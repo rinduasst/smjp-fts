@@ -223,17 +223,31 @@ function Kurikulum() {
             </option>
           ))}
           </select>
-            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
-            <input
+          <div className="relative w-full sm:max-w-sm">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+              <input
+                className="
+                block w-full
+                pl-10 pr-4 py-2.5
+                border border-gray-300
+                rounded-lg
+                bg-white
+                placeholder-gray-500
+                text-gray-900
+                focus:border-green-500
+                focus:outline-none
+                transition "
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Cari Kurikulum..."
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300
-              rounded-lg bg-white placeholder-gray-500 text-gray-900
-              focus:border-green-500 focus:outline-none transition"
+              
             />
           </div>
+        </div>
         </div>
   
         {/* TABLE */}
