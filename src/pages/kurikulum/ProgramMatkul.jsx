@@ -242,7 +242,6 @@ function ProgramMatkul() {
   };
 
   const { user, peran } = useAuth();
-
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
       setFilterProdi(user.prodiId);

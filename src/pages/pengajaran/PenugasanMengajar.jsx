@@ -364,7 +364,7 @@ function PenugasanMengajar() {
            focus:ring-2 focus:ring-green-500
            focus:border-green-500 transition"
             value={filterJenis} onChange={e => setFilterJenis(e.target.value)}>
-            <option value="">Semua Jenis</option>
+            <option value="">Semua Jenis Kelas</option>
             {jenisKelasList.map(jenis => (
               <option key={jenis} value={jenis}>{jenis}</option>
             ))}
@@ -378,7 +378,7 @@ function PenugasanMengajar() {
                     focus:border-green-500 transition"
                     
                 value={filterKode} onChange={e => setFilterKode(e.target.value)}>
-            <option value="">Semua Kode</option>
+            <option value="">Semua Kelas</option>
             {kodeKelasList.map(kode => (
               <option key={kode} value={kode}>{kode}</option>
             ))}

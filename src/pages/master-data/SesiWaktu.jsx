@@ -78,20 +78,11 @@ function SlotWaktu() {
       return;
     }
   
-    // convert ke Date lokal (WIB)
-    const mulaiLocal = new Date();
-    mulaiLocal.setHours(formData.jamMulaiJam);
-    mulaiLocal.setMinutes(formData.jamMulaiMenit);
-    mulaiLocal.setSeconds(0);
-  
-    const selesaiLocal = new Date();
-    selesaiLocal.setHours(formData.jamSelesaiJam);
-    selesaiLocal.setMinutes(formData.jamSelesaiMenit);
-    selesaiLocal.setSeconds(0);
+
     const payload = {
       nama: formData.nama,
-      jamMulai: mulaiLocal.toISOString(),
-      jamSelesai: selesaiLocal.toISOString(),
+      jamMulai: `${formData.jamMulaiJam}.${formData.jamMulaiMenit}`,
+      jamSelesai: `${formData.jamSelesaiJam}.${formData.jamSelesaiMenit}`,
       slotMalam: formData.slotMalam,
     };
     try {
@@ -118,16 +109,19 @@ function SlotWaktu() {
     
   
   const handleEdit = (item) => {
-    const mulai = item.jamMulai?.slice(11, 16) || "";
-    const selesai = item.jamSelesai?.slice(11, 16) || "";
+    const mulaiJam = item.jamMulai?.split(".")[0] || "";
+    const mulaiMenit = item.jamMulai?.split(".")[1] || "";
+    
+    const selesaiJam = item.jamSelesai?.split(".")[0] || "";
+    const selesaiMenit = item.jamSelesai?.split(".")[1] || "";
   
     setSelectedItem(item);
     setFormData({
       nama: item.nama || "",
-      jamMulaiJam: mulai.split(":")[0] || "",
-      jamMulaiMenit: mulai.split(":")[1] || "",
-      jamSelesaiJam: selesai.split(":")[0] || "",
-      jamSelesaiMenit: selesai.split(":")[1] || "",
+      jamMulaiJam: mulaiJam,
+      jamMulaiMenit: mulaiMenit,
+      jamSelesaiJam: selesaiJam,
+      jamSelesaiMenit: selesaiMenit,
       slotMalam: item.slotMalam || false,
     });
     setShowModal(true);
@@ -232,23 +226,12 @@ function SlotWaktu() {
                 <tr key={row.id} >
                       <td className="py-4 px-6">{row.nama}</td>
                       <td className="py-4 px-6">
-                      {row.jamMulai
-                      ? new Date(row.jamMulai).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          timeZone: "Asia/Jakarta",
-                        })
-                      : "-"}
-                    </td>
-                    <td className="py-4 px-6">
-                    {row.jamSelesai
-                    ? new Date(row.jamSelesai).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        timeZone: "Asia/Jakarta",
-                      })
-                    : "-"}
-                    </td>
+                      {row.jamMulai || "-"}
+                      </td>
+
+                      <td className="py-4 px-6">
+                      {row.jamSelesai || "-"}
+                      </td>
                     <td className="py-4 px-6">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium

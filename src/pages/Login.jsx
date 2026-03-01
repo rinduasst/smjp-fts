@@ -19,10 +19,7 @@ function Login() {
       const res = await api.post("/api/auth/login", { email, password });
 
       const token =
-        res.data?.data?.tokenAkses ||
-        res.data?.data?.token ||
-        res.data?.tokenAkses ||
-        res.data?.token;
+        res.data?.data?.token
 
       if (!token) {
         setError("Token tidak ditemukan.");

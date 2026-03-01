@@ -64,29 +64,27 @@ const GenerateJadwal = () => {
     }
   };
   const handleGenerate = async () => {
-    if (!fakultasId || !periodeId) {
-      alert("Fakultas dan periode wajib dipilih");
-      return;
-    }
-  
-    setShowLoading(true);
-    setResult(null);
-  
     try {
-      const res = await api.post("/api/scheduler/generate", {
-        fakultasId,
-        periodeAkademikId: periodeId,
-        dryRun,
-        preset,
-        namaBatch,
-      });
+      const res = await api.post("/api/scheduler/generate", payload);
+      const jobId = res.data.data.jobId;
+      toast.info("⏳ Sistem sedang menyusun jadwal. Proses ini mungkin memerlukan beberapa menit.");
+      const interval = setInterval(async () => {
+        const jobRes = await api.get(
+          `/api/scheduler/job/${jobId}`
+        );
+        const jobStatus = jobRes.data.data.status;
+        if (jobStatus === "DONE") {
+          clearInterval(interval);
+          toast.success("Jadwal berhasil disusun. Silakan cek hasilnya.");
+        }
+        if (jobStatus === "FAILED") {
+          clearInterval(interval);
+          toast.error("Terjadi kendala saat menyusun jadwal. Silakan coba lagi.");
+        }
+      }, 5000);
   
-      setResult(res.data.data);
     } catch (err) {
-      alert("Gagal generate jadwal");
-    } finally {
-      setLoading(false);
-      setShowLoading(false);
+      toast.error("❌ Gagal memulai proses penyusunan jadwal.");
     }
   };
   //helper jam

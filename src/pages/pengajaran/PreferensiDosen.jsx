@@ -201,24 +201,8 @@ function PreferensiDosen() {
                       <td className="py-4 px-6">{row.dosen?.nama}</td>
                       <td className="py-4 px-6">{row.hari?.nama}</td>
                       <td className="py-4 px-6">
-                      
-                      {row.slotWaktu?.jamMulai
-                        ? new Date(row.slotWaktu.jamMulai).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            timeZone: "Asia/Jakarta",
-                          })
-                        : "-"}
-                      {" - "}
-                      {row.slotWaktu?.jamSelesai
-                        ? new Date(row.slotWaktu.jamSelesai).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            timeZone: "Asia/Jakarta",
-                          })
-                        : "-"}
-                      
-                    </td>
+                       {row.slotWaktu?.jamMulai || "-"} - {row.slotWaktu?.jamSelesai || "-"}
+                     </td>
                       <td className="py-4 px-6">{row.prioritas}</td>
                       <td className="py-4 px-6">
                       <span
@@ -348,21 +332,9 @@ function PreferensiDosen() {
                 <option value="">Pilih Slot Waktu</option>
 
                 {slotList.map(s => (
-                  <option key={s.id} value={s.id}>
-                   {s.nama} (
-                    {new Date(s.jamMulai).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "Asia/Jakarta",
-                    })}
-                    {" - "}
-                    {new Date(s.jamSelesai).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "Asia/Jakarta",
-                    })}
-                  )
-                  </option>
+                 <option key={s.id} value={s.id}>
+                 {s.nama} ({s.jamMulai} - {s.jamSelesai})
+               </option>
                 ))}
               </select>
               </div>
@@ -410,7 +382,7 @@ function PreferensiDosen() {
 
               <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status Mengajar
+              Status Ketersediaan
             </label>
             <select
               value={formData.bolehMengajar ? "1" : "0"}
@@ -423,8 +395,8 @@ function PreferensiDosen() {
               className="w-full px-3 py-2 bg-gray-100 rounded
                         focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="1">Diizinkan</option>
-              <option value="0">Tidak Diizinkan</option>
+              <option value="1">Bersedia</option>
+              <option value="0">Tidak Bersedia</option>
             </select>
           </div>
 
@@ -447,7 +419,6 @@ function PreferensiDosen() {
               </div>
 
             </form>
-
 
             </div>
           </div>
@@ -517,14 +488,14 @@ function PreferensiDosen() {
               </div>
 
               <div>
-                <p className="text-gray-500">Status Mengajar</p>
+                <p className="text-gray-500">Status Ketersediaan</p>
                 <span
                   className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold
                     ${selectedItem.bolehMengajar
                       ? "bg-green-100 text-green-700"
                       : "bg-red-100 text-red-700"}`}
                 >
-                  {selectedItem.bolehMengajar ? "Diizinkan" : "Tidak Diizinkan"}
+                  {selectedItem.bolehMengajar ? "Bersedia" : "Tidak Bersedia"}
                 </span>
               </div>
 

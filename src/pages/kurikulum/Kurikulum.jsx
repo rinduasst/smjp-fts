@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import {useAuth} from "../../hooks/useAuth"
 
 
-
 function Kurikulum() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,11 +27,17 @@ function Kurikulum() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // contoh data prodi (nanti dari API)
   const fetchKurikulum = async () => {
+    setLoading(true);
     try {
-      const res = await api.get("/api/kurikulum/kurikulum");
+      const res = await api.get("/api/kurikulum/kurikulum", {
+        params: {
+          prodiId: filterProdi
+        }
+      });
+  
       setData(res.data?.data?.items || []);
     } catch (err) {
-      console.error("Gagal fetch kurikulum:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -47,22 +52,20 @@ function Kurikulum() {
     }
   };
   
-  useEffect(() => {
-    fetchKurikulum();
-    fetchProdi();
-  }, []);
+    // fetch prodi cuma sekali
+    useEffect(() => {
+      fetchProdi();
+    }, []);
+
+    // fetch kurikulum kalau filter berubah
+    useEffect(() => {
+      fetchKurikulum();
+    }, [filterProdi]);
   
  
-  const filteredData = data.filter( item=>{
-    const matchSearch =
-    item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
-     
-      const matchProdi = filterProdi
-      ? item.prodi?.id === filterProdi
-      : true;
-    
-      return matchSearch && matchProdi;
-    });
+    const filteredData = data.filter(item =>
+      item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
 
   const resetForm = () => {
@@ -173,6 +176,11 @@ function Kurikulum() {
   };
 
   const { user,peran } = useAuth();
+  useEffect(() => {
+    if (peran === "TU_PRODI" && user?.prodiId) {
+      setFilterProdi(user.prodiId);
+    }
+  }, [peran, user]);
 
 
 
@@ -208,6 +216,7 @@ function Kurikulum() {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
 
           {/* Filter prodi */}
+          {peran !== "TU_PRODI" && (
           <select
             value={filterProdi}
             onChange={e => setFilterProdi(e.target.value)}
@@ -223,6 +232,7 @@ function Kurikulum() {
             </option>
           ))}
           </select>
+          )}
           <div className="relative w-full sm:max-w-sm">
           <Search
             size={18}
