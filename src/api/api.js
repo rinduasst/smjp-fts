@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 const api = axios.create({
-  baseURL: "https://collective-bear-shn-3fbf09f0.koyeb.app"
+  baseURL: "http://43.129.55.147:3000"
  
 });
 
