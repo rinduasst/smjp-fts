@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { ToastContainer } from "react-toastify";
 
 export default function MainLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -14,6 +15,7 @@ export default function MainLayout({ children }) {
       
       {/* Sidebar */}
       {isSidebarOpen && <Sidebar />}
+      <ToastContainer position="top-right" autoClose={4000} />
 
       {/* wrapper konten */}
       <div

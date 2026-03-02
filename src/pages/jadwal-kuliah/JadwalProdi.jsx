@@ -9,12 +9,10 @@ const JadwalProdi = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeBatchId, setActiveBatchId] = useState(null);
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(200);
-  const [total, setTotal] = useState(0);
+ 
   const [batchInfo, setBatchInfo] = useState(null);
   const { user, peran } = useAuth();
-  const totalPages = Math.ceil(total / pageSize);
+
 
   const fetchFinalBatch = async () => {
     try {
@@ -33,13 +31,28 @@ const JadwalProdi = () => {
     if (!activeBatchId) return;
     setLoading(true);
     try {
-      const res = await api.get("/api/scheduler/jadwal", {
-        params: { batchId: activeBatchId, page, pageSize },
-      });
-      setData(res.data?.data?.items || []);
-      setTotal(res.data?.data?.total || 0);
+      let allData = [];
+      let currentPage = 1;
+      let totalPages = 1;
+      do {
+        const res = await api.get("/api/scheduler/jadwal", {
+          params: {
+            batchId: activeBatchId,
+            page: currentPage,
+            pageSize: 200,
+          },
+        });
+        const items = res.data?.data?.items || [];
+        const total = res.data?.data?.total || 0;
+        allData = [...allData, ...items];
+        totalPages = Math.ceil(total / 200);
+        currentPage++;
+      } while (currentPage <= totalPages);
+  
+      setData(allData);
+  
     } catch (err) {
-      console.error("Gagal mengambil jadwal", err);
+      console.error("Gagal mengambil semua jadwal", err);
     } finally {
       setLoading(false);
     }
@@ -51,7 +64,7 @@ const JadwalProdi = () => {
 
   useEffect(() => {
     if (activeBatchId) fetchJadwal();
-  }, [activeBatchId, page]);
+  }, [activeBatchId]);
 
   const fakultas = batchInfo?.fakultas?.nama || "";
   const periode = batchInfo?.periode?.nama || "";
@@ -158,9 +171,16 @@ const sortedSemesters = Object.entries(groupedBySemester)
         </div>
 
         {sortedSemesters.map(([semester, items]) => (
-  <div key={semester} className="mb-8 overflow-x-auto">
-    <h2 className="text-center font-bold mb-2">SEMESTER {semester}</h2>
-    <table className="min-w-full text-sm text-left border border-gray-300">
+        <div
+          key={semester}
+          className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+         <h2 className="text-center font-bold mb-4 text-gray-700">
+          SEMESTER {semester}
+        </h2>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm text-left border border-gray-300 bg-white">
       <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
         <tr>
           <th className="px-4 py-3 border">Hari</th>
@@ -173,6 +193,7 @@ const sortedSemesters = Object.entries(groupedBySemester)
         </tr>
       </thead>
       <tbody>
+        
         {Object.entries(
           items.reduce((acc, jadwal) => {
             const hari = jadwal.hari?.nama || "-";
@@ -188,7 +209,7 @@ const sortedSemesters = Object.entries(groupedBySemester)
                   {hari}
                 </td>
               )}
-              <td className="border px-4 py-2">
+              <td className="border py-2 px-1">
                 {jadwal.slotWaktu?.jamMulai} - {jadwal.slotWaktu?.jamSelesai}
               </td>
               <td className="border px-4 py-2">
@@ -217,18 +238,13 @@ const sortedSemesters = Object.entries(groupedBySemester)
           ))
         )}
       </tbody>
+      
     </table>
   </div>
+  </div>
 ))}
+</div>
 
-        <div className="px-6 py-4 bg-gray-50 flex justify-between items-center text-sm">
-          <div>Halaman {page} dari {totalPages} | Total {filteredData.length} data</div>
-          <div className="flex gap-2">
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
-            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
-          </div>
-        </div>
-      </div>
     </MainLayout>
   );
 };

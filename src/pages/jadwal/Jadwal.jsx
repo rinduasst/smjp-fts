@@ -18,7 +18,9 @@ const Jadwal = () => {
 
   const totalPages = Math.ceil(total / pageSize);
   const [batchInfo, setBatchInfo] = useState(null);
-  
+  //loading
+  const [hasFetched, setHasFetched] = useState(false);
+
   // Ambil batch FINAL
   const fetchFinalBatch = async () => {
     try {
@@ -41,8 +43,10 @@ const Jadwal = () => {
   // Ambil Jadwal berdasarkan batch FINAL
   const fetchJadwal = async () => {
     if (!activeBatchId) return;
-
+  
     setLoading(true);
+    setHasFetched(false);
+  
     try {
       const res = await api.get("/api/scheduler/jadwal", {
         params: {
@@ -52,13 +56,14 @@ const Jadwal = () => {
           prodiId: selectedProdi || undefined,
         },
       });
-
+  
       setData(res.data?.data?.items || []);
       setTotal(res.data?.data?.total || 0);
     } catch (err) {
       console.error("Gagal mengambil jadwal", err);
     } finally {
       setLoading(false);
+      setHasFetched(true);
     }
   };
 
@@ -94,7 +99,6 @@ const Jadwal = () => {
       [],
     ];
 
-  
     const tableHeader = [
       "Hari",
       "Pukul",
@@ -153,10 +157,8 @@ const Jadwal = () => {
           e: { r: rowIndex + items.length - 1, c: 0 },
         });
       }
-  
       rowIndex += items.length;
     });
-  
     const ws = XLSX.utils.aoa_to_sheet([
       ...titleRows,
       tableHeader,
@@ -273,18 +275,24 @@ const Jadwal = () => {
 
           <tbody>
           {loading ? (
-         <tr>
-         <td colSpan="8" className="h-40">
-           <div className="flex items-center justify-center h-full">
-             <Loader2 className="animate-spin w-8 h-8 text-gray-600" />
-           </div>
-         </td>
-       </tr>
-          ) : data.length > 0 ? (
+            <tr>
+              <td colSpan="8" className="h-40">
+                <div className="flex items-center justify-center h-full gap-2 text-gray-600">
+                  <Loader2 className="animate-spin w-6 h-6" />
+                  <span>Memuat jadwal...</span>
+                </div>
+              </td>
+            </tr>
+          ) : hasFetched && data.length === 0 ? (
+            <tr>
+              <td colSpan={8} className="text-center py-6 text-gray-500">
+                Tidak ada jadwal
+              </td>
+            </tr>
+          ) : (
             Object.entries(groupedByHari).map(([hari, items]) =>
               items.map((jadwal, index) => (
                 <tr key={jadwal.id} className="hover:bg-gray-50">
-                  {/* HARI digabung */}
                   {index === 0 && (
                     <td
                       rowSpan={items.length}
@@ -294,26 +302,21 @@ const Jadwal = () => {
                     </td>
                   )}
 
-                {/* PUKUL */}
-                <td className="px-4 py-3 border whitespace-nowrap">
-                {jadwal.slotWaktu?.jamMulai?.trim()} - {jadwal.slotWaktu?.jamSelesai?.trim()}
-              </td>
+                  <td className="px-4 py-3 border whitespace-nowrap">
+                    {jadwal.slotWaktu?.jamMulai?.trim()} -{" "}
+                    {jadwal.slotWaktu?.jamSelesai?.trim()}
+                  </td>
+
                   <td className="px-4 py-3 border font-medium">
-                    {
-                      jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.nama
-                    }
+                    {jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.nama}
                   </td>
 
                   <td className="px-4 py-3 border text-center">
-                    {
-                      jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.sks
-                    }
+                    {jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.sks}
                   </td>
 
                   <td className="px-4 py-3 border">
-                    {
-                      jadwal.penugasanMengajar?.programMatkul?.prodi?.nama
-                    }
+                    {jadwal.penugasanMengajar?.programMatkul?.prodi?.nama}
                   </td>
 
                   <td className="px-4 py-3 border">
@@ -321,48 +324,39 @@ const Jadwal = () => {
                   </td>
 
                   <td className="px-4 py-3 border">
-                  {jadwal.penugasanMengajar?.kelasList?.length > 0
-                    ? jadwal.penugasanMengajar.kelasList
-                        .map((k) => {
-                          const periode =
-                            jadwal.penugasanMengajar?.programMatkul?.periode;
+                    {jadwal.penugasanMengajar?.kelasList?.length > 0
+                      ? jadwal.penugasanMengajar.kelasList
+                          .map((k) => {
+                            const periode =
+                              jadwal.penugasanMengajar?.programMatkul?.periode;
 
-                          const angkatan = k.kelompokKelas?.angkatan;
-                          const tahunMulai = periode?.tahunMulai;
-                          const paruh = periode?.paruh;
+                            const semesterAngka = hitungSemester(
+                              k.kelompokKelas?.angkatan,
+                              periode?.tahunMulai,
+                              periode?.paruh
+                            );
 
-                          const semesterAngka = hitungSemester(
-                            angkatan,
-                            tahunMulai,
-                            paruh
-                          );
+                            const romawi = toRomawi(semesterAngka);
 
-                          const romawi = toRomawi(semesterAngka);
+                            const jenis =
+                              k.kelompokKelas?.jenisKelas === "REGULER"
+                                ? "REG"
+                                : "KAR";
 
-                          const jenis =
-                            k.kelompokKelas?.jenisKelas === "REGULER"
-                              ? "REG"
-                              : "KAR";
+                            const kode = k.kelompokKelas?.kode;
 
-                          const kode = k.kelompokKelas?.kode;
-
-                          return `${romawi}_${jenis}_${kode}`;
-                        })
-                        .join(", ")
-                    : "-"}
+                            return `${romawi}_${jenis}_${kode}`;
+                          })
+                          .join(", ")
+                      : "-"}
                   </td>
+
                   <td className="px-4 py-3 border whitespace-nowrap">
-                  {jadwal.ruang?.nama || "-"}
+                    {jadwal.ruang?.nama || "-"}
                   </td>
                 </tr>
               ))
             )
-          ) : (
-            <tr>
-              <td colSpan={8} className="text-center py-6">
-                Tidak ada jadwal
-                </td>
-            </tr>
           )}
         </tbody>
         </table>

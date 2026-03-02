@@ -346,39 +346,48 @@ function ProgramMatkul() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
-                  {peran !== "TU_PRODI" && (
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Program Studi</th>)}
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Kurikulum</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Periode</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Kelas</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-              {filteredData.map((row) => (
-                  <tr key={row.id} className="border- hover:bg-gray-50">
-                    <td className="px-6 py-4">{row.mataKuliah?.kode} - {row.mataKuliah?.nama}</td>
-                    {peran !== "TU_PRODI" && (
-                    <td className="px-6 py-4">{row.prodi?.nama}</td> )}
-                    <td className="px-6 py-4">{row.kurikulum?.nama}</td>
-                    <td className="px-6 py-4">{row.periode?.nama}</td>
-                    <td className="px-6 py-4">{row.jumlahKelompokKelas}</td>
-                    <td className="py-4 px-6 flex gap-2">
-                      <button onClick={() => handleEdit(row)} className="text-blue-600" title="Edit "><Edit size={16} /></button>
-                      <button onClick={() => handleDelete(row)} className="text-red-600" title="Hapus"><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+            <thead className="bg-gray-50">
+  <tr>
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
+    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">SKS</th>
+    {peran !== "TU_PRODI" && (
+      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Program Studi</th>
+    )}
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Kurikulum</th>
+    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Periode</th>
+    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Kelas</th>
+    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+  </tr>
+</thead>
+
+<tbody className="divide-y divide-gray-200">
+  {filteredData.map((row) => (
+    <tr key={row.id} className="hover:bg-gray-50">
+      <td className="px-4 py-3">{row.mataKuliah?.kode} - {row.mataKuliah?.nama}</td>
+      <td className="px-4 py-3 text-center">{row.mataKuliah?.sks}</td>
+      {peran !== "TU_PRODI" && (
+        <td className="">{row.prodi?.nama}</td>
+      )}
+      <td className="px-4 py-3">{row.kurikulum?.nama}</td>
+      <td className="px-4 py-3 text-center">{row.periode?.nama}</td>
+      <td className="px-4 py-3 text-center">{row.jumlahKelompokKelas}</td>
+      <td className="px-4 py-3 flex justify-center gap-2">
+        <button onClick={() => handleEdit(row)} className="text-blue-600" title="Edit">
+          <Edit size={16} />
+        </button>
+        <button onClick={() => handleDelete(row)} className="text-red-600" title="Hapus">
+          <Trash2 size={16} />
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-700">
-        Menampilkan {(page - 1) * pageSize + 1}     - {Math.min(page * pageSize, totalData)} dari {totalData} data program matkul
+        Menampilkan {(page - 1) * pageSize + 1}     - {Math.min(page * pageSize, totalData)} dari {totalData} data mata kuliah
           </div>
 
           <div className="flex items-center gap-2">

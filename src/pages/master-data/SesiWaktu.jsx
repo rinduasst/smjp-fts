@@ -269,7 +269,7 @@ function SlotWaktu() {
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Menampilkan <span className="font-semibold">{filteredData.length}</span> dari <span className="font-semibold">{data.length}</span> fakultas
+                Menampilkan <span className="font-semibold">{filteredData.length}</span> data dari <span className="font-semibold">{data.length}</span> sesi perkuliahan
               </div>
             </div>
           </div>

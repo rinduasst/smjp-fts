@@ -201,7 +201,7 @@ function KelompokKelas() {
         {/* Header */}
         <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900"> 
-            Data Kelompok Kelas
+            Data Kelas
         </h1>
           <p className="text-gray-600 mt-2">Kelola Data Kelpompok Kelas Berdasaekan Program Studi</p>
         </div>
@@ -365,8 +365,8 @@ function KelompokKelas() {
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
               <div>
-                Menampilkan {(page - 1) * pageSize + 1} -{" "}
-                {Math.min(page * pageSize, totalData)} dari {totalData}
+                Menampilkan {(page - 1) * pageSize + 1} -{" "}<span className="font-semibold">
+                {Math.min(page * pageSize, totalData)}</span> dari <span className="font-semibold">{totalData} data kelas </span>
               </div>      </div>
 
               <div className="flex gap-2">

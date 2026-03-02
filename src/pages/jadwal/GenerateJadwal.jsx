@@ -1,6 +1,8 @@
 import React, { Fragment, useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
@@ -10,6 +12,7 @@ const GenerateJadwal = () => {
   const [showLoading, setShowLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
   const [dosenList, setDosenList] = useState([]);
   const [hariList, setHariList] = useState([]);
   const [slotList, setSlotList] = useState([]);
@@ -20,6 +23,7 @@ const GenerateJadwal = () => {
   const [prodiFilter, setProdiFilter] = useState("");
 
   const [preset, setPreset] = useState("CEPAT");
+  const [jobId, setJobId] = useState(null);
   const [namaBatch, setNamaBatch] = useState("");
 
   useEffect(() => {
@@ -64,38 +68,74 @@ const GenerateJadwal = () => {
     }
   };
   const handleGenerate = async () => {
+    if (!fakultasId || !periodeId) {
+      toast.warning("Fakultas dan Periode wajib dipilih!");
+      return;
+    }
+    const payload = {
+      fakultasId,
+      periodeAkademikId: periodeId,
+      dryRun,
+      preset,
+      namaBatch,
+    };
     try {
-      const res = await api.post("/api/scheduler/generate", payload);
-      const jobId = res.data.data.jobId;
-      toast.info("⏳ Sistem sedang menyusun jadwal. Proses ini mungkin memerlukan beberapa menit.");
-      const interval = setInterval(async () => {
-        const jobRes = await api.get(
-          `/api/scheduler/job/${jobId}`
-        );
-        const jobStatus = jobRes.data.data.status;
-        if (jobStatus === "DONE") {
-          clearInterval(interval);
-          toast.success("Jadwal berhasil disusun. Silakan cek hasilnya.");
-        }
-        if (jobStatus === "FAILED") {
-          clearInterval(interval);
-          toast.error("Terjadi kendala saat menyusun jadwal. Silakan coba lagi.");
-        }
-      }, 5000);
+      setLoading(true);
   
+      // kalau dryRun → tampilkan modal loading
+      if (dryRun) {
+        setShowLoading(true);
+      }
+      const res = await api.post("/api/scheduler/generate", payload);
+  
+      const data = res.data.data;
+      // MODE PREVIEW (DRY RUN)
+      if (dryRun) {
+        // tutup modal loading
+        setShowLoading(false);
+        // tampilkan preview
+        setResult(data);
+        toast.success("Preview jadwal berhasil dibuat");
+        return;
+      }
+      // MODE GENERATE ASYNC
+      toast.success("Sistem sedang menyusun jadwal!");
+      if (data.mode === "ASYNC") {
+        const jid = data.jobId;
+        const interval = setInterval(async () => {
+          const jobRes = await api.get(`/api/scheduler/job/${jid}`);
+          const jobData = jobRes.data.data;
+          if (jobData.status === "DONE") {
+            clearInterval(interval);
+            toast.success(
+              <div className="flex items-center gap-2">
+                <span>Jadwal berhasil disusun!</span>
+                <button
+                  onClick={() => {
+                    window.location.href = "/scheduler/batch";
+                  }}
+                  className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+                >
+                  Lihat
+                </button>
+              </div>
+            );
+          }
+          if (jobData.status === "FAILED") {
+            clearInterval(interval);
+            toast.error("Generate jadwal gagal");
+          }
+        }, 5000);
+      }
     } catch (err) {
-      toast.error("❌ Gagal memulai proses penyusunan jadwal.");
+      setShowLoading(false);
+      toast.error("Gagal generate jadwal");
+    } finally {
+      setLoading(false);
     }
   };
-  //helper jam
-    const formatJam = (time) => {
-      if (!time) return "-";
-      const date = new Date(time);
-      return date.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).replace(":", ".");
-    };
+ 
+
     // Ambil jadwal valid dulu
     const jadwalValid = (result?.jadwalPreview || []).filter(j =>
       j.penugasanMengajarId &&
@@ -108,19 +148,15 @@ const GenerateJadwal = () => {
     //  baru difilter berdasarkan prodi
     const jadwalFiltered = jadwalValid.filter(j => {
       if (!prodiFilter) return true;
-    
       const penugasan = penugasanList.find(
         p => String(p.id) === String(j.penugasanMengajarId)
       );
-    
       return String(penugasan?.programMatkul?.prodi?.id) === String(prodiFilter);
     });
     
     const handleSave = async () => {
       if (!window.confirm("Yakin ingin menyimpan jadwal ini?")) return;
-    
       setLoading(true);
-    
       try {
         await api.post("/api/scheduler/generate", {
           fakultasId,
@@ -130,7 +166,7 @@ const GenerateJadwal = () => {
           namaBatch,
         });
     
-        alert("Jadwal berhasil disimpan ke batch!");
+        toast.success("Jadwal berhasil disimpan ke batch!");
       } catch (err) {
         alert("Gagal menyimpan jadwal");
       } finally {
@@ -149,7 +185,15 @@ const GenerateJadwal = () => {
     ];
  
     const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-
+    //ubah ke romawi
+    const toRomawi = (num) => {
+      const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+      return map[num] || num;
+    };
+    
+    const hitungSemester = (angkatan, tahunMulai, paruh) => {
+      return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
+    };
     // jadwal grup by hari
     // jadwal grup by hari dan urutkan per jam mulai
     const jadwalGroupedByHari = jadwalFiltered.reduce((acc, j) => {
@@ -168,7 +212,16 @@ const GenerateJadwal = () => {
         return new Date(slotA.jamMulai) - new Date(slotB.jamMulai);
       });
     });
+// Hitung total konflik "nyata" dari penaltyBreakdown
+const totalKonflik =
+  (result?.stats?.penaltyBreakdown?.bentrokDosen ? 1 : 0) +
+  (result?.stats?.penaltyBreakdown?.bentrokKelas ? 1 : 0) +
+  (result?.stats?.penaltyBreakdown?.bentrokRuang ? 1 : 0) +
+  (result?.stats?.penaltyBreakdown?.kelasGabunganRuangSalah ? 1 : 0) +
+  (result?.stats?.penaltyBreakdown?.constraintDosen ? 1 : 0) +
+  (result?.stats?.penaltyBreakdown?.slotTidakValidUntukSks ? 1 : 0);
 
+  
 
   return (
     <MainLayout>
@@ -185,17 +238,16 @@ const GenerateJadwal = () => {
             </h3>
             <p className="text-sm text-gray-500">
             Sistem menggunakan beberapa preset optimasi untuk mengatur strategi pencarian solusi terbaik.
-            Pengguna dapat memilih tingkat optimasi sesuai kebutuhan proses.
           </p>
           </div>
 
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2.5 rounded-lg shadow-sm disabled:opacity-50"
           >
             {loading ? "Memproses..." : "Generate Jadwal"}
-          </button>
+          </button> 
         </div>
 
       
@@ -325,28 +377,23 @@ const GenerateJadwal = () => {
               <div>
               <p className="font-semibold">Penilaian Jadwal</p>
               <p className="text-gray-600">
-                Tingkat kualitas jadwal: 
-                <b> {(result.stats.fitnessTerbaik * 100).toFixed(1)}%</b>
-              </p>
+              Tingkat kualitas jadwal: 
+              <b>{(result.stats.fitnessTerbaik * 100).toFixed(6)}%</b>
+              {result.stats.fitnessTerbaik >= 0.9 && " (Sangat Baik)"}
+              {result.stats.fitnessTerbaik >= 0.75 && result.stats.fitnessTerbaik < 0.9 && " (Baik)"}
+              {result.stats.fitnessTerbaik < 0.75 && " (Perlu Optimasi)"}
+            </p>
                 {/* <p className="text-xs text-gray-400">
                   Semakin mendekati 100%, jadwal semakin optimal.
                 </p> */}
             </div>
-              <div>
-                <p className="font-semibold">Jumlah Percobaan Sistem</p>
-                <p className="text-gray-600">
-                  Sistem mencoba menyusun jadwal sebanyak{" "}
-                  <b>{result.stats.totalGenerasi}</b> kali
-                </p>
-              </div>
 
-              <div>
-                <p className="font-semibold">Jumlah Konflik Jadwal</p>
-                <p className="text-gray-600">
-                  Ditemukan <b>{result.stats.penaltyTerbaik}</b> konflik aturan
-                </p>
-                
-              </div>
+            <div>
+            <p className="font-semibold">Jumlah Konflik Jadwal</p>
+            <p className="text-gray-600">
+              Ditemukan <b>{totalKonflik}</b> konflik aturan
+            </p>
+          </div>
         {/* KESIMPULAN */}
         
               {result.stats.penaltyTerbaik === 0 ? (
@@ -368,10 +415,10 @@ const GenerateJadwal = () => {
         )}
 
 
-        {/* ================= PREVIEW JADWAL ================= */}
+        {/*  PREVIEW JADWAL */}
         {result?.jadwalPreview?.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-            <h3 className="font-semibold text-gray-800 mb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+          <h3 className="font-semibold text-gray-800 mb-4">
               Preview Jadwal
             </h3>
 
@@ -406,57 +453,124 @@ const GenerateJadwal = () => {
                   <th className="p-2 border">SKS</th>
                   <th className="p-2 border">Kelas</th>
                   <th className="p-2 border">Dosen</th>
+                  <th className="p-2 border">Program Studi</th>
                   <th className="p-2 border">Ruangan</th>
                 </tr>
               </thead>
-        <tbody>
-          {hariUrut.map((namaHari) => {
-            const items = jadwalGroupedByHari[namaHari] || []; // jika kosong, tetap render header
+              <tbody>
+  {Object.entries(jadwalGroupedByHari)
+    .sort(([a], [b]) => {
+      const urutanHari = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+      return urutanHari.indexOf(a) - urutanHari.indexOf(b);
+    })
+    .map(([namaHari, items]) => {
+
+      if (!items || items.length === 0) {
+        return (
+          <Fragment key={namaHari}>
+            <tr className="bg-gray-200">
+              <td colSpan={8} className="p-3 font-semibold text-center">
+                {namaHari}
+              </td>
+            </tr>
+
+            <tr>
+              <td colSpan={8} className="p-2 text-center text-gray-400 italic">
+                Tidak ada jadwal
+              </td>
+            </tr>
+          </Fragment>
+        );
+      }
+
+      return (
+        <Fragment key={namaHari}>
+
+          {/* HEADER HARI */}
+          <tr className="bg-gray-200">
+            <td colSpan={8} className="p-3 font-semibold text-center">
+              {namaHari}
+            </td>
+          </tr>
+
+          {/* DATA */}
+          {items.map((j, index) => {
+
+            const penugasan = penugasanList.find(
+              p => String(p.id) === String(j.penugasanMengajarId)
+            );
+
+            const dosen = dosenList.find(
+              d => String(d.id) === String(j.dosenId)
+            );
+
+            const ruang = ruangList.find(
+              r => String(r.id) === String(j.ruangId)
+            );
+
+            const slot = slotList.find(
+              s => String(s.id) === String(j.slotWaktuId)
+            );
+
             return (
-              <React.Fragment key={namaHari}>
-                {/* HEADER HARI */}
-                <tr className="bg-gray-200">
-                  <td colSpan={8} className="p-3 font-semibold text-gray-800 text-center">
-                    {namaHari}
-                  </td>
-                </tr>
+              <tr key={`${j.penugasanMengajarId}-${index}`}>
 
-                {/* DATA PER HARI */}
-                {items.length > 0 ? (
-                  items.map((j, index) => {
-                    const penugasan = penugasanList.find(p => String(p.id) === String(j.penugasanMengajarId));
-                    const dosen = dosenList.find(d => String(d.id) === String(j.dosenId));
-                    const ruang = ruangList.find(r => String(r.id) === String(j.ruangId));
-                    const slot = slotList.find(s => String(s.id) === String(j.slotWaktuId));
+                <td className="p-2 border">
+                  {slot?.jamMulai} - {slot?.jamSelesai}
+                </td>
 
-                    if (!penugasan || !slot || !ruang || !dosen) return null;
-                        // Ambil semua kode kelas dari penugasan
-                     const kelasCodes = penugasan.kelasList?.map(k => k.kelompokKelas?.kode).join(", ") || "-";
-                    return (
-                      <tr key={`${j.penugasanMengajarId}-${index}`}>
-                        {/* <td className="p-2 border"></td> */}
-                        <td className="p-2 border">{formatJam(slot.jamMulai)} - {formatJam(slot.jamSelesai)}</td>
-                        <td className="p-2 border">{penugasan.programMatkul?.mataKuliah?.kode}</td>
-                        <td className="p-2 border">{penugasan.programMatkul?.mataKuliah?.nama}</td>
-                        <td className="p-2 border text-center">{penugasan.programMatkul?.mataKuliah?.sks}</td>
-                        <td className="p-2 border text-center">{kelasCodes}</td>
-                        <td className="p-2 border">{dosen.nama}</td>
-                        <td className="p-2 border">{ruang.nama}</td>
-                      </tr>
+                <td className="p-2 border">
+                  {penugasan?.programMatkul?.mataKuliah?.kode}
+                </td>
+
+                <td className="p-2 border">
+                  {penugasan?.programMatkul?.mataKuliah?.nama}
+                </td>
+
+                <td className="p-2 border text-center">
+                  {penugasan?.programMatkul?.mataKuliah?.sks}
+                </td>
+
+                <td className="p-2 border text-center">
+                  {penugasan?.kelasList?.map((k) => {
+                    const periode = penugasan.programMatkul?.periode;
+                    const semesterAngka = hitungSemester(
+                      k.kelompokKelas?.angkatan,
+                      periode?.tahunMulai,
+                      periode?.paruh
                     );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="p-2 text-center text-gray-400 italic">Tidak ada jadwal</td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
 
+                    const romawi = toRomawi(semesterAngka);
 
+                    const jenis =
+                      k.kelompokKelas?.jenisKelas === "REGULER"
+                        ? "REG"
+                        : "KAR";
 
+                    return `${romawi}_${jenis}_${k.kelompokKelas?.kode}`;
+                  }).join(", ")}
+                </td>
+
+                <td className="p-2 border">
+                  {dosen?.nama}
+                </td>
+
+                <td className="p-2 border">
+                  {penugasan?.programMatkul?.prodi?.nama}
+                </td>
+
+                <td className="p-2 border">
+                  {ruang?.nama}
+                </td>
+
+              </tr>
+            );
+          })}
+
+        </Fragment>
+      );
+    })}
+</tbody>
                       </table>
                     </div>
                         {/* Table Footer */}

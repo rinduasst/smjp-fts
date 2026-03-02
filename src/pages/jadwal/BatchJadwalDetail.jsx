@@ -249,13 +249,10 @@ const BatchJadwalDetail = () => {
 
          {/* Jumlah Pelanggaran */}
          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-
          <p className="text-xs text-gray-500 mb-1">
             Total Konflik
           </p>
-
           <div className="flex items-center justify-between mt-1">
-
             <p className="text-lg font-semibold text-red-600">
               {totalKonflik}
             </p>
@@ -269,11 +266,8 @@ const BatchJadwalDetail = () => {
               <Eye size={16} />
               Detail Konflik
             </button>
-
           </div>
-
           </div>
-
             {/* Tanggal */}
             <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <p className="text-xs text-gray-500 mb-1">
@@ -284,33 +278,22 @@ const BatchJadwalDetail = () => {
                   .toLocaleDateString("id-ID")}
               </p>
             </div>
-
             </div>
-
-
             {/* CARD KETERANGAN WARNA PRODI */}
             <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-
             <h2 className="font-semibold mb-3 text-gray-800">
               Keterangan Warna Program Studi
             </h2>
-
             <div className="flex flex-wrap gap-x-6 gap-y-2">
-
               {Object.entries(warnaProdi).map(([nama, warna]) => (
-
                 <div key={nama} className="flex items-center gap-2">
-
                   <span
                     className={`w-4 h-4 rounded border ${warna.split(" ")[0]}`}
                   ></span>
-
                   <span className="text-sm text-gray-700">
                     {nama}
                   </span>
-
                 </div>
-
               ))}
         </div>
       </div>

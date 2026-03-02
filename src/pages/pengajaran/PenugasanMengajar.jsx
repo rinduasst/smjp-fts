@@ -351,13 +351,12 @@ function PenugasanMengajar() {
 
         {/* Action Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row justify-between gap-4">
-        {peran === "TU_PRODI" && (
           <button
             onClick={() => { resetForm(); setShowModal(true); }}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition"
           >
             <Plus size={18} /> Tambah Penugasan
-          </button>)}
+          </button>
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <select  className="w-full px-3 py-2.5 border border-gray-300
            rounded-lg bg-white text-gray-900 focus:outline-none
