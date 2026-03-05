@@ -139,17 +139,17 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
         <div className="mb-">
         {/* Judul dan deskripsi */}
         <div className="mb-6">
-        {/* Judul */}
-        <h1 className="text-2xl font-bold text-gray-800">
-            Jadwal Perkuliahan Semester Aktif
-        </h1>
-        {/* Keterangan dinamis singkat */}
-        <div className="mt-2 text-sm text-gray-600">
-        <span className="font-semibold">
-            {batchInfo?.fakultas?.nama || "-"}  - Periode {batchInfo?.periode?.nama || "-"} ({batchInfo?.periode?.tahunMulai || "-"} / {batchInfo?.periode?.tahunSelesai || "-"})
-        </span>
-        </div>
-        </div>
+  {/* Judul */}
+  <h1 className="text-2xl font-bold text-gray-800">
+    Jadwal Perkuliahan Semester Aktif
+  </h1>
+{/* Keterangan dinamis singkat */}
+<div className="mt-2 text-sm text-gray-600">
+  <span className="font-semibold">
+    {batchInfo?.fakultas?.nama || "-"}  - Periode {batchInfo?.periode?.nama || "-"} ({batchInfo?.periode?.tahunMulai || "-"} / {batchInfo?.periode?.tahunSelesai || "-"})
+  </span>
+</div>
+</div>
 
         {/* Tombol Export */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
