@@ -1,30 +1,267 @@
-import { createWorkbook, applyTableBorder } from "../baseWorkbook";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export const exportAllProdi = async (data) => {
-  const { workbook, sheet } = createWorkbook();
+export const exportAllProdi = async (data, batchInfo) => {
 
-  sheet.mergeCells("A1:H1");
-  sheet.getCell("A1").value = "JADWAL SEMUA PROGRAM STUDI";
-  sheet.getCell("A1").alignment = { horizontal: "center" };
-  sheet.getCell("A1").font = { bold: true, size: 14 };
+  const workbook = new ExcelJS.Workbook();
 
-  let rowIndex = 3;
+  const fakultas = batchInfo?.fakultas?.nama || "";
+  const prodi = data[0]?.penugasanMengajar?.programMatkul?.prodi?.nama || "";
+  const periode = batchInfo?.periode?.nama || "";
 
-  data.forEach((item) => {
-    const row = sheet.addRow([
-      item.prodi,
-      item.semester,
-      item.hari,
-      item.mataKuliah,
-      item.dosen,
-      item.ruang,
-    ]);
+  const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-    applyTableBorder(row);
-    rowIndex++;
+function hitungSemester(angkatan, tahunMulai, paruh) {
+  if (!angkatan || !tahunMulai) return 1;
+
+  const tahunStudi = tahunMulai - angkatan + 1;
+
+  if (paruh === "GANJIL") {
+    return (tahunStudi * 2) - 1; // 1,3,5,7
+  }
+
+  if (paruh === "GENAP") {
+    return tahunStudi * 2; // 2,4,6,8
+  }
+
+  return 1;
+}
+
+  function toRomawi(num) {
+    const roman = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+    return roman[num] || num;
+  }
+
+  const borderAll = (cell) => {
+    cell.border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" }
+    };
+  };
+
+  /* ================= GROUP DATA ================= */
+
+  const grouped = {};
+
+  data.forEach((j) => {
+
+    j.penugasanMengajar?.kelasList?.forEach((k) => {
+
+      const angkatan = k.kelompokKelas?.angkatan;
+      const tahunMulai = batchInfo?.periode?.tahunMulai;
+      const paruh = batchInfo?.periode?.paruh;
+
+      const semester = toRomawi(
+        hitungSemester(angkatan, tahunMulai, paruh)
+      );
+
+      const kelas = k.kelompokKelas?.kode || "UNKNOWN";
+
+      if (!grouped[semester]) grouped[semester] = {};
+      if (!grouped[semester][kelas]) grouped[semester][kelas] = [];
+
+      grouped[semester][kelas].push(j);
+
+    });
+
+  });
+  /* ================= LOOP SEMESTER ================= */
+  const romawiToNumber = {
+    I: 1,
+    II: 2,
+    III: 3,
+    IV: 4,
+    V: 5,
+    VI: 6,
+    VII: 7,
+    VIII: 8
+  };
+  
+  Object.entries(grouped)
+    .sort(([a], [b]) => romawiToNumber[a] - romawiToNumber[b])
+    .forEach(([semester, kelasList]) => {
+
+    const sheet = workbook.addWorksheet(`SMT ${semester}`);
+
+    let row = 1;
+
+    /* HEADER */
+
+    sheet.mergeCells(`A${row}:I${row}`);
+    sheet.getCell(`A${row}`).value = `JADWAL KULIAH ${periode}`;
+    sheet.getCell(`A${row}`).alignment = { horizontal: "center" };
+    sheet.getCell(`A${row}`).font = { bold: true, size: 14 };
+    row++;
+
+    sheet.mergeCells(`A${row}:I${row}`);
+    sheet.getCell(`A${row}`).value = `PROGRAM STUDI ${prodi.toUpperCase()}`;
+    sheet.getCell(`A${row}`).alignment = { horizontal: "center" };
+    sheet.getCell(`A${row}`).font = { bold: true };
+    row++;
+
+    sheet.mergeCells(`A${row}:I${row}`);
+    sheet.getCell(`A${row}`).value = fakultas.toUpperCase();
+    sheet.getCell(`A${row}`).alignment = { horizontal: "center" };
+    sheet.getCell(`A${row}`).font = { bold: true };
+    row += 2;
+
+    /* SORT KELAS */
+    const sortedKelas = Object.entries(kelasList)
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    /* LOOP KELAS */
+
+    sortedKelas.forEach(([kelas, jadwalList]) => {
+
+      sheet.mergeCells(`A${row}:I${row}`);
+
+      const titleCell = sheet.getCell(`A${row}`);
+
+      titleCell.value = `SEMESTER ${semester}_${kelas} `;
+
+      titleCell.font = { bold: true, size: 12 };
+
+      titleCell.alignment = {
+        horizontal: "center",
+        vertical: "middle"
+      };
+
+      titleCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9D9D9" }
+      };
+
+      sheet.getRow(row).height = 28;
+
+      row++;
+
+      const headers = [
+        "HARI",
+        "PUKUL",
+        "KODE MK",
+        "MATA KULIAH",
+        "SKS",
+        "DOSEN / TENAGA PENGAJAR",
+        "DOSEN PENGAMPU",
+        "Jml Mhs",
+        "R"
+      ];
+
+      const headerRow = sheet.addRow(headers);
+
+      headerRow.eachCell((cell) => {
+
+        cell.font = { bold: true };
+
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle"
+        };
+
+        borderAll(cell);
+
+      });
+
+      sheet.getRow(headerRow.number).height = 22;
+
+      /* GROUP HARI */
+
+      const groupedByHari = {};
+
+      jadwalList.forEach((j) => {
+
+        const hari = j.hari?.nama || "-";
+
+        if (!groupedByHari[hari]) groupedByHari[hari] = [];
+
+        groupedByHari[hari].push(j);
+
+      });
+
+      let rowIndex = sheet.lastRow.number + 1;
+
+      hariUrut.forEach((hari) => {
+
+        const items = groupedByHari[hari] || [];
+        const startRow = rowIndex;
+
+        if (items.length === 0) {
+
+          const rowData = sheet.addRow([
+            hari, "", "", "", "", "", "", "", ""
+          ]);
+          rowData.eachCell((cell) => {
+            borderAll(cell);
+            cell.alignment = {
+              horizontal: "left",
+              vertical: "middle"
+            };
+          });
+          sheet.getRow(rowData.number).height = 35;
+
+          rowIndex++;
+
+        } else {
+
+          items.forEach((j) => {
+
+            const rowData = sheet.addRow([
+              hari,
+              `${j.slotWaktu?.jamMulai}-${j.slotWaktu?.jamSelesai}`,
+              j.penugasanMengajar?.programMatkul?.mataKuliah?.kode,
+              j.penugasanMengajar?.programMatkul?.mataKuliah?.nama,
+              j.penugasanMengajar?.programMatkul?.mataKuliah?.sks,
+              j.penugasanMengajar?.dosen?.nama,
+              j.penugasanMengajar?.dosen?.nama,
+              "",
+              j.ruang?.nama
+            ]);
+
+            rowData.eachCell((cell) => {
+              borderAll(cell);
+              cell.alignment = {
+                horizontal: "left",
+                vertical: "middle"
+              };
+            });
+            sheet.getRow(rowData.number).height = 35;
+            rowIndex++;
+
+          });
+
+          const endRow = rowIndex - 1;
+
+          if (items.length > 1) {
+            sheet.mergeCells(`A${startRow}:A${endRow}`);
+          }
+
+        }
+
+      });
+
+      row = rowIndex + 1;
+
+    });
+
+    sheet.columns = [
+      { width: 12 },
+      { width: 15 },
+      { width: 12 },
+      { width: 35 },
+      { width: 6 },
+      { width: 35 },
+      { width: 35 },
+      { width: 10 },
+      { width: 10 }
+    ];
+
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(new Blob([buffer]), "Jadwal_Semua_Prodi.xlsx");
+
+  saveAs(new Blob([buffer]), "Jadwal_Prodi.xlsx");
+
 };

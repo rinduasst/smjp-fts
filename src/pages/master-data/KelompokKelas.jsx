@@ -278,8 +278,12 @@ function KelompokKelas() {
             ))}
             </select>
             )}
-          <Search className="absolute left-3 top-3 text-gray-400" size={18}/>
-           
+                <div className="relative w-full sm:max-w-sm">
+            
+            <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
               <input
                 className="
                 block w-full
@@ -300,6 +304,8 @@ function KelompokKelas() {
                 }}
                 placeholder="Cari Kelas..."  />
                 </div>
+                </div>
+       
         </div>
 
         {/* Table */}

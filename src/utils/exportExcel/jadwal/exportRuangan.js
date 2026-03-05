@@ -55,23 +55,32 @@ export const exportRuangan = async (jadwalList, batch) => {
     const toRomawi = (num) =>
   ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][num] || num;
 
-const hitungSemester = (angkatan, tahunMulai, paruh) =>
+  const hitungSemester = (angkatan, tahunMulai, paruh) =>
   (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
 
-    /* ================= TITLE ================= */
+    /* title */
+    const fakultas = batch?.fakultas?.nama || "-";
+    const tahunMulai = batch?.periode?.tahunMulai;
+    const tahunSelesai = batch?.periode?.tahunSelesai;
+    const paruh = batch?.periode?.paruh || "-"; // GASAL / GENAP
+    
+    const tahunAjaran =
+      tahunMulai && tahunSelesai ? `${tahunMulai}/${tahunSelesai}` : "-";
+    
     sheet.mergeCells(1, 1, 1, ruangList.length + 1);
-    sheet.getCell(1, 1).value = "JADWAL RUANGAN";
+    sheet.getCell(1, 1).value = `JADWAL RUANGAN SEMESTER ${paruh} TA ${tahunAjaran}`;
     sheet.getCell(1, 1).font = { bold: true, size: 16 };
     sheet.getCell(1, 1).alignment = { horizontal: "center" };
 
     sheet.mergeCells(2, 1, 2, ruangList.length + 1);
-    sheet.getCell(2, 1).value = `Hari: ${hari} | Batch: ${batch || "-"}`;
+    sheet.getCell(2, 1).value = fakultas.toUpperCase();
+    sheet.getCell(2, 1).font = { bold: true, size: 16 };
     sheet.getCell(2, 1).alignment = { horizontal: "center" };
-    sheet.getCell(2, 1).font = { italic: true };
+    
 
     sheet.addRow([]);
 
-    /* ================= HEADER ================= */
+    /* header  */
     const headerRow = sheet.addRow(["Pukul", ...ruangList.map((r) => r.nama)]);
     headerRow.font = { bold: true };
     headerRow.eachCell((cell) => {

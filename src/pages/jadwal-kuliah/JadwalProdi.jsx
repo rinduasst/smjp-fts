@@ -177,7 +177,7 @@ const sortedSemesters = Object.entries(groupedBySemester)
           }, {})
         ).map(([hari, hariItems]) =>
           hariItems.map((jadwal, idx) => (
-            <tr key={jadwal.id}>
+            <tr key={`${jadwal.id}-${idx}`}>
               {idx === 0 && (
                 <td rowSpan={hariItems.length} className="px-4 py-2 border align-top">
                   {hari}
