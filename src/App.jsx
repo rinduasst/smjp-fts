@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-
-
 /* PAGES */
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -40,6 +38,7 @@ import Jadwal from "./pages/jadwal/Jadwal";
 import JadwalProdi from "./pages/jadwal-kuliah/JadwalProdi";
 import JadwalDosen from "./pages/jadwal-kuliah/JadwalDosen";
 import JadwalRuangan from "./pages/jadwal-kuliah/JadwalRuangan";
+import JadwalKelas from "./pages/jadwal-kuliah/JadwalKelas";
 import PerubahanJadwal from "./pages/jadwal/PerubahanJadwal";
 
 /* Pengaturan */
@@ -88,6 +87,7 @@ function App() {
         <Route path="/jadwal-kuliah/jadwal-prodi" element={<JadwalProdi />} />
         <Route path="/jadwal-kuliah/jadwal-dosen" element={<JadwalDosen />} />
         <Route path="/jadwal-kuliah/jadwal-ruangan" element={<JadwalRuangan />} />
+        <Route path="/jadwal-kuliah/jadwal-kelas" element={<JadwalKelas />} />
         <Route path="/pengajuan-perubahan-jadwal" element={<PerubahanJadwal />} />
 
         {/* Pengaturan */}

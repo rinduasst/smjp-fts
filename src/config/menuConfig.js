@@ -73,7 +73,8 @@ import {
     children: [
       { name: "Jadwal Kuliah", path: "/jadwal-kuliah/jadwal", roles: ["ADMIN","TU_FAKULTAS", "TU_PRODI"] },
       { name: "Jadwal Prodi", path: "/jadwal-kuliah/jadwal-prodi", roles: [ "TU_PRODI"] },
-      // { name: "Jadwal Dosen", path: "/jadwal-kuliah/jadwal-dosen", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
+      { name: "Jadwal Kelas", path: "/jadwal-kuliah/jadwal-kelas", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
+      { name: "Jadwal Dosen", path: "/jadwal-kuliah/jadwal-dosen", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
       { name: "Jadwal Ruangan", path: "/jadwal-kuliah/jadwal-ruangan", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
       { name: "Perubahan Jadwal", path: "/pengajuan-perubahan-jadwal", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
       // { name: "Export Jadwal ", path: "/scheduler/jadwal", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },

@@ -14,46 +14,38 @@ const JadwalProdi = () => {
  
   const [batchInfo, setBatchInfo] = useState(null);
   const { user, peran } = useAuth();
-
+//ambil batch final
   const fetchFinalBatch = async () => {
     try {
-      const res = await api.get("/api/scheduler/batch");
-      const finalBatch = res.data?.data?.items.find((b) => b.status === "FINAL");
+      const res = await api.get("/api/scheduler/batch", {
+        params: { status: "FINAL", page: 1, pageSize: 100 },
+      });
+  
+      const finalBatch = res.data?.data?.items.find(b => b.status === "FINAL");
+  
       if (finalBatch) {
-        setActiveBatchId(finalBatch.id);
         setBatchInfo(finalBatch);
       }
+  
     } catch (err) {
       console.error("Gagal mengambil batch", err);
     }
   };
-
+//Fetch jadwal prodi pakai endpoint baru
   const fetchJadwal = async () => {
-    if (!activeBatchId) return;
+    if (!batchInfo || !user?.prodiId) return;
     setLoading(true);
     try {
-      let allData = [];
-      let currentPage = 1;
-      let totalPages = 1;
-      do {
-        const res = await api.get("/api/scheduler/jadwal", {
-          params: {
-            batchId: activeBatchId,
-            page: currentPage,
-            pageSize: 200,
-          },
-        });
-        const items = res.data?.data?.items || [];
-        const total = res.data?.data?.total || 0;
-        allData = [...allData, ...items];
-        totalPages = Math.ceil(total / 200);
-        currentPage++;
-      } while (currentPage <= totalPages);
-  
-      setData(allData);
-  
+      const res = await api.get("/api/view-jadwal/prodi", {
+        params: {
+          periodeAkademikId: batchInfo.periodeId,
+          prodiId: user.prodiId,
+          statusBatch: "FINAL",
+        },
+      });
+      setData(res.data?.data?.hari || []);
     } catch (err) {
-      console.error("Gagal mengambil semua jadwal", err);
+      console.error("Gagal mengambil jadwal", err);
     } finally {
       setLoading(false);
     }
@@ -64,68 +56,45 @@ const JadwalProdi = () => {
   }, []);
 
   useEffect(() => {
-    if (activeBatchId) fetchJadwal();
-  }, [activeBatchId]);
+    if (batchInfo && user?.prodiId) {
+      fetchJadwal();
+    }
+  }, [batchInfo, user]);
 
-  const fakultas = batchInfo?.fakultas?.nama || "";
-  const periode = batchInfo?.periode?.nama || "";
-
-  const isAdmin = peran === "ADMIN";
-  const filteredData = isAdmin
-    ? data
-    : data.filter((item) => item.penugasanMengajar?.programMatkul?.prodi?.id === user?.prodiId);
-
-  // Sorting & grouping global
-  const sortedData = filteredData.sort((a, b) => {
-    const hariOrder = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
-    return hariOrder.indexOf(a.hari?.nama || "") - hariOrder.indexOf(b.hari?.nama || "");
-  });
-
-  const groupedHari = sortedData.reduce((acc, item) => {
-    const hari = item.hari?.nama || "-";
-    if (!acc[hari]) acc[hari] = [];
-    acc[hari].push(item);
-    return acc;
-  }, {});
 
   const toRomawi = (num) => {
+    if (!num || num <= 0) return "";
     const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
     return map[num] || num;
   };
+
 
   const hitungSemester = (angkatan, tahunMulai, paruh) => {
     if (!angkatan || !tahunMulai) return 0;
     return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
   };
-  // Group data per semester
-const groupedBySemester = {};
 
-filteredData.forEach((jadwal) => {
-  if (!jadwal.penugasanMengajar?.kelasList) return;
-
-  jadwal.penugasanMengajar.kelasList.forEach((k) => {
-    const periode = jadwal.penugasanMengajar?.programMatkul?.periode;
-    const angkatan = k.kelompokKelas?.angkatan;
-    const tahunMulai = periode?.tahunMulai;
-    const paruh = periode?.paruh;
-    const semesterAngka = hitungSemester(angkatan, tahunMulai, paruh);
-    const romawi = toRomawi(semesterAngka);
-
-    if (!groupedBySemester[romawi]) groupedBySemester[romawi] = [];
-    groupedBySemester[romawi].push({ ...jadwal, kelasKode: k.kelompokKelas?.kode, jenisKelas: k.kelompokKelas?.jenisKelas });
-  });
-});
-// Ambil entries dan urutkan berdasarkan angka semester
-const sortedSemesters = Object.entries(groupedBySemester)
-  .sort(([a], [b]) => {
-    // ubah romawi ke angka
-    const romanToNumber = (roman) => {
-      const map = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7, VIII:8, IX:9, X:10, XI:11, XII:12 };
-      return map[roman] || 0;
-    };
-    return romanToNumber(a) - romanToNumber(b);
-  });
-
+  const formatKelas = (slot) => {
+    if (!slot.kelas) return "-";
+  
+    return slot.kelas
+      .map((k) => {
+        const romawi = toRomawi(
+          hitungSemester(
+            k.angkatan,
+            batchInfo?.periode?.tahunMulai,
+            batchInfo?.periode?.paruh
+          )
+        );
+  
+        if (k.kode?.toLowerCase() === "karyawan") {
+          return `${romawi}_KARYAWAN`;
+        }
+  
+        return `${romawi}_REG_${k.kode}`;
+      })
+      .join(", ");
+  };
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen p-6">
@@ -143,82 +112,64 @@ const sortedSemesters = Object.entries(groupedBySemester)
             Export Excel
           </button>
         </div>
-
-        {sortedSemesters.map(([semester, items]) => (
-        <div
-          key={semester}
-          className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-         <h2 className="text-center font-bold mb-4 text-gray-700">
-          SEMESTER {semester}
-        </h2>
-
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left border border-gray-300 bg-white">
-      <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
-        <tr>
-          <th className="px-4 py-3 border">Hari</th>
-          <th className="px-4 py-3 border">Jam</th>
-          <th className="px-4 py-3 border">Mata Kuliah</th>
-          <th className="px-4 py-3 border text-center">SKS</th>
-          <th className="px-4 py-3 border">Dosen</th>
-          <th className="px-4 py-3 border">Kelas</th>
-          <th className="px-4 py-3 border">Ruangan</th>
-        </tr>
-      </thead>
-      <tbody>
-        
-        {Object.entries(
-          items.reduce((acc, jadwal) => {
-            const hari = jadwal.hari?.nama || "-";
-            if (!acc[hari]) acc[hari] = [];
-            acc[hari].push(jadwal);
-            return acc;
-          }, {})
-        ).map(([hari, hariItems]) =>
-          hariItems.map((jadwal, idx) => (
-            <tr key={`${jadwal.id}-${idx}`}>
-              {idx === 0 && (
-                <td rowSpan={hariItems.length} className="px-4 py-2 border align-top">
-                  {hari}
-                </td>
-              )}
-              <td className="border py-2 px-1">
-                {jadwal.slotWaktu?.jamMulai} - {jadwal.slotWaktu?.jamSelesai}
-              </td>
-              <td className="border px-4 py-2">
-                {jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.nama}
-              </td>
-              <td className="border px-4 py-2 text-center">
-                {jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.sks}
-              </td>
-              <td className="border px-4 py-2">
-                {jadwal.penugasanMengajar?.dosen?.nama}
-              </td>
-              <td className="border px-4 py-2">
-                {jadwal.penugasanMengajar?.kelasList?.map((k) => {
-                  const periode = jadwal.penugasanMengajar?.programMatkul?.periode;
-                  const angkatan = k.kelompokKelas?.angkatan;
-                  const tahunMulai = periode?.tahunMulai;
-                  const paruh = periode?.paruh;
-                  const semesterAngka = hitungSemester(angkatan, tahunMulai, paruh);
-                  const romawi = toRomawi(semesterAngka);
-                  const jenis = k.kelompokKelas?.jenisKelas === "REGULER" ? "REG" : "KAR";
-                  return `${romawi}_${jenis}_${k.kelompokKelas?.kode}`;
-                }).join(", ")}
-              </td>
-              <td className="border px-4 py-2">{jadwal.ruang?.nama}</td>
-            </tr>
-          ))
-        )}
-      </tbody>
-      
-    </table>
-  </div>
-  </div>
-))}
-</div>
+            <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
+              <tr>
+              <th className="px-4 py-3 border">Hari</th>
+                <th className="px-4 py-3 border">Jam</th>
+                <th className="px-4 py-3 border">Mata Kuliah</th>
+                <th className="px-4 py-3 border text-center">SKS</th>
+                <th className="px-4 py-3 border">Dosen</th>
+                <th className="px-4 py-3 border">Kelas</th>
+                <th className="px-4 py-3 border">Ruangan</th>
+              </tr>
+            </thead>
+            <tbody>
+            {data.map((hari) =>
+              hari.slots.map((slot, idx) => (
+                <tr key={`${hari.id}-${idx}`}>
+                  {idx === 0 && (
+                    <td
+                      rowSpan={hari.slots.length}
+                      className="px-4 py-2 border font-medium text-center"
+                    >
+                      {hari.nama}
+                    </td>
+                  )}
 
+                  <td className="border px-4 py-2">
+                    {slot.jamMulai} - {slot.jamSelesai}
+                  </td>
+
+                  <td className="border px-4 py-2">
+                    {slot.matkul?.nama}
+                  </td>
+
+                  <td className="border px-4 py-2 text-center">
+                    {slot.matkul?.sksTotal}
+                  </td>
+
+                  <td className="border px-4 py-2">
+                    {slot.dosen?.nama}
+                  </td>
+
+                  <td className="border px-4 py-2">
+                    {formatKelas(slot)}
+                  </td>
+
+                  <td className="border px-4 py-2">
+                    {slot.ruang?.nama}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+          </table>
+        </div>
+      </div>
+
+    
     </MainLayout>
   );
 };
