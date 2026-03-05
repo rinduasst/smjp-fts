@@ -21,11 +21,15 @@ const ConstraintDosen = () => {
     tipe: "HARD",
     prioritas: "",
     constraints: {
-      WAJIB_HARI: "",
-      WAJIB_RUANG: "",
-      WAJIB_LANTAI: "",
-      HINDARI_SLOT: "",
-      MAKS_SESI_PERHARI: "",
+      WAJIB_HARI: null,
+      WAJIB_RUANG: null,
+      WAJIB_LANTAI: null,
+      WAJIB_SLOT: null,
+      HINDARI_SLOT: null,
+      HINDARI_HARI: null,
+      HINDARI_SESI: null,
+      MAKS_SESI_PERHARI: null,
+      MAKS_HARI_PERMINGGU: null
     }
   });
   // fetch master
@@ -87,11 +91,28 @@ const ConstraintDosen = () => {
   };
 
   const handleEdit = (row) => {
+    const emptyConstraints = {
+      WAJIB_HARI: null,
+      WAJIB_RUANG: null,
+      WAJIB_LANTAI: null,
+      WAJIB_SLOT: null,
+      HINDARI_SLOT: null,
+      HINDARI_HARI: null,
+      HINDARI_SESI: null,
+      MAKS_SESI_PERHARI: null,
+      MAKS_HARI_PERMINGGU: null
+    };
+  
     setFormData({
       dosenId: row.dosenId,
       tipe: row.isHard ? "HARD" : "SOFT",
-      prioritas: row.prioritas || ""
+      prioritas: row.prioritas || "",
+      constraints: {
+        ...emptyConstraints,
+        [row.jenisConstraint]: row.nilaiConstraint
+      }
     });
+  
     setSelectedId(row.id);
     setIsEdit(true);
     setShowModal(true);
@@ -150,6 +171,14 @@ const ConstraintDosen = () => {
         return "Hindari Slot";
       case "MAKS_SESI_PERHARI":
         return "Maks. Sesi / Hari";
+        case "WAJIB_SLOT":
+        return "Wajib Slot";
+      case "HINDARI_HARI":
+        return "Hindari Hari";
+      case "HINDARI_SESI":
+        return "Hindari Sesi";
+      case "MAKS_HARI_PERMINGGU":
+        return "Maks. Hari / Minggu";
       default:
         return jenis;
     }
@@ -173,8 +202,12 @@ const ConstraintDosen = () => {
     "WAJIB_HARI",
     "WAJIB_RUANG",
     "WAJIB_LANTAI",
+    "WAJIB_SLOT",
     "HINDARI_SLOT",
-    "MAKS_SESI_PERHARI"
+    "HINDARI_HARI",
+    "HINDARI_SESI",
+    "MAKS_SESI_PERHARI",
+    "MAKS_HARI_PERMINGGU"
   ];
   const getDisplayNilai = (row) => {
     switch (row.jenisConstraint) {
@@ -315,7 +348,71 @@ const ConstraintDosen = () => {
             <option value="3">3</option>
           </select>
         );
-  
+        case "WAJIB_SLOT":
+          return (
+            <select
+              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg"
+              value={formData.constraints.WAJIB_SLOT}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  constraints: {
+                    ...prev.constraints,
+                    WAJIB_SLOT: e.target.value
+                  }
+                }))
+              }
+            >
+              <option value="">Pilih Slot</option>
+              {jamList.map(j => (
+                <option key={j.id} value={j.id}>
+                   {j.jamMulai}-{j.jamSelesai}
+                </option>
+              ))}
+            </select>
+          );
+          case "HINDARI_HARI":
+          return (
+            <select
+              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg"
+              value={formData.constraints.HINDARI_HARI}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  constraints: {
+                    ...prev.constraints,
+                    HINDARI_HARI: e.target.value
+                  }
+                }))
+              }
+            >
+              <option value="">Pilih Hari</option>
+              {hariList.map(h => (
+                <option key={h.id} value={h.id}>{h.nama}</option>
+              ))}
+            </select>
+          );
+          case "HINDARI_HARI":
+          return (
+            <select
+              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg"
+              value={formData.constraints.HINDARI_HARI}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  constraints: {
+                    ...prev.constraints,
+                    HINDARI_HARI: e.target.value
+                  }
+                }))
+              }
+            >
+              <option value="">Pilih Hari</option>
+              {hariList.map(h => (
+                <option key={h.id} value={h.id}>{h.nama}</option>
+              ))}
+            </select>
+          );
       default:
         return null;
     }
@@ -398,7 +495,7 @@ const ConstraintDosen = () => {
                     <td className="p-4 text-center">
                     <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                        ${row.isHard ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-600'}`}
+                        ${row.isHard ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
                       >
                       
                       {row.isHard ? "Hard" : "Soft"}
