@@ -77,7 +77,7 @@ const Jadwal = () => {
       fetchJadwal();
     }
   }, [activeBatchId, page, selectedProdi]);
-  const fetchProdi = async () => {
+  const fetchProdi = async () => { 
     try {
       const res = await api.get("/api/master-data/prodi");
       setProdiList(res.data?.data?.items || []);

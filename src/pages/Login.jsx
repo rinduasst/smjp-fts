@@ -36,76 +36,96 @@ function Login() {
   };
 
   return (
-   <div
-  className="min-h-screen bg-contain bg-center bg-no-repeat relative flex items-center justify-end px-53"
-  style={{ backgroundImage: "url('/logosmjp.png')" }}
+    <div className="relative min-h-screen flex items-center justify-center px-4">
 
-    >
-      {/* Overlay */}
-      <div className="absolute inset-0"></div>
+    {/* Background Image */}
+    <div
+      className="absolute inset-0 bg-cover bg-center"
+      style={{ backgroundImage: "url('/background.jpg')" }}
+    ></div>
+   <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/90 to-transparent"></div>
+    {/* Overlay Hitam Transparan */}
+    <div className="absolute inset-0 bg-black/60"></div>
+    <div className="absolute top-6 left-8 z-20">
 
-      {/* Card */}
-        <div className="w-full max-w-md">
-        <div className="bg-white/40 backdrop-blur-xl rounded-[30px] shadow-2xl p-10 border border-white/30">
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-700 tracking-wide">
-           LOGIN 
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Sistem Manajemen Jadwal Perkuliahan
-            </p>
+    </div>
+    {/* Content */}
+    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
+
+        {/* Header */}
+        <div className="px-10 pt-10 pb-6 text-center">
+          <img
+            src="/test.png"
+            alt="Logo SMJP"
+            className="w-90 mx-auto mb-2"
+          />
+          <div className="border-t px-1 border-gray-200">
           </div>
-
+        </div>
+  
+        <div className="px-8 pb-8">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-700 text-sm text-center">{error}</p>
+              <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
           )}
-
-          <form onSubmit={handleLogin} className="space-y-6">
+  
+          <form onSubmit={handleLogin} className="space-y-5">
             
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/60 backdrop-blur-md rounded-full px-6 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 transition"
-                  placeholder="Masukkan email Anda"
-                  required
-                />
-              </div>
-            </div>
+           {/* Email */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Email
+            </label>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-green-600 transition" />
+              
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-700 focus:outline-none focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
+                placeholder="Masukkan email"
+                required
+              />
+            </div>
+          </div>
+
+{/* Password */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium text-gray-700">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/60 backdrop-blur-md rounded-full px-6 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 transition"
-                  placeholder="Masukkan password Anda"
-                  required
-                />
-              </div>
+              <button
+                type="button"
+                className="text-sm text-green-600 hover:underline"
+              >
+                Lupa?
+              </button>
             </div>
 
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-green-600 transition" />
+
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-700 focus:outline-none focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
+                placeholder="Masukkan password"
+                required
+              />
+            </div>
+          </div>
+  
             {/* Button */}
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-lg font-medium text-white flex items-center justify-center transition ${
+              className={`w-full py-3 rounded-full font-medium text-white flex items-center justify-center transition ${
                 loading
                   ? "bg-green-400 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700"
@@ -114,24 +134,21 @@ function Login() {
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Masuk"
+                "Sign in"
               )}
             </button>
           </form>
-
-          {/* Extra */}
-          <div className="text-center mt-6">
-            <p className="text-sm text-gray-600">
-              Belum memiliki akun?{" "}
-              <span className="text-blue-600">
-                Hubungi administrator
-              </span>
-            </p>
+  
+          <div className="text-center mt-6 text-sm text-gray-500">
+            Belum punya akun?{" "}
+            <span className="text-green-600 font-medium">
+              Hubungi Administrator
+            </span>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
+  )
+              };
 export default Login;
+              

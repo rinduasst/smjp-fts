@@ -102,9 +102,6 @@ const BatchJadwal = () => {
   
     return { label: "Kurang", color: "red", value: persen };
   };
-  
-  
-
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
@@ -118,8 +115,6 @@ const BatchJadwal = () => {
               Daftar hasil generate jadwal kuliah
             </p>
           </div>
-
-      
         </div>
 
        {/* Table Section */}
@@ -188,9 +183,9 @@ const BatchJadwal = () => {
                     </td>
 
                     {/* Kualitas */}
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-2">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
                         ${
                           kualitas.color === "green"
                             ? "bg-green-100 text-green-700"
@@ -222,8 +217,8 @@ const BatchJadwal = () => {
                     </td>
 
                     {/* Aksi */}
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3 justify-center">
+                    <td className="py-4 px-6 ">
+                      <div className="flex items-center  gap-3 justify-center">
                         {item.status !== "FINAL" && (
                         <button
                         onClick={() => setAktif(item.id)}

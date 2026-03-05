@@ -28,11 +28,15 @@ function Kurikulum() {
   // contoh data prodi (nanti dari API)
   const fetchKurikulum = async () => {
     setLoading(true);
+  
+    const effectiveProdiId =
+      peran === "TU_PRODI" ? user?.prodiId : filterProdi;
+  
     try {
       const res = await api.get("/api/kurikulum/kurikulum", {
         params: {
-          prodiId: filterProdi
-        }
+          ...(effectiveProdiId && { prodiId: effectiveProdiId }),
+        },
       });
   
       setData(res.data?.data?.items || []);
@@ -180,8 +184,7 @@ function Kurikulum() {
     if (peran === "TU_PRODI" && user?.prodiId) {
       setFilterProdi(user.prodiId);
     }
-  }, [peran, user]);
-
+  }, [filterProdi, peran, user]);
 
 
   return (
@@ -279,10 +282,10 @@ function Kurikulum() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase"> 
                     Program Studi
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
                     Aksi
                   </th>
                 </tr>
@@ -307,8 +310,9 @@ function Kurikulum() {
                         {row.prodi?.nama || "-"}
                       </td>
 
-                      <td className="px-6 py-4">
-                      <span
+                      <td className="px-2 py-2">
+                      <div className="flex flex-col  items-center gap-1">
+                    <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
                       ${row.aktif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
                     >
@@ -318,8 +322,20 @@ function Kurikulum() {
                       ></div>
                       {row.aktif ? 'Aktif' : 'Tidak Aktif'}
                     </span>
-                      </td>
+                  </div>
+                </td>
                       <td className="px-6 py-4 flex gap-3">
+                      <button
+                        onClick={() => navigate(`/kurikulum/${row.id}/assignMatkul`)}
+                        className="inline-flex items-center gap-2 px-3 py-2 
+                        bg-green-500 text-white text-sm font-semibold 
+                        rounded-lg shadow-sm
+                        hover:bg-green-600 hover:shadow-md
+                        transition-all"
+                      >
+                        <CheckSquare size={16} />
+                        Kelola Mata Kuliah
+                      </button>
                         <button
                           onClick={() => handleEdit(row)}
                           className="text-blue-600 hover:text-blue-800"
@@ -334,13 +350,6 @@ function Kurikulum() {
                         >
                           <Trash2 size={16} />
                         </button>
-                        <button onClick={() => navigate(`/kurikulum/${row.id}/assignMatkul`)}
-                         className="text-yellow-600 hover:text-yellow-800"
-                          title="Assign Mata Kuliah"
-                        > 
-                        <CheckSquare size={18} />
-                         </button>
-
                           <button
                           onClick={() => navigate(`/kurikulum/${row.id}`)}
                           className="text-green-600 hover:text-green-800"
@@ -441,7 +450,7 @@ function Kurikulum() {
                     <input
                       type="number"
                       name="angkatanMulai"
-                      value={formData.angkatanMulai}
+                      value={formData.angkatanMulai} 
                       onChange={handleInputChange}
                       placeholder="Mulai"
                       className="px-3 py-2 bg-gray-100 rounded

@@ -197,26 +197,6 @@ const BatchJadwalDetail = () => {
       const key = namaProdi.toLowerCase().trim();
       return warnaProdi[key] || "bg-gray-200 text-gray-700";
     };
-    // if (!batch && !loading) {
-    //   return (
-    //     <MainLayout>
-    //       <div className="p-6 text-gray-500">
-    //         Data batch tidak ditemukan.
-    //       </div>
-    //     </MainLayout>
-    //   );
-    // }
-    
-    // if (!batch) {
-    //   return (
-    //     <MainLayout>
-    //       <div className="p-6 text-gray-500">
-    //         Memuat detail batch jadwal...
-    //       </div>
-    //     </MainLayout>
-    //   );
-    // }
-
       return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -248,25 +228,46 @@ const BatchJadwalDetail = () => {
             </div>
 
          {/* Jumlah Pelanggaran */}
-         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-         <p className="text-xs text-gray-500 mb-1">
-            Total Konflik
+       {/* Jumlah Pelanggaran / Status Konflik */}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <p className="text-xs text-gray-500 mb-1">
+            Status Konflik Jadwal
           </p>
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-lg font-semibold text-red-600">
-              {totalKonflik}
-            </p>
 
-            <button
-              onClick={() => navigate(`/scheduler/batch/${batch.id}/conflicts`)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 
-                        bg-red-600 text-white text-xs font-medium 
-                        rounded-lg hover:bg-red-700 transition"
-            >
-              <Eye size={16} />
-              Detail Konflik
-            </button>
-          </div>
+            <div className="flex items-center justify-between mt-1">
+              {totalKonflik > 0 ? (
+                <>
+                  <p className="text-lg font-semibold text-red-600">
+                    {totalKonflik}
+                  </p>
+
+                  <button
+                    onClick={() =>
+                      navigate(`/scheduler/batch/${batch.id}/conflicts`)
+                    }
+                    className="inline-flex items-center gap-1 px-3 py-1.5 
+                              bg-red-600 text-white text-xs font-medium 
+                              rounded-lg hover:bg-red-700 transition"
+                  >
+                    <Eye size={16} />
+                    Detail Konflik
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-semibold text-green-600">
+                    100%
+                  </p>
+
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 
+                                  bg-green-100 text-green-700 text-xs font-medium 
+                                  rounded-lg">
+                    <CheckCircle size={14} />
+                    Jadwal Optimal
+                  </span>
+                </>
+              )}
+            </div>
           </div>
             {/* Tanggal */}
             <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -303,15 +304,11 @@ const BatchJadwalDetail = () => {
               <Loader2 className="animate-spin text-gray-500" size={24} />
               <p className="text-gray-500">Memuat data Jadwal..</p>
             </div>
-
       )}
-
           {!loading &&
             hariUrut.map((hari) => {
               const jadwalHari = jadwalGroupedByHari[hari] || [];
               if (jadwalHari.length === 0) return null;
-
-          
                   // Ambil ruang dan slot untuk hari ini
                   const ruangListHari = Array.from(
                     new Map(jadwalHari.map(j => [j.ruang?.id, j.ruang])).values()
@@ -322,47 +319,36 @@ const BatchJadwalDetail = () => {
               
                 // Matrix hari
               const matrixHari = {};
-
               jadwalHari.forEach(j => {
                 if (!j.slotWaktu?.id || !j.ruang?.id) return;
-
                 if (!matrixHari[j.slotWaktu.id])
                   matrixHari[j.slotWaktu.id] = {};
-
                 // hitung semester dulu
                 const angkatan =
                 j.penugasanMengajar?.kelasList?.[0]?.kelompokKelas?.angkatan;
                 const tahunMulai = batch?.periode?.tahunMulai;
                 const paruh = batch?.periode?.paruh;
-
                 let semesterRomawi = "-";
-
                 if (angkatan && tahunMulai && paruh) {
                   const semester = hitungSemester(angkatan, tahunMulai, paruh);
                   semesterRomawi = toRomawi(semester);
                 }
-
                 const prodiNama =
                 j.penugasanMengajar?.programMatkul?.prodi?.nama || "";
-              
               const warna = getWarnaProdi(prodiNama);
-              
               matrixHari[j.slotWaktu.id][j.ruang.id] = {
                 matkul:
                   j.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-",
-              
                 kelas:
                   j.penugasanMengajar?.kelasList
                     ?.map(k => k.kelompokKelas?.kode)
                     .join(", ") || "-",
-              
                 semester: semesterRomawi,
                 kode: j.penugasanMengajar?.kode || "-",
                 prodi: prodiNama,
                 warna: warna,
               };
               });
-              
               return (
                 <div key={hari} className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                   <h2 className="text-lg font-semibold mb-2">{hari}</h2>

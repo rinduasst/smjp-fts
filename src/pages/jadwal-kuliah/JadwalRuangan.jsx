@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
-import { Loader2, ArrowLeft, Eye } from "lucide-react";
+import { Loader2, ArrowLeft, Eye , Download} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { exportRuangan }
+from "../../utils/exportExcel/jadwal/exportRuangan.js";
 
 const JadwalRuangan = () => {
   const [batch, setBatch] = useState(null);
@@ -90,15 +92,6 @@ const JadwalRuangan = () => {
   // Total konflik dummy, bisa disesuaikan API
   const totalKonflik = jadwalList.filter(j => j.konflik).length;
 
-  if (loading || !batch) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center py-6">
-          <Loader2 className="animate-spin mr-2" /> Memuat data...
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
     <MainLayout>
@@ -112,22 +105,41 @@ const JadwalRuangan = () => {
           Daftar jadwal perkuliahan yang telah disusun, diurutkan per ruangan dan slot waktu 
         </p>
       </div>
-     
-
-         
-
+    
         {/* Keterangan Warna Prodi */}
-        <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <h2 className="font-semibold mb-3 text-gray-800">Keterangan Warna Program Studi</h2>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <div className="mb-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Keterangan Warna Program Studi
+              </h2>
+              <p className="text-sm text-gray-500">
+                Digunakan untuk membedakan jadwal berdasarkan program studi
+              </p>
+            </div>
+
+            <button
+              onClick={() => exportRuangan(jadwalList, batch)}
+              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
+              >
+             <Download size={16} />
+              Export File
+            </button>
+          </div>
+
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex flex-wrap gap-3">
             {Object.entries(warnaProdi).map(([nama, warna]) => (
               <div key={nama} className="flex items-center gap-2">
                 <span className={`w-4 h-4 rounded border ${warna.split(" ")[0]}`}></span>
                 <span className="text-sm text-gray-700">{nama}</span>
               </div>
             ))}
+            </div>
           </div>
         </div>
+
 
         {/* Matrix Jadwal */}
         {!loading &&
@@ -174,11 +186,24 @@ const JadwalRuangan = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {slotListHari.map((slot) => (
-                        <tr key={slot.id} className="hover:bg-gray-50">
-                          <td className="p-2 border font-medium whitespace-nowrap">
-                            {formatJam(slot.jamMulai)} - {formatJam(slot.jamSelesai)}
+                      {loading ? (
+                        <tr>
+                          <td
+                            colSpan={ruangListHari.length + 1}
+                            className="text-center py-6"
+                          >
+                            <div className="flex justify-center items-center gap-2">
+                              <Loader2 className="animate-spin" />
+                              <span>Memuat data...</span>
+                            </div>
                           </td>
+                        </tr>
+                      ) : (
+                        slotListHari.map((slot) => (
+                          <tr key={slot.id} className="hover:bg-gray-50">
+                            <td className="p-2 border font-medium whitespace-nowrap">
+                              {formatJam(slot.jamMulai)} - {formatJam(slot.jamSelesai)}
+                            </td>
                           {ruangListHari.map((ruang) => {
                             const jadwal = matrixHari[slot.id]?.[ruang.id];
                             return (
@@ -187,13 +212,17 @@ const JadwalRuangan = () => {
                                   <div className="space-y-1">
                                     <div className="font-medium">{jadwal.matkul}</div>
                                     <div className="text-[11px] opacity-90">{jadwal.semester}_{jadwal.kelas}</div>
-                                  </div>
-                                ) : <span className="text-gray-300">-</span>}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
+                                    </div>
+                                  
+                                  ) : (
+                                    <span className="text-gray-300">-</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

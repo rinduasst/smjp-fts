@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
-import * as XLSX from "xlsx";
 import { Download, Loader2 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import {
+  exportAllProdi,
+ } from "../../utils/exportExcel/jadwal/exportAllProdi.js";
 
 const JadwalProdi = () => {
   const [data, setData] = useState([]);
@@ -12,7 +14,6 @@ const JadwalProdi = () => {
  
   const [batchInfo, setBatchInfo] = useState(null);
   const { user, peran } = useAuth();
-
 
   const fetchFinalBatch = async () => {
     try {
@@ -68,33 +69,6 @@ const JadwalProdi = () => {
 
   const fakultas = batchInfo?.fakultas?.nama || "";
   const periode = batchInfo?.periode?.nama || "";
-
-  const handleExportExcel = () => {
-    if (!data || data.length === 0) return;
-    const wb = XLSX.utils.book_new();
-    const rows = data.map((jadwal) => [
-      jadwal.hari?.nama || "-",
-      `${jadwal.slotWaktu?.jamMulai} - ${jadwal.slotWaktu?.jamSelesai}`,
-      jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.nama,
-      jadwal.penugasanMengajar?.programMatkul?.mataKuliah?.sks,
-      jadwal.penugasanMengajar?.programMatkul?.prodi?.nama,
-      jadwal.penugasanMengajar?.dosen?.nama,
-      jadwal.penugasanMengajar?.kelasList?.map((k) => k.kelompokKelas?.kode).join(", "),
-      jadwal.ruang?.nama,
-    ]);
-
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["JADWAL PERKULIAHAN"],
-      [`Fakultas ${fakultas}`],
-      [periode],
-      [],
-      ["Hari", "Jam", "Mata Kuliah", "SKS", "Prodi", "Dosen", "Kelas", "Ruangan"],
-      ...rows,
-    ]);
-
-    XLSX.utils.book_append_sheet(wb, ws, "Jadwal");
-    XLSX.writeFile(wb, `Jadwal_${periode || "Unknown"}.xlsx`);
-  };
 
   const isAdmin = peran === "ADMIN";
   const filteredData = isAdmin
@@ -162,7 +136,7 @@ const sortedSemesters = Object.entries(groupedBySemester)
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <button
-            onClick={handleExportExcel}
+            onClick={() => exportAllProdi(filteredData, batchInfo)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={18} />

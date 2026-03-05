@@ -51,7 +51,7 @@ import {
       roles: ["ADMIN", "TU_PRODI","TU_FAKULTAS"],
       children: [
         { name: "Penugasan Mengajar", path: "/pengajaran/penugasan-mengajar", roles: ["ADMIN", "TU_PRODI","TU_FAKULTAS"] },
-        { name: "Preferensi Dosen", path: "/pengajaran/preferensi-dosen", roles: ["TU_PRODI","ADMIN", "TU_FAKULTAS"] },
+        // { name: "Preferensi Dosen", path: "/pengajaran/preferensi-dosen", roles: ["TU_PRODI","ADMIN", "TU_FAKULTAS"] },
         { name: "Aturan Mengajar Dosen", path: "/pengajaran/aturan-mengajar-dosen", roles: ["TU_PRODI","ADMIN", "TU_FAKULTAS"] },
       ],
     },

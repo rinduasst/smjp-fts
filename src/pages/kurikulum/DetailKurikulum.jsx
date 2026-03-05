@@ -37,8 +37,8 @@ export default function DetailKurikulum() {
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <p><b>Nama Kurikulum:</b> {kurikulum.nama}</p>
           <p>
-            <b>Tahun:</b> {kurikulum.angkatanMulai} –{" "}
-            {kurikulum.angkatanSelesai}
+            <b>Tahun:</b> {kurikulum.angkatanMulai} – 
+            {kurikulum.angkatanSelesai?? "Sekarang"}
           </p>
           <p>
             <b>Program Studi:</b> {kurikulum.prodi?.nama} (

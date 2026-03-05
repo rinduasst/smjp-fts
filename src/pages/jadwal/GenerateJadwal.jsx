@@ -7,21 +7,11 @@ import "react-toastify/dist/ReactToastify.css";
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
   const [periodeId, setPeriodeId] = useState("");
-  const [dryRun, setDryRun] = useState(true);
 
-  const [showLoading, setShowLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-
-  const [dosenList, setDosenList] = useState([]);
-  const [hariList, setHariList] = useState([]);
-  const [slotList, setSlotList] = useState([]);
-  const [ruangList, setRuangList] = useState([]);
   const [penugasanList, setPenugasanList] = useState([]);
   const [fakultasList, setFakultasList] = useState([]);
   const [periodeList, setPeriodeList] = useState([]);
-  const [prodiFilter, setProdiFilter] = useState("");
-
   const [preset, setPreset] = useState("CEPAT");
   const [jobId, setJobId] = useState(null);
   const [namaBatch, setNamaBatch] = useState("");
@@ -29,7 +19,6 @@ const GenerateJadwal = () => {
   useEffect(() => {
     fetchFakultas();
     fetchPeriode();
-    fetchMasterData();
   }, []);
   const fetchFakultas = async () => {
     const res = await api.get("/api/master-data/fakultas");
@@ -40,85 +29,51 @@ const GenerateJadwal = () => {
     const res = await api.get("/api/master-data/periode-akademik");
     setPeriodeList(res.data?.data?.items || []);
   };
-  const fetchMasterData = async () => {
-    try {
-      const [
-        dRes,
-        hRes,
-        sRes,
-        rRes,
-        pmRes
-      ] = await Promise.all([
-        api.get("/api/master-data/dosen"),
-        api.get("/api/master-data/hari"),
-        api.get("/api/master-data/slot-waktu"),
-        api.get("/api/master-data/ruang"),
-        api.get("/api/pengajaran/penugasan-mengajar"),
-      ]);
-  
- 
-      setDosenList(dRes.data?.data?.items || []);
-      setHariList(hRes.data?.data || []);
-      setSlotList(sRes.data?.data?.items || []);
-      setRuangList(rRes.data?.data?.items || []);
-      setPenugasanList(pmRes.data?.data?.items || []);
-  
-    } catch (err) {
-      console.error("Gagal load master data", err);
-    }
-  };
+
   const handleGenerate = async () => {
     if (!fakultasId || !periodeId) {
       toast.warning("Fakultas dan Periode wajib dipilih!");
       return;
     }
-    const payload = {
-      fakultasId,
-      periodeAkademikId: periodeId,
-      dryRun,
-      preset,
-      namaBatch,
-    };
+  
     try {
       setLoading(true);
   
-      // kalau dryRun → tampilkan modal loading
-      if (dryRun) {
-        setShowLoading(true);
-      }
+      const payload = {
+        fakultasId,
+        periodeAkademikId: periodeId,
+        dryRun: false,
+        preset,
+        namaBatch,
+      };
       const res = await api.post("/api/scheduler/generate", payload);
-  
       const data = res.data.data;
-      // MODE PREVIEW (DRY RUN)
-      if (dryRun) {
-        // tutup modal loading
-        setShowLoading(false);
-        // tampilkan preview
-        setResult(data);
-        toast.success("Preview jadwal berhasil dibuat");
-        return;
-      }
-      // MODE GENERATE ASYNC
-      toast.success("Sistem sedang menyusun jadwal!");
+  
+      // MODE ASYNC
       if (data.mode === "ASYNC") {
+        toast.info("Sistem sedang menyusun jadwal...");
         const jid = data.jobId;
         const interval = setInterval(async () => {
           const jobRes = await api.get(`/api/scheduler/job/${jid}`);
           const jobData = jobRes.data.data;
           if (jobData.status === "DONE") {
             clearInterval(interval);
+            const batchId = jobData.result?.batchId;
             toast.success(
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span>Jadwal berhasil disusun!</span>
                 <button
                   onClick={() => {
-                    window.location.href = "/scheduler/batch";
+                    window.location.href = `/scheduler/batch/${batchId}`;
                   }}
-                  className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs"
                 >
                   Lihat
                 </button>
-              </div>
+              </div>,
+              {
+                autoClose: false
+              }
             );
           }
           if (jobData.status === "FAILED") {
@@ -126,53 +81,21 @@ const GenerateJadwal = () => {
             toast.error("Generate jadwal gagal");
           }
         }, 5000);
+      } else {
+        // MODE SYNC
+        toast.success("Jadwal berhasil disimpan!");
+  
+        setTimeout(() => {
+          window.location.href = "/scheduler/batch";
+        }, 1500);
       }
+  
     } catch (err) {
-      setShowLoading(false);
       toast.error("Gagal generate jadwal");
     } finally {
       setLoading(false);
     }
   };
- 
-
-    // Ambil jadwal valid dulu
-    const jadwalValid = (result?.jadwalPreview || []).filter(j =>
-      j.penugasanMengajarId &&
-      j.hariId &&
-      j.slotWaktuId &&
-      j.ruangId &&
-      j.dosenId
-    );
-    
-    //  baru difilter berdasarkan prodi
-    const jadwalFiltered = jadwalValid.filter(j => {
-      if (!prodiFilter) return true;
-      const penugasan = penugasanList.find(
-        p => String(p.id) === String(j.penugasanMengajarId)
-      );
-      return String(penugasan?.programMatkul?.prodi?.id) === String(prodiFilter);
-    });
-    
-    const handleSave = async () => {
-      if (!window.confirm("Yakin ingin menyimpan jadwal ini?")) return;
-      setLoading(true);
-      try {
-        await api.post("/api/scheduler/generate", {
-          fakultasId,
-          periodeAkademikId: periodeId,
-          dryRun: false,
-          preset,
-          namaBatch,
-        });
-    
-        toast.success("Jadwal berhasil disimpan ke batch!");
-      } catch (err) {
-        alert("Gagal menyimpan jadwal");
-      } finally {
-        setLoading(false);
-      }
-    };
     const prodiList = [
       ...new Map(
         penugasanList
@@ -183,45 +106,7 @@ const GenerateJadwal = () => {
           ])
       ).values()
     ];
- 
-    const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    //ubah ke romawi
-    const toRomawi = (num) => {
-      const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
-      return map[num] || num;
-    };
-    
-    const hitungSemester = (angkatan, tahunMulai, paruh) => {
-      return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
-    };
-    // jadwal grup by hari
-    // jadwal grup by hari dan urutkan per jam mulai
-    const jadwalGroupedByHari = jadwalFiltered.reduce((acc, j) => {
-      const hari = hariList.find(h => String(h.id) === String(j.hariId));
-      if (!hari) return acc;
-      if (!acc[hari.nama]) acc[hari.nama] = [];
-      acc[hari.nama].push(j);
-      return acc;
-    }, {});
 
-    // setelah grouping, urutkan setiap hari berdasarkan jamMulai
-    Object.keys(jadwalGroupedByHari).forEach(hari => {
-      jadwalGroupedByHari[hari].sort((a, b) => {
-        const slotA = slotList.find(s => String(s.id) === String(a.slotWaktuId));
-        const slotB = slotList.find(s => String(s.id) === String(b.slotWaktuId));
-        return new Date(slotA.jamMulai) - new Date(slotB.jamMulai);
-      });
-    });
-// Hitung total konflik "nyata" dari penaltyBreakdown
-const totalKonflik =
-  (result?.stats?.penaltyBreakdown?.bentrokDosen ? 1 : 0) +
-  (result?.stats?.penaltyBreakdown?.bentrokKelas ? 1 : 0) +
-  (result?.stats?.penaltyBreakdown?.bentrokRuang ? 1 : 0) +
-  (result?.stats?.penaltyBreakdown?.kelasGabunganRuangSalah ? 1 : 0) +
-  (result?.stats?.penaltyBreakdown?.constraintDosen ? 1 : 0) +
-  (result?.stats?.penaltyBreakdown?.slotTidakValidUntukSks ? 1 : 0);
-
-  
 
   return (
     <MainLayout>
@@ -335,271 +220,7 @@ const totalKonflik =
           </div>
 
         </div>
-
-        {/* Dry Run */}
-        <div className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            checked={dryRun}
-            onChange={(e) => setDryRun(e.target.checked)}
-            className="mt-1"
-          />
-          <div>
-            <span className="text-sm text-gray-700 font-medium">
-              Mode Preview
-            </span>
-            <p className="text-xs text-gray-500 ">
-            Jika diaktifkan, sistem hanya mencoba membuat jadwal tanpa menyimpannya.
-          </p>
-          </div>
         </div>
-
-        </div>
-
-   
-        {result && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-            <h3 className="font-semibold text-gray-800 mb-4">
-              Hasil Proses Penyusunan Jadwal
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-
-              <div>
-                <p className="font-semibold">Mode Proses</p>
-                <p className="text-gray-600">
-                  {result.mode === "DRY_RUN"
-                    ? "Preview (jadwal belum disimpan ke sistem)"
-                    : "Final (jadwal sudah disimpan ke sistem)"}
-                </p>
-              </div>
-
-              <div>
-              <p className="font-semibold">Penilaian Jadwal</p>
-              <p className="text-gray-600">
-              Tingkat kualitas jadwal: 
-              <b>{(result.stats.fitnessTerbaik * 100).toFixed(6)}%</b>
-              {result.stats.fitnessTerbaik >= 0.9 && " (Sangat Baik)"}
-              {result.stats.fitnessTerbaik >= 0.75 && result.stats.fitnessTerbaik < 0.9 && " (Baik)"}
-              {result.stats.fitnessTerbaik < 0.75 && " (Perlu Optimasi)"}
-            </p>
-                {/* <p className="text-xs text-gray-400">
-                  Semakin mendekati 100%, jadwal semakin optimal.
-                </p> */}
-            </div>
-
-            <div>
-            <p className="font-semibold">Jumlah Konflik Jadwal</p>
-            <p className="text-gray-600">
-              Ditemukan <b>{totalKonflik}</b> konflik aturan
-            </p>
-          </div>
-        {/* KESIMPULAN */}
-        
-              {result.stats.penaltyTerbaik === 0 ? (
-               <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-500">
-                  <p> Jadwal sudah baik dan tidak melanggar aturan. Aman untuk disimpan.
-                </p>
-                </div>
-              ) : (
-                <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-500">
-                <p>
-                  Jadwal masih memiliki pelanggaran aturan. Disarankan generate ulang
-                  atau periksa aturan dosen & ruang.
-                </p>
-                </div>
-              )}
-            </div>
-            </div>
-     
-        )}
-
-
-        {/*  PREVIEW JADWAL */}
-        {result?.jadwalPreview?.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-          <h3 className="font-semibold text-gray-800 mb-4">
-              Preview Jadwal
-            </h3>
-
-            <div className="overflow-x-auto">
-            <div className="mb-4 flex items-center gap-4">
-            <div>
-              <select
-                value={prodiFilter}
-                onChange={(e) => setProdiFilter(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300
-           rounded-lg bg-white text-gray-900 focus:outline-none
-           focus:ring-2 focus:ring-green-500
-           focus:border-green-500 transition"
-        >
-                <option value="">Semua Prodi</option>
-                {prodiList.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nama}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-              <table className="w-full text-sm border">
-                <thead className="bg-gray-100">
-                <tr>
-                  {/* <th className="p-2 border">Hari</th> */}
-                  <th className="p-2 border">Pukul</th>
-                  <th className="p-2 border">Kode MK</th>
-                  <th className="p-2 border">Mata Kuliah</th>
-                  <th className="p-2 border">SKS</th>
-                  <th className="p-2 border">Kelas</th>
-                  <th className="p-2 border">Dosen</th>
-                  <th className="p-2 border">Program Studi</th>
-                  <th className="p-2 border">Ruangan</th>
-                </tr>
-              </thead>
-              <tbody>
-  {Object.entries(jadwalGroupedByHari)
-    .sort(([a], [b]) => {
-      const urutanHari = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
-      return urutanHari.indexOf(a) - urutanHari.indexOf(b);
-    })
-    .map(([namaHari, items]) => {
-
-      if (!items || items.length === 0) {
-        return (
-          <Fragment key={namaHari}>
-            <tr className="bg-gray-200">
-              <td colSpan={8} className="p-3 font-semibold text-center">
-                {namaHari}
-              </td>
-            </tr>
-
-            <tr>
-              <td colSpan={8} className="p-2 text-center text-gray-400 italic">
-                Tidak ada jadwal
-              </td>
-            </tr>
-          </Fragment>
-        );
-      }
-
-      return (
-        <Fragment key={namaHari}>
-
-          {/* HEADER HARI */}
-          <tr className="bg-gray-200">
-            <td colSpan={8} className="p-3 font-semibold text-center">
-              {namaHari}
-            </td>
-          </tr>
-
-          {/* DATA */}
-          {items.map((j, index) => {
-
-            const penugasan = penugasanList.find(
-              p => String(p.id) === String(j.penugasanMengajarId)
-            );
-
-            const dosen = dosenList.find(
-              d => String(d.id) === String(j.dosenId)
-            );
-
-            const ruang = ruangList.find(
-              r => String(r.id) === String(j.ruangId)
-            );
-
-            const slot = slotList.find(
-              s => String(s.id) === String(j.slotWaktuId)
-            );
-
-            return (
-              <tr key={`${j.penugasanMengajarId}-${index}`}>
-
-                <td className="p-2 border">
-                  {slot?.jamMulai} - {slot?.jamSelesai}
-                </td>
-
-                <td className="p-2 border">
-                  {penugasan?.programMatkul?.mataKuliah?.kode}
-                </td>
-
-                <td className="p-2 border">
-                  {penugasan?.programMatkul?.mataKuliah?.nama}
-                </td>
-
-                <td className="p-2 border text-center">
-                  {penugasan?.programMatkul?.mataKuliah?.sks}
-                </td>
-
-                <td className="p-2 border text-center">
-                  {penugasan?.kelasList?.map((k) => {
-                    const periode = penugasan.programMatkul?.periode;
-                    const semesterAngka = hitungSemester(
-                      k.kelompokKelas?.angkatan,
-                      periode?.tahunMulai,
-                      periode?.paruh
-                    );
-
-                    const romawi = toRomawi(semesterAngka);
-
-                    const jenis =
-                      k.kelompokKelas?.jenisKelas === "REGULER"
-                        ? "REG"
-                        : "KAR";
-
-                    return `${romawi}_${jenis}_${k.kelompokKelas?.kode}`;
-                  }).join(", ")}
-                </td>
-
-                <td className="p-2 border">
-                  {dosen?.nama}
-                </td>
-
-                <td className="p-2 border">
-                  {penugasan?.programMatkul?.prodi?.nama}
-                </td>
-
-                <td className="p-2 border">
-                  {ruang?.nama}
-                </td>
-
-              </tr>
-            );
-          })}
-
-        </Fragment>
-      );
-    })}
-</tbody>
-                      </table>
-                    </div>
-                        {/* Table Footer */}
-                        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-gray-700">
-                              Menampilkan{" "}
-                              <span className="font-semibold">{jadwalFiltered.length}</span>{" "}
-                              dari{" "}
-                              <span className="font-semibold">
-                                {result?.jadwalPreview?.length || 0}
-                              </span>{" "}
-                              total sesi
-                            </div>
-                          </div>
-                        </div>
-                        {result?.mode === "DRY_RUN" && (
-                        <div className="px-6 py-4 flex justify-end">
-                          <button
-                            onClick={handleSave}
-                            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm disabled:opacity-50"
-                          >
-                            Simpan Jadwal ke Batch
-                          </button>
-                        </div>
-                      )}
-                  </div>
-                )}
-                
 
                 <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800">
                   <b>Catatan:</b>
@@ -607,46 +228,6 @@ const totalKonflik =
                   Proses generate dapat memakan waktu beberapa saat tergantung parameter yang digunakan.
                   </p></div>
               </div>
-              {showLoading && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 ">
-                <div className="bg-white rounded-xl p-8 shadow-xl w-full max-w-md text-center animate-fade-in">
-                  
-                  <div className="flex justify-center mb-5">
-                    <svg
-                      className="animate-spin h-12 w-12 text-green-600"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                  </div>
-
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    Sistem sedang memproses jadwal
-                  </h3>
-
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                  Sistem sedang melakukan proses penjadwalan perkuliahan menggunakan
-                    <span className="font-semibold text-green-600"> algoritma genetika. </span>
-                    Mohon menunggu hingga seluruh tahapan selesai.
-
-                  </p>
-                </div>
-              </div>
-            )}
 
     </MainLayout>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/api";
+import {ArrowLeft  } from "lucide-react";
 import MainLayout from "../../components/MainLayout";
 
 export default function AssignMatkul() {
@@ -23,17 +24,26 @@ export default function AssignMatkul() {
   };
 
   const getMatkulKurikulum = async () => {
-    const res = await api.get(
-      `/api/kurikulum/mata-kuliah?kurikulumId=${id}`
-    );
-    setMatkulList(res.data.data.items);
+    const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
+  
+    setMatkulList(res.data.data.matkul);
   };
-
   const getAllMatkul = async () => {
-    const res = await api.get("/api/kurikulum/mata-kuliah");
-    setAllMatkul(res.data.data.items);
+    let page = 1;
+    let totalPages = 1;
+    let allData = [];
+    do {
+      const res = await api.get(
+        `/api/kurikulum/mata-kuliah?page=${page}&pageSize=100&q=`
+      );
+  
+      allData = [...allData, ...res.data.data.items];
+      totalPages = res.data.data.totalPages;
+      page++;
+    } while (page <= totalPages);
+  
+    setAllMatkul(allData);
   };
-
   const getSelected = (id) => {
     return selectedMatkul.find((s) => s.id === id);
   };
@@ -65,7 +75,14 @@ export default function AssignMatkul() {
       alert("Gagal menyimpan perubahan");
     }
   };
-
+  //Filter Matkul yang Sudah Di-Assign
+  const availableMatkul = allMatkul.filter(
+    (mk) =>
+      !matkulList.some(
+        (m) => m.mataKuliah?.id === mk.id
+      )
+  );
+  console.log("ASSIGNED:", matkulList);
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-1">Penugasan Mata Kuliah</h1>
@@ -77,8 +94,8 @@ export default function AssignMatkul() {
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <p><b>Nama Kurikulum:</b> {kurikulum.nama}</p>
           <p>
-            <b>Tahun:</b> {kurikulum.angkatanMulai} –{" "}
-            {kurikulum.angkatanSelesai}
+            <b>Tahun:</b> {kurikulum.angkatanMulai} –  
+            {kurikulum.angkatanSelesai?? "Sekarang"}
           </p>
           <p>
             <b>Program Studi:</b> {kurikulum.prodi?.nama} (
@@ -97,6 +114,7 @@ export default function AssignMatkul() {
       </div>
 
       <div className="bg-white rounded-lg shadow border overflow-x-auto">
+     
       <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
         <thead className="bg-gray-50">
           <tr className="text-gray-700 uppercase text-xs tracking-wide">
@@ -110,7 +128,7 @@ export default function AssignMatkul() {
         </thead>
 
         <tbody className="divide-y">
-          {allMatkul.map((mk, index) => {
+        {availableMatkul.map((mk, index) => {
             const selected = getSelected(mk.id);
             const isAssigned = matkulList.some((m) => m.mataKuliahId === mk.id);
             const isSelected = selectedMatkul.some((s) => s.id === mk.id);
@@ -142,21 +160,17 @@ export default function AssignMatkul() {
                   }
                 }}
               />
-
                 </td>
-
+            
                 <td className="px-3 py-2 font-mono text-gray-700">{mk.kode}</td>
-
                 <td className="px-3 py-2 text-gray-800">{mk.nama}</td>
-
                 <td className="px-3 py-2 text-center">{mk.sks}</td>
-
                 <td className="px-3 py-2 text-center">
                   {checked ? (
                     <input
                       type="number"
                       min={1}
-                      value={selected.semester}
+                      value={selected?.semester ?? 1}
                       onChange={(e) =>
                         setSelectedMatkul((prev) =>
                           prev.map((s) =>
@@ -177,21 +191,17 @@ export default function AssignMatkul() {
                     <span className="text-gray-400">—</span>
                   )}
                 </td>
-
                 <td className="px-3 py-2 text-center">
-                  {checked ? (
+                  {isSelected ? (
                     <input
                       type="number"
                       min={1}
-                      value={selected.minimalSemester}
+                      value={selected?.minimalSemester ?? 1}
                       onChange={(e) =>
                         setSelectedMatkul((prev) =>
                           prev.map((s) =>
                             s.id === mk.id
-                              ? {
-                                  ...s,
-                                  minimalSemester: +e.target.value,
-                                }
+                              ? { ...s, minimalSemester: +e.target.value }
                               : s
                           )
                         )
@@ -212,22 +222,14 @@ export default function AssignMatkul() {
           })}
         </tbody>
       </table>
-
       </div>
-
       <div className="mt-4 flex justify-between">
         <button
           onClick={() => navigate("/kurikulum/kurikulum")}
-          className="
-            flex items-center gap-2
-            bg-gray-400 text-white
-            px-5 py-2 rounded-lg
-            text-sm font-medium
-            hover:bg-gray-600
-            transition-colors
-          "
-        >
-          Kembali
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium"
+          >
+            <ArrowLeft size={18} />
+            Kembali
         </button>
         <button
           onClick={handleAssign}
