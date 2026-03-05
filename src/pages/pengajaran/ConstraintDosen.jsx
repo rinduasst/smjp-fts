@@ -209,6 +209,23 @@ const ConstraintDosen = () => {
     "MAKS_SESI_PERHARI",
     "MAKS_HARI_PERMINGGU"
   ];
+  const constraintGroups = {
+    "Waktu": [
+      "WAJIB_HARI",
+      "WAJIB_SLOT",
+      "HINDARI_HARI",
+      "HINDARI_SLOT",
+      "HINDARI_SESI"
+    ],
+    "Ruangan": [
+      "WAJIB_RUANG",
+      "WAJIB_LANTAI"
+    ],
+    "Batas Mengajar": [
+      "MAKS_SESI_PERHARI",
+      "MAKS_HARI_PERMINGGU"
+    ]
+  };
   const getDisplayNilai = (row) => {
     switch (row.jenisConstraint) {
       case "WAJIB_HARI":
@@ -371,24 +388,26 @@ const ConstraintDosen = () => {
               ))}
             </select>
           );
-          case "HINDARI_HARI":
+          case "HINDARI_SESI":
           return (
             <select
-              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg"
-              value={formData.constraints.HINDARI_HARI}
+              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={formData.constraints.HINDARI_SESI}
               onChange={(e) =>
                 setFormData(prev => ({
                   ...prev,
                   constraints: {
                     ...prev.constraints,
-                    HINDARI_HARI: e.target.value
+                    HINDARI_SESI: e.target.value
                   }
                 }))
               }
             >
-              <option value="">Pilih Hari</option>
-              {hariList.map(h => (
-                <option key={h.id} value={h.id}>{h.nama}</option>
+              <option value="">Pilih Sesi</option>
+              {jamList.map(j => (
+                <option key={j.id} value={j.id}>
+                  {j.nama} ({j.jamMulai}-{j.jamSelesai})
+                </option>
               ))}
             </select>
           );
@@ -413,6 +432,29 @@ const ConstraintDosen = () => {
               ))}
             </select>
           );
+          case "MAKS_HARI_PERMINGGU":
+  return (
+    <select
+      className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+      value={formData.constraints.MAKS_HARI_PERMINGGU}
+      onChange={(e) =>
+        setFormData(prev => ({
+          ...prev,
+          constraints: {
+            ...prev.constraints,
+            MAKS_HARI_PERMINGGU: e.target.value
+          }
+        }))
+      }
+    >
+      <option value="">Pilih</option>
+      <option value="1">1 Hari</option>
+      <option value="2">2 Hari</option>
+      <option value="3">3 Hari</option>
+      <option value="4">4 Hari</option>
+      <option value="5">5 Hari</option>
+    </select>
+  );
       default:
         return null;
     }
@@ -578,46 +620,56 @@ const ConstraintDosen = () => {
             Aturan Mengajar
           </label>
 
-          {jenisList.map(jenis => (
-            <div
-              key={jenis}
-              className={`p-3 rounded-lg border space-y-2
-                ${formData.constraints[jenis] !== null
-                  ? "border-green-400 bg-green-50"
-                  : "border-gray-200 bg-white"
+          {Object.entries(constraintGroups).map(([groupName, jenisArray]) => (
+  <div key={groupName} className="space-y-3">
+
+    {/* Judul Group */}
+    <div className="text-sm font-semibold text-gray-700 border-b pb-1">
+      {groupName}
+    </div>
+
+    {/* Isi Constraint */}
+    {jenisArray.map(jenis => (
+      <div
+        key={jenis}
+        className={`p-3 rounded-lg border space-y-2
+        ${formData.constraints[jenis] !== null
+          ? "border-green-400 bg-green-50"
+          : "border-gray-200 bg-white"}
+        `}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+
+          <input
+            type="checkbox"
+            checked={formData.constraints[jenis] !== null}
+            onChange={(e) =>
+              setFormData(prev => ({
+                ...prev,
+                constraints: {
+                  ...prev.constraints,
+                  [jenis]: e.target.checked ? "" : null
                 }
-              `}
-            >
-              {/* HEADER CHECKBOX */}
-             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <input
-                  type="checkbox"
-                  checked={formData.constraints[jenis] !== null}
-                  onChange={(e) =>
-                    setFormData(prev => ({
-                      ...prev,
-                      constraints: {
-                        ...prev.constraints,
-                        [jenis]: e.target.checked ? "" : null
-                      }
-                    }))
-                  }
-                  className="w-4 h-4"
-                />
+              }))
+            }
+            className="w-4 h-4"
+          />
 
-                <span className="text-sm font-medium">
-                  {mapJenisConstraint(jenis)}
-                </span>
-              </div>
+          <span className="text-sm font-medium">
+            {mapJenisConstraint(jenis)}
+          </span>
+        </div>
 
-              {/* INPUT DI BAWAH */}
-              {formData.constraints[jenis] !== null && (
-                <div  >
-                  {renderInputByJenis(jenis)}
-                </div>
-              )}
-            </div>
-          ))}
+        {formData.constraints[jenis] !== null && (
+          <div>
+            {renderInputByJenis(jenis)}
+          </div>
+        )}
+      </div>
+    ))}
+
+  </div>
+))}
         </div>
       {/* TIPE */}
       <div>
