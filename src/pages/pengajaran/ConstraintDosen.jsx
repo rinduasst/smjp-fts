@@ -540,12 +540,14 @@ const ConstraintDosen = () => {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="p-6 text-center">
-                    <Loader2 className="animate-spin mx-auto" />
-                  </td>
-                  </tr>
+            {loading ? (
+             <tr>
+             <td colSpan="6" className="p-8">
+               <div className="flex flex-col items-center justify-center gap-2">
+                 <Loader2 className="animate-spin" size={24} />
+               </div>
+             </td>
+           </tr>
               ) : filteredData.length ? (
                 filteredData.map((row) => (
                   <tr key={row.id}>

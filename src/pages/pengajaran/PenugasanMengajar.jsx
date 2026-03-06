@@ -430,7 +430,7 @@ function PenugasanMengajar() {
               <tbody className="divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center">
+                    <td colSpan="7" className="py-8 text-center">
                       <Loader2 className="animate-spin mx-auto" />
                     </td>
                   </tr>

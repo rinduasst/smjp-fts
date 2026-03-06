@@ -86,31 +86,69 @@ const JadwalRuangan = () => {
     jadwalGroupedByHari[hari].push(j);
   });
 
+  const sesiList = [
+    "08.00-08.50",
+    "08.50-09.40",
+    "09.40-10.30",
+    "10.30-11.20",
+    "13.00-13.50",
+    "13.50-14.40",
+    "14.40-15.30",
+    "16.00-16.50",
+    "16.50-17.40",
+    "18.30-19.20",
+    "19.20-20.10",
+    "20.10-21.00",
+    "21.00-21.50"
+  ];
+  const hitungRowSpan = (mulai, selesai) => {
+    const start = sesiList.findIndex(s => s.startsWith(mulai));
+    const end = sesiList.findIndex(s => s.endsWith(selesai));
+    return end - start + 1;
+  };
   return (
     <MainLayout>
-      <div className="bg-gray-50 min-h-screen p-6">
+      <div className="bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">Jadwal Ruangan</h1>
           <p className="text-sm text-gray-600">Daftar jadwal per ruangan dan slot waktu</p>
         </div>
-
         {/* Keterangan Warna Prodi */}
-        <div className="mb-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-          <div className="flex flex-wrap gap-3">
-            {Object.entries(warnaProdi).map(([nama, warna]) => (
-              <div key={nama} className="flex items-center gap-2">
-                <span className={`w-4 h-4 rounded border ${warna.split(" ")[0]}`}></span>
-                <span className="text-sm text-gray-700">{nama}</span>
-              </div>
-            ))}
+        <div className="mb-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Keterangan Warna Program Studi
+            </h3>
+            <p className="text-sm text-gray-500">
+              Setiap warna menunjukkan program studi yang menggunakan ruangan pada jadwal berikut.
+            </p>
           </div>
+
+          {/* Button export */}
           <button
             onClick={() => exportRuangan(jadwalList, batch)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={16} /> Export File
           </button>
+
+        </div>
+
+        {/* Garis pemisah */}
+        <hr className="border-gray-200 mb-4" />
+
+        {/* Legend warna */}
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(warnaProdi).map(([nama, warna]) => (
+            <div key={nama} className="flex items-center gap-2">
+              <span className={`w-4 h-4 rounded border ${warna.split(" ")[0]}`}></span>
+              <span className="text-sm text-gray-700 capitalize">{nama}</span>
+            </div>
+          ))}
+        </div>
         </div>
 
         {/* Matrix Jadwal */}
@@ -119,19 +157,28 @@ const JadwalRuangan = () => {
           if (!jadwalHari.length) return null;
 
           // Buat list ruangan dan slot
+          // const ruangList = Array.from(new Set(jadwalHari.map(j => j.ruangan)));
+          // const slotList = Array.from(new Set(jadwalHari.map(j => `${j.jamMulai}-${j.jamSelesai}`)))
+          //   .sort((a,b) => a.localeCompare(b));
           const ruangList = Array.from(new Set(jadwalHari.map(j => j.ruangan)));
-          const slotList = Array.from(new Set(jadwalHari.map(j => `${j.jamMulai}-${j.jamSelesai}`)))
-            .sort((a,b) => a.localeCompare(b));
-
+          const slotList = sesiList;
           // Matrix
           const matrix = {};
+          const skipCell = {};
+
           jadwalHari.forEach(j => {
-            const slotKey = `${j.jamMulai}-${j.jamSelesai}`;
+            const startIndex = sesiList.findIndex(s => s.startsWith(j.jamMulai));
+
+            const slotKey = sesiList[startIndex]; // pakai slot asli
+
             if (!matrix[slotKey]) matrix[slotKey] = {};
+
             matrix[slotKey][j.ruangan] = {
               matkul: j.mataKuliah,
               kelas: formatKelas(j),
               warna: getWarnaProdi(j.prodi),
+              jamMulai: j.jamMulai,
+              rowspan: hitungRowSpan(j.jamMulai, j.jamSelesai)
             };
           });
 
@@ -149,20 +196,33 @@ const JadwalRuangan = () => {
                   <tbody>
                     {slotList.map(slotKey => (
                       <tr key={slotKey} className="hover:bg-gray-50">
-                        <td className="p-2 border font-medium whitespace-nowrap">{slotKey}</td>
-                        {ruangList.map(ruang => {
-                          const jadwal = matrix[slotKey][ruang];
+                        <td className="p-2 border font-medium whitespace-nowrap">
+                        {slotKey}
+                          </td>
+                          {ruangList.map(ruang => {
+                          const key = `${slotKey}-${ruang}`;
+                          if (skipCell[key]) return null;
+                          const jadwal = matrix[slotKey]?.[ruang];
+                          if (!jadwal) {
+                            return <td key={ruang} className="p-2 border text-center"></td>;
+                          }
+                          // tandai slot berikutnya supaya tidak dirender
+                          const startIndex = sesiList.findIndex(s => s.startsWith(jadwal.jamMulai));
+                          for (let i = 1; i < jadwal.rowspan; i++) {
+                            const nextSlot = sesiList[startIndex + i];
+                            skipCell[`${nextSlot}-${ruang}`] = true;
+                          }
                           return (
-                            <td key={ruang} className={`p-2 border text-center align-top ${jadwal?.warna || ""}`}>
-                              {jadwal ? (
-                                <div className="space-y-1">
-                                  <div className="font-medium">{jadwal.matkul}</div>
-                                  <div className="text-[11px] opacity-90">{jadwal.kelas}</div>
-                                </div>
-                              ) : <span className="text-gray-300">-</span>}
-                            </td>
-                          );
-                        })}
+                            <td
+                          key={ruang}
+                          rowSpan={jadwal.rowspan}
+                          className={`p-2 border text-center align-top ${jadwal.warna}`}
+                        >
+                          <div className="font-medium">{jadwal.matkul}</div>
+                          <div className="text-[11px]">{jadwal.kelas}</div>
+                        </td>
+                      );
+                      })}           
                       </tr>
                     ))}
                   </tbody>

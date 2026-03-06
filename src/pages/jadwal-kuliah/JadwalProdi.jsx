@@ -32,25 +32,26 @@ const JadwalProdi = () => {
     }
   };
 //Fetch jadwal prodi pakai endpoint baru
-  const fetchJadwal = async () => {
-    if (!batchInfo || !user?.prodiId) return;
-    setLoading(true);
-    try {
-      const res = await api.get("/api/view-jadwal/prodi", {
-        params: {
-          periodeAkademikId: batchInfo.periodeId,
-          prodiId: user.prodiId,
-          statusBatch: "FINAL",
-        },
-      });
-      setData(res.data?.data?.hari || []);
-    } catch (err) {
-      console.error("Gagal mengambil jadwal", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchJadwal = async () => {
+  if (!batchInfo || !user?.prodiId) return;
 
+  setLoading(true);
+  try {
+    const res = await api.get("/api/view-jadwal/prodi", {
+      params: {
+        periodeAkademikId: batchInfo.periodeId,
+        prodiId: user.prodiId,
+        statusBatch: "FINAL",
+      },
+    });
+
+    setData(res.data?.data?.hari || []);
+  } catch (err) {
+    console.error("Gagal mengambil jadwal", err);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     fetchFinalBatch();
   }, []);
@@ -59,8 +60,7 @@ const JadwalProdi = () => {
     if (batchInfo && user?.prodiId) {
       fetchJadwal();
     }
-  }, [batchInfo, user]);
-
+  }, [batchInfo, user?.prodiId]);
 
   const toRomawi = (num) => {
     if (!num || num <= 0) return "";
@@ -105,7 +105,7 @@ const JadwalProdi = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <button
-            onClick={() => exportAllProdi(filteredData, batchInfo)}
+            onClick={() => exportAllProdi(data, batchInfo)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={18} />
@@ -126,43 +126,60 @@ const JadwalProdi = () => {
               </tr>
             </thead>
             <tbody>
-            {data.map((hari) =>
-              hari.slots.map((slot, idx) => (
-                <tr key={`${hari.id}-${idx}`}>
-                  {idx === 0 && (
-                    <td
-                      rowSpan={hari.slots.length}
-                      className="px-4 py-2 border font-medium text-center"
-                    >
-                      {hari.nama}
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="p-8">
+                  <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+                    <Loader2 className="animate-spin" size={24} />
+                    <span className="text-sm">Memuat data jadwal...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : data.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="text-center py-6 text-gray-500">
+                  Tidak ada jadwal
+                </td>
+              </tr>
+            ) : (
+              data.map((hari) =>
+                hari.slots.map((slot, idx) => (
+                  <tr key={`${hari.id}-${idx}`} className="hover:bg-gray-50">
+                    {idx === 0 && (
+                      <td
+                        rowSpan={hari.slots.length}
+                        className="px-4 py-2 border font-medium text-center"
+                      >
+                        {hari.nama}
+                      </td>
+                    )}
+
+                    <td className="border px-4 py-2 whitespace-nowrap">
+                      {slot.jamMulai} - {slot.jamSelesai}
                     </td>
-                  )}
 
-                  <td className="border px-4 py-2">
-                    {slot.jamMulai} - {slot.jamSelesai}
-                  </td>
+                    <td className="border px-4 py-2">
+                      {slot.matkul?.nama}
+                    </td>
 
-                  <td className="border px-4 py-2">
-                    {slot.matkul?.nama}
-                  </td>
+                    <td className="border px-4 py-2 text-center">
+                      {slot.matkul?.sksTotal}
+                    </td>
 
-                  <td className="border px-4 py-2 text-center">
-                    {slot.matkul?.sksTotal}
-                  </td>
+                    <td className="border px-4 py-2">
+                      {slot.dosen?.nama}
+                    </td>
 
-                  <td className="border px-4 py-2">
-                    {slot.dosen?.nama}
-                  </td>
+                    <td className="border px-4 py-2">
+                      {formatKelas(slot)}
+                    </td>
 
-                  <td className="border px-4 py-2">
-                    {formatKelas(slot)}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {slot.ruang?.nama}
-                  </td>
-                </tr>
-              ))
+                    <td className="border px-4 py-2">
+                      {slot.ruang?.nama}
+                    </td>
+                  </tr>
+                ))
+              )
             )}
           </tbody>
           </table>

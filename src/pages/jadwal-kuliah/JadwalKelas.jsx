@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 const JadwalKelas = () => {
   const { user } = useAuth();
@@ -10,7 +10,7 @@ const JadwalKelas = () => {
   const [data, setData] = useState([]);
   const [batchInfo, setBatchInfo] = useState(null);
   const [semesterAktif, setSemesterAktif] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   // ambil batch final
   const fetchFinalBatch = async () => {
     try {
@@ -31,7 +31,9 @@ const JadwalKelas = () => {
   // ambil jadwal
   const fetchJadwal = async () => {
     if (!batchInfo || !user?.prodiId) return;
-
+  
+    setLoading(true);
+  
     try {
       const res = await api.get("/api/view-jadwal/prodi", {
         params: {
@@ -40,10 +42,12 @@ const JadwalKelas = () => {
           statusBatch: "FINAL",
         },
       });
-
+  
       setData(res.data?.data?.hari || []);
     } catch (err) {
       console.error("Gagal ambil jadwal", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,23 +143,23 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
         <div className="mb-">
         {/* Judul dan deskripsi */}
         <div className="mb-6">
-  {/* Judul */}
-  <h1 className="text-2xl font-bold text-gray-800">
-    Jadwal Perkuliahan Semester Aktif
-  </h1>
-{/* Keterangan dinamis singkat */}
-<div className="mt-2 text-sm text-gray-600">
-  <span className="font-semibold">
-    {batchInfo?.fakultas?.nama || "-"}  - Periode {batchInfo?.periode?.nama || "-"} ({batchInfo?.periode?.tahunMulai || "-"} / {batchInfo?.periode?.tahunSelesai || "-"})
-  </span>
-</div>
-</div>
+        {/* Judul */}
+        <h1 className="text-2xl font-bold text-gray-800">
+          Jadwal Perkuliahan Semester Aktif
+        </h1>
+      {/* Keterangan dinamis singkat */}
+      <div className="mt-2 text-sm text-gray-600">
+        <span className="font-semibold">
+          {batchInfo?.fakultas?.nama || "-"}  - Periode {batchInfo?.periode?.nama || "-"} ({batchInfo?.periode?.tahunMulai || "-"} / {batchInfo?.periode?.tahunSelesai || "-"})
+        </span>
+      </div>
+      </div>
 
         {/* Tombol Export */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <p className="text-sm text-gray-600">
-      Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
-    </p>
+          Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
+        </p>
             <button
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
             >
@@ -166,7 +170,7 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
         </div>
         
         {/* TABEL */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow min-h-[300px] relative">
         <div className="flex justify-around border-b border-gray-200 mb-6">
         {semesterList.map((semester, idx) => (
             <button
@@ -211,49 +215,58 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
                     </tr>
                     </thead>
                     <tbody>
-                    {(() => {
-                    const hariGroup = {};
+                    {loading ? (
+                      <tr>
+                        <td colSpan="5" className="p-8 text-center">
+                          <div className="flex flex-col items-center gap-2 text-gray-500">
+                            <Loader2 className="animate-spin" size={24} />
+                            <span className="text-sm">Memuat jadwal...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      (() => {
+                        const hariGroup = {};
 
-                    jadwal.forEach((j) => {
-                        if (!hariGroup[j.hari]) {
-                        hariGroup[j.hari] = [];
-                        }
-                        hariGroup[j.hari].push(j);
-                    });
+                        jadwal.forEach((j) => {
+                          if (!hariGroup[j.hari]) {
+                            hariGroup[j.hari] = [];
+                          }
+                          hariGroup[j.hari].push(j);
+                        });
 
-                    return Object.entries(hariGroup).map(([hari, items]) =>
-                        items.map((item, i) => (
-                        <tr key={`${hari}-${i}`}>
-                            
-                            {i === 0 && (
-                            <td
-                                rowSpan={items.length}
-                                className="border px-4 py-2 font-medium text-center"
-                            >
-                                {hari}
-                            </td>
-                            )}
+                        return Object.entries(hariGroup).map(([hari, items]) =>
+                          items.map((item, i) => (
+                            <tr key={`${hari}-${i}`}>
+                              {i === 0 && (
+                                <td
+                                  rowSpan={items.length}
+                                  className="border px-4 py-2 font-medium text-center"
+                                >
+                                  {hari}
+                                </td>
+                              )}
 
-                            <td className="border px-4 py-2">
-                            {item.jamMulai} - {item.jamSelesai}
-                            </td>
+                              <td className="border px-4 py-2">
+                                {item.jamMulai} - {item.jamSelesai}
+                              </td>
 
-                            <td className="border px-4 py-2">
-                            {item.matkul?.nama}
-                            </td>
+                              <td className="border px-4 py-2">
+                                {item.matkul?.nama}
+                              </td>
 
-                            <td className="border px-4 py-2">
-                            {item.dosen?.nama}
-                            </td>
+                              <td className="border px-4 py-2">
+                                {item.dosen?.nama}
+                              </td>
 
-                            <td className="border px-4 py-2">
-                            {item.ruang?.nama}
-                            </td>
-
-                        </tr>
-                        ))
-                    );
-                    })()}
+                              <td className="border px-4 py-2">
+                                {item.ruang?.nama}
+                              </td>
+                            </tr>
+                          ))
+                        );
+                      })()
+                    )}
                     </tbody>
                 </table>
                 </div>

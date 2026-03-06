@@ -4,7 +4,7 @@
   import MainLayout from "../../components/MainLayout";
   import api from "../../api/api";
   import { useAuth } from "../../hooks/useAuth";
-
+  
   const PerubahanJadwal = () => {
     const navigate = useNavigate();
 
@@ -49,7 +49,7 @@
         setLoading(true);
     
         const res = await api.get(
-          "/api/pengajuan-perubahan-jadwal?page=1&pageSize=20"
+          "/api/pengajuan-perubahan-jadwal?page=1&pageSize=200"
         );
     
         setData(res.data?.data?.items || []);
@@ -61,9 +61,7 @@
         setLoading(false);
       }
     };
-    useEffect(() => {
-      fetchData();
-    }, []);
+   
 
     const handleSubmit = async () => {
       console.log({
@@ -105,85 +103,77 @@
         setShowModal(false);
         fetchData();
       } catch (err) {
+        
         console.error("ERROR API:", err.response?.data || err);
       }
     };
 
     //Ambil batch FINAL
-    //GET /api/scheduler/batch → ambil yang status FINAL
-      //GET /api/scheduler/batch/:id → ambil jadwalId
-    const fetchFinalBatch = async () => {
-      try {
-        setLoading(true);
+          //Ambil daftar jadwal FINAL untuk dropdown
+          const fetchFinalBatch = async () => {
+            try {
+              const res = await api.get("/api/scheduler/batch", {
+                params: { status: "FINAL", page: 1, pageSize: 10 },
+              });
+              const finalBatch = res.data?.data?.items.find(b => b.status === "FINAL");
+              if (finalBatch) {
+                setActiveBatchId(finalBatch.periodeId);
+              }
+            } catch (err) {
+              console.error("Gagal mengambil batch FINAL", err);
+            }
+          };
+        
+          // fetch semua jadwal FINAL tanpa filter prodi
+          const fetchJadwalFinal = async () => {
+            if (!activeBatchId) return;
+
+            try {
+              const res = await api.get("/api/view-jadwal/all", {
+                params: {
+                  periodeAkademikId: activeBatchId,
+                  statusBatch: "FINAL",
+                  page: 1,
+                  pageSize: 200,
+                },
+              });
+
+              setJadwalList(res.data?.data?.items || []);
+            } catch (err) {
+              console.error("Gagal ambil jadwal", err);
+            }
+          };
+          useEffect(() => {
+            const init = async () => {
+              await fetchData();
+              await fetchFinalBatch();
+              await fetchMasterData();
+            };
+          
+            init();
+          }, []);
+          
+          useEffect(() => {
+            if (activeBatchId) {
+              fetchJadwalFinal();
+            }
+          }, [activeBatchId]);
     
-        const res = await api.get("/api/scheduler/batch?page=1&pageSize=100");
-    
-        const finalBatch = res.data?.data?.items.find(
-          (b) => b.status === "FINAL"
-        );
-    
-        if (!finalBatch) {
-          console.warn("Batch FINAL tidak ditemukan");
-          return;
-        }
-    
-        setActiveBatchId(finalBatch.id);
-    
-        const resDetail = await api.get(
-          `/api/scheduler/batch/${finalBatch.id}`
-        );
-    
-        setJadwalList(resDetail.data?.data?.jadwal || []);
-    
-      } catch (err) {
-        console.error("Gagal ambil batch FINAL", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    useEffect(() => {
-      fetchFinalBatch();
-    }, []);
-    
-    useEffect(() => {
-      if (activeBatchId) {
-        fetchJadwalFinal();
-      }
-    }, [activeBatchId]);
-    //Ambil daftar jadwal FINAL untuk dropdown
-    const fetchJadwalFinal = async () => {
-      if (!activeBatchId) return;
-    
-      try {
-        const res = await api.get("/api/scheduler/jadwal", {
-          params: {
-            batchId: activeBatchId,
-            page: 1,
-            pageSize: 200,
-            prodiId, 
-          },
-        });
-    
-        setJadwalList(res.data?.data?.items || []);
-      } catch (err) {
-        console.error("Gagal mengambil jadwal", err);
-      }
-    };
-    const fetchMasterData = async () => {
-      try {
-        const [hariRes, slotRes, ruangRes] = await Promise.all([
-          api.get("/api/master-data/hari"),
-          api.get("/api/master-data/slot-waktu"),
-          api.get("/api/master-data/ruang"),
-        ]);
-    
-        setHariList(hariRes.data?.data || []); 
-        setSlotList(slotRes.data?.data?.items || []);
-        setRuangList(ruangRes.data?.data?.items || []);
-      } catch (err) {
-        console.error("Gagal ambil master data", err);
-      }
-    };
+        const fetchMasterData = async () => {
+          try {
+            const [hariRes, slotRes, ruangRes] = await Promise.all([
+              api.get("/api/master-data/hari"),
+              api.get("/api/master-data/slot-waktu"),
+              api.get("/api/master-data/ruang"),
+            ]);
+        
+            setHariList(hariRes.data?.data || []); 
+            setSlotList(slotRes.data?.data?.items || []);
+            setRuangList(ruangRes.data?.data?.items || []);
+          } catch (err) {
+            console.error("Gagal ambil master data", err);
+          }
+        };
 
       useEffect(() => {
         fetchMasterData();
@@ -204,9 +194,10 @@
         return matchSearch && matchStatus;
       });
       //untuk nampilin card
-    const jadwalFiltered = jadwalList.filter(
-      j => j.penugasanMengajar?.programMatkul?.prodi?.id === prodiId
-    );
+  //     const jadwalFiltered = peran === "TU_PRODI"
+  // ? jadwalList.filter(j => j.prodi?.id === prodiId)
+  // : jadwalList;
+      const jadwalFiltered = jadwalList;
     const selectedObj = jadwalFiltered.find(
       j => j.id === selectedJadwal
       );
@@ -229,22 +220,24 @@
         return `${formatJam(slot.jamMulai)} - ${formatJam(slot.jamSelesai)}`;
       };
       
-      const getRuangNama = (id) => {
-        return ruangList.find(r => r.id === id)?.nama || "";
-      };
       const getJadwalDetail = (jadwalKuliahId) => {
         return jadwalList.find(j => j.id === jadwalKuliahId);
       };
-      
       const getNamaDosen = (jadwalKuliahId) => {
         const jadwal = getJadwalDetail(jadwalKuliahId);
-        return jadwal?.penugasanMengajar?.dosen?.nama || "-";
+        return jadwal?.dosen || "-";
       };
       
       const getNamaMatkul = (jadwalKuliahId) => {
         const jadwal = getJadwalDetail(jadwalKuliahId);
-        return jadwal?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-";
+        return jadwal?.mataKuliah || "-";
       };
+      
+      const getRuangNama = (id) => {
+        return ruangList.find(r => r.id === id)?.nama || "-";
+      };
+      
+
 
       const handleApprove = async (id) => {
         const confirmApprove = window.confirm(
@@ -263,8 +256,10 @@
           );
         }
       };
-      console.log("Reject ID:", selectedId);
-      console.log("Body:", { alasanRespon });
+      console.log("Checking jadwal vs user prodi:");
+      jadwalList.forEach(j => {
+        console.log("Jadwal ID:", j.id, "Prodi Jadwal:", j.prodi?.id, "User Prodi:", prodiId);
+      });
       const submitReject = async () => {
         if (!alasanReject || alasanReject.length < 5) {
           alert("Alasan minimal 5 karakter");
@@ -311,6 +306,18 @@
           );
         }
       };
+      // Hitung rowSpan tiap hari
+      const hariRowSpan = {};
+      let prevHari = null;
+
+      jadwalFiltered.forEach((jadwal, index) => {
+        if (jadwal.hari !== prevHari) {
+          // hitung berapa jadwal yang sama berturut-turut
+          const count = jadwalFiltered.slice(index).filter(j => j.hari === jadwal.hari).length;
+          hariRowSpan[index] = count; // simpan rowSpan di index
+          prevHari = jadwal.hari;
+        }
+      });
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -413,7 +420,7 @@
                   <tbody className="divide-y divide-gray-200">
                     {loading ? (
                       <tr>
-                        <td colSpan="5" className="py-8 text-center">
+                        <td colSpan="7" className="py-8 text-center">
                           <Loader2 className="animate-spin mx-auto" />
                         </td>
                       </tr>
@@ -572,7 +579,7 @@
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-8 text-center text-gray-500">
+                        <td colSpan="7" className="py-8 text-center text-gray-500">
                           Tidak ada data pengajuan
                         </td>
                       </tr>
@@ -631,12 +638,12 @@
               {selectedObj && (
                 <>
                   <div className="bg-gray-50  rounded-lg p-3">
-                    <h4 className="font-semibold text-gray-700 mb-1">Jadwal {selectedObj.penugasanMengajar?.dosen?.nama}</h4>
-                    <p className="text-sm">Hari: {selectedObj.hari?.nama}</p>
+                    <h4 className="font-semibold text-gray-700 mb-1">Jadwal {selectedObj?.dosen}</h4>
+                    <p className="text-sm">Hari: {selectedObj?.hari}</p>
                     <p className="text-sm">
-                      Jam: {selectedObj.slotWaktu?.jamMulai} - {selectedObj.slotWaktu?.jamSelesai}
+                      Jam: {selectedObj?.jamMulai} - {selectedObj?.jamSelesai}
                     </p>
-                    <p className="text-sm">{selectedObj.ruang?.nama}</p>
+                    <p className="text-sm">{selectedObj?.ruangan}</p>
                     
                   </div>
 
@@ -780,37 +787,34 @@
                   </thead>
 
                   <tbody>
-                    {jadwalFiltered.map(j => (
-                      <tr key={j.id} className="hover:bg-gray-50">
-                        <td className="border px-3 py-2">{j.hari?.nama}</td>
-                        <td className="border px-3 py-2">
-                          {j.slotWaktu?.jamMulai?.trim()} - {j.slotWaktu?.jamSelesai?.trim()}
+                  {jadwalFiltered.map((j, idx) => (
+                    <tr key={j.id}>
+                      {/* Hari dengan rowSpan */}
+                      {hariRowSpan[idx] ? (
+                        <td className="border px-3 py-2" rowSpan={hariRowSpan[idx]}>
+                          {j.hari}
                         </td>
-                        <td className="border px-3 py-2">
-                          {j.penugasanMengajar?.programMatkul?.mataKuliah?.nama}
-                        </td>
-                        <td className="border px-3 py-2">
-                        {j.penugasanMengajar?.dosen?.nama}
-                        </td>
-                        <td className="border px-3 py-2">{j.ruang?.nama}</td>
-                        <td className="border px-3 py-2 text-center">
+                      ) : null}
+
+                      <td className="border px-3 py-2 whitespace-nowrap">{j.jamMulai} - {j.jamSelesai}</td>
+                      <td className="border px-3 py-2">{j.mataKuliah}</td>
+                      <td className="border px-3 py-2">{j.dosen}</td>
+                      <td className="border px-3 py-2"s>{j.ruangan}</td>
+                      <td className="border px-3 py-2 text-center">
                         <button
                           onClick={() => {
                             setSelectedJadwal(j.id);
-                            setSelectedJadwalText(
-                              // `${j.hari?.nama} | ${j.slotWaktu?.jamMulai} - ${j.slotWaktu?.jamSelesai} | ${j.penugasanMengajar?.programMatkul?.mataKuliah?.nama} | ${j.ruang?.nama}`
-                                ` ${j.penugasanMengajar?.programMatkul?.mataKuliah?.nama}`
-                            );
+                            setSelectedJadwalText(`${j.mataKuliah} | ${j.hari} | ${j.jamMulai}-${j.jamSelesai}`);
                             setShowPilihJadwal(false);
                           }}
                           className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                         >
                           Pilih
                         </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
                 </table>
               </div>
 

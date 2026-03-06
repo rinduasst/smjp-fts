@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
-import { Download } from "lucide-react";
+import { Download,Loader2 } from "lucide-react";
 
 const Jadwal = () => {
   const [data, setData] = useState([]);
@@ -158,12 +158,10 @@ const Jadwal = () => {
         </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white shadow-sm border border-gray-200">
           <div className="overflow-x-auto">
-          <div className="overflow-x-auto border border-gray-300 rounded-md">
-          <table className="min-w-full text-sm text-left">
-            
-            <thead className="bg-gray-200 text-gray-700">
+          <table className="min-w-full text-sm text-left border border-gray-300 bg-white">
+            <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
               <tr>
                 <th className="px-3 py-2 border">Hari</th>
                 <th className="px-3 py-2 border text-center">Jam</th>
@@ -175,14 +173,16 @@ const Jadwal = () => {
                 <th className="px-3 py-2 border">Ruangan</th>
               </tr>
             </thead>
-
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    Loading...
-                  </td>
-                </tr>
+            {loading ? (
+             <tr>
+             <td colSpan="8" className="p-8">
+               <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+                 <Loader2 className="animate-spin" size={24} />
+                 <span className="text-sm">Memuat data jadwal...</span>
+               </div>
+             </td>
+           </tr>
               ) : hasFetched && data.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-4">
@@ -258,7 +258,7 @@ const Jadwal = () => {
             </div>
           </div>
         </div>
-      </div>
+
     </MainLayout>
   );
 };

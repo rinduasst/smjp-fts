@@ -108,10 +108,7 @@ const JadwalDosen = () => {
         </div>
 
         {/* Tabel */}
-        {loading ? (
-          <div className="flex items-center gap-2 text-gray-600"><Loader2 className="animate-spin" /> Loading...</div>
-        ) : (
-          <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
+           <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
             <table className="min-w-full text-sm border border-gray-300">
               <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
                 <tr>
@@ -127,33 +124,59 @@ const JadwalDosen = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((dosen, idx) => {
+              {loading ? (
+                <tr>
+                  <td colSpan="9" className="p-8 text-center">
+                    <div className="flex flex-col items-center gap-2 text-gray-500">
+                      <Loader2 className="animate-spin" size={24} />
+                      <span className="text-sm">Memuat jadwal dosen...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="p-6 text-center text-gray-500">
+                    Tidak ada data jadwal dosen
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((dosen, idx) => {
                   const totalSKS = dosen.jadwal.reduce((acc, j) => acc + (j.sks || 0), 0);
 
                   return dosen.jadwal.map((j, i) => (
                     <tr key={`${dosen.nama}-${i}`}>
                       {i === 0 && (
                         <>
-                          <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 text-center">{idx + 1}</td>
-                          <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 font-medium">{dosen.nama}</td>
+                          <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 text-center">
+                            {idx + 1}
+                          </td>
+                          <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 font-medium">
+                            {dosen.nama}
+                          </td>
                         </>
                       )}
+
                       <td className="border px-3 py-2">{j.mataKuliah}</td>
                       <td className="border px-3 py-2">{formatKelas(j)}</td>
                       <td className="border px-3 py-2 text-center">{j.sks}</td>
                       <td className="border px-3 py-2">{j.hari}</td>
-                      <td className="border px-3 py-2 whitespace-nowrap">{j.jamMulai} - {j.jamSelesai}</td>
+                      <td className="border px-3 py-2 whitespace-nowrap">
+                        {j.jamMulai} - {j.jamSelesai}
+                      </td>
                       <td className="border px-3 py-2">{j.ruangan}</td>
+
                       {i === 0 && (
-                        <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 text-center font-semibold">{totalSKS}</td>
+                        <td rowSpan={dosen.jadwal.length} className="border px-3 py-2 text-center font-semibold">
+                          {totalSKS}
+                        </td>
                       )}
                     </tr>
                   ));
-                })}
+                })
+              )}
               </tbody>
             </table>
-          </div>
-        )}
+        </div>
       </div>
     </MainLayout>
   );
