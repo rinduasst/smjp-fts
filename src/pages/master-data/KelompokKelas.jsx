@@ -226,7 +226,7 @@ function KelompokKelas() {
               setFilterAngkatan(e.target.value);
               setPage(1);
             }}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+            className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
           >
             <option value="">Tahun</option>
             {Array.from({ length: 6}, (_, i) => {
@@ -239,12 +239,7 @@ function KelompokKelas() {
             })}
           </select>
           {/* Filter jenis */}
-       <select  className="w-full px-3 py-2.5 border
-           border-gray-300
-            rounded-lg bg-white text-gray-900
-             focus:outline-none
-                    focus:ring-2 focus:ring-green-500
-                    focus:border-green-500 transition"
+       <select className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
             value={filterJenis}
             onChange={(e) => {
               setFilterJenis(e.target.value);
@@ -257,12 +252,7 @@ function KelompokKelas() {
           </select>
             {/* Filter prodi */}
             {peran !== "TU_PRODI" && (
-             <select  className="w-full px-3 py-2.5 border
-             border-gray-300
-              rounded-lg bg-white text-gray-900
-               focus:outline-none
-                      focus:ring-2 focus:ring-green-500
-                      focus:border-green-500 transition"
+             <select className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
               value={filterProdi}
               onChange={(e) => {
                 setFilterProdi(e.target.value);

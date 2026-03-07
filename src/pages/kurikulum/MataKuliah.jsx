@@ -16,13 +16,15 @@ function MataKuliah() {
     kode: "",
     nama: "",
     sks: "",
-    jenis: "WAJIB"
+    jenis: "WAJIB",
+    prodiId: ""
   });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
+  const [prodiList, setListProdi] = useState([]);
   const fetchData = async () => {
     try {
       const res = await api.get(
@@ -39,9 +41,21 @@ function MataKuliah() {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    fetchData();
-  }, [page, search]);
+
+    const fetchProdi = async () => {
+      try {
+        const res = await api.get('api/master-data/prodi');
+        setListProdi(res.data?.data?.items || []);
+      } catch (err) {
+        console.error('Gagal fetch Data Prodi:', err);
+      }
+    };
+    useEffect(() => {
+      fetchData();
+      if (peran === "ADMIN" || peran === "TU_FAKULTAS") {
+        fetchProdi();
+      }
+    }, [page, search]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,7 +78,8 @@ function MataKuliah() {
       kode: "",
       nama: "",
       sks: "",
-      jenis: "WAJIB"
+      jenis: "WAJIB",
+      prodiId:""
     });
     setFormErrors({});
     setSelected(null);
@@ -80,7 +95,6 @@ function MataKuliah() {
     });
     setShowModal(true);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -88,44 +102,52 @@ function MataKuliah() {
       setFormErrors(errors);
       return;
     }
-
+  
     setIsSubmitting(true);
+  
     try {
       const payload = {
+        prodiId: peran === "ADMIN" || peran === "TU_FAKULTAS"
+          ? formData.prodiId
+          : user.prodiId,
         kode: formData.kode.toUpperCase().trim(),
         nama: formData.nama.trim(),
         sks: Number(formData.sks),
         jenis: formData.jenis
       };
-
+  
       if (selected) {
         await api.put(`/api/kurikulum/mata-kuliah/${selected.id}`, payload);
       } else {
         await api.post("/api/kurikulum/mata-kuliah", payload);
       }
-
+  
       await fetchData();
       setShowModal(false);
       resetForm();
       alert("Data berhasil disimpan");
-    }  catch (err) {
+  
+    } catch (err) {
       console.error(err);
-    
+  
       const status = err.response?.status;
       const message = err.response?.data?.message;
-    
+  
       if (status === 400 || status === 409) {
-        alert(
-          message ||
-          "Mata kuliah dengan kode atau nama tersebut sudah terdaftar"
-        );
+        alert(message || "Kode atau nama mata kuliah sudah digunakan");
+  
+        // reset input kode supaya user isi ulang
+        setFormData(prev => ({
+          ...prev,
+          kode: ""
+        }));
       } else {
         alert("Gagal menyimpan data. Silakan coba lagi.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
-    
-
   const handleDelete = async (row) => {
     if (!row) return;
   
@@ -223,6 +245,7 @@ function MataKuliah() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Kode</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Mata Kuliah</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">SKS</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Program Studi</th>
                   <th className="py-4 text-left text-xs font-semibold text-gray-500 uppercase">Jenis Mata Kuliah</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Aksi</th>
                 </tr>
@@ -231,7 +254,7 @@ function MataKuliah() {
               <tbody className="divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                 <td colSpan="5" className="py-8 text-center">
+                 <td colSpan="6" className="py-8 text-center">
                       <Loader2 className="animate-spin mx-auto" />
                     </td>
                   </tr>
@@ -241,6 +264,7 @@ function MataKuliah() {
                       <td className="px-6 py-4">{row.kode}</td>
                       <td className="px-6 py-4">{row.nama}</td>
                       <td className="px-6 py-4">{row.sks}</td>
+                      <td className="px-6 py-4">{row.prodi?.nama}</td>
                       <td className="px-6 py-4 ">
                       <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
@@ -318,17 +342,9 @@ function MataKuliah() {
               </div>
               {/* MODAL TAMBAH / EDIT MATA KULIAH */}
 
-
       {/* Form */}
       <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
         {/* Kode Mata Kuliah */}
-        {peran === "TU_PRODI" && (
-        <div className="mb-4 text-sm text-gray-600">
-          Prodi: <strong>{user?.nama}</strong>
-        </div>
-      )}
-
-
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Kode Mata Kuliah
@@ -378,6 +394,28 @@ function MataKuliah() {
             required
           />
         </div>
+        {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Program Studi
+          </label>
+          <select
+            name="prodiId"
+            value={formData.prodiId}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 bg-gray-100 rounded 
+                      focus:outline-none focus:ring-2 focus:ring-green-500"
+            required
+          >
+            <option value="">Pilih Prodi</option>
+            {prodiList.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nama}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
         {/* Jenis Mata Kuliah */}
         <div>

@@ -111,7 +111,7 @@ function Kurikulum() {
     setIsSubmitting(true);
   
     const payload = {
-      prodiId: formData.prodiId,
+      prodiId: peran === "TU_PRODI" ? user?.prodiId : formData.prodiId,
       nama: formData.nama.trim(),
       angkatanMulai: Number(formData.angkatanMulai),
    angkatanSelesai: formData.angkatanSelesai
@@ -182,11 +182,12 @@ function Kurikulum() {
   const { user,peran } = useAuth();
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
-      setFilterProdi(user.prodiId);
+      setFormData((prev) => ({
+        ...prev,
+        prodiId: user.prodiId
+      }));
     }
-  }, [filterProdi, peran, user]);
-
-
+  }, [peran, user]);
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
@@ -411,6 +412,7 @@ function Kurikulum() {
                   <input
                     type="text"
                     name="nama"
+                    placeholder="Masukan Nama Kurikulum"
                     value={formData.nama}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 bg-gray-100 rounded
@@ -420,6 +422,7 @@ function Kurikulum() {
                 </div>
   
                 {/* Prodi */}
+                {peran !== "TU_PRODI" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Program Studi
@@ -440,6 +443,7 @@ function Kurikulum() {
                     ))}
                   </select>
                 </div>
+              )}
   
                 {/* Angkatan */}
                 <div>

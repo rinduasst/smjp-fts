@@ -103,7 +103,8 @@ const fetchJadwal = async () => {
           <p className="text-sm text-gray-600">Daftar jadwal perkuliahan yang telah disusun untuk periode aktif.</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
+        <div className="flex flex-col lg:flex-row gap-3">
           <button
             onClick={() => exportAllProdi(data, batchInfo)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
@@ -111,6 +112,7 @@ const fetchJadwal = async () => {
             <Download size={18} />
             Export Excel
           </button>
+        </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left border border-gray-300 bg-white">

@@ -122,8 +122,8 @@ const Jadwal = () => {
           </p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
+        <div className="flex flex-col lg:flex-row gap-3">
         <button
          
           className="flex items-center gap-2 bg-gradient-to-r
@@ -141,11 +141,8 @@ const Jadwal = () => {
             setPage(1);
             setSelectedProdi(e.target.value);
           }}
-          className="w-full px-3 py-2.5 border border-gray-300
-          rounded-lg bg-white text-gray-900 focus:outline-none
-          focus:ring-2 focus:ring-green-500
-          focus:border-green-500 transition"
-        >
+          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+          >
           <option value="">Semua Prodi</option>
 
           {prodiList.map((prodi) => (
@@ -154,7 +151,7 @@ const Jadwal = () => {
             </option>
           ))}
         </select>
-         
+         </div>
         </div>
         </div>
 

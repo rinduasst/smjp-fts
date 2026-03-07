@@ -40,10 +40,10 @@ function Login() {
 
     {/* Background Image */}
     <div
-      className="absolute inset-0 bg-cover bg-center"
-      style={{ backgroundImage: "url('/background.jpg')" }}
+      className="absolute top-0 left-0 right-0 bottom-0 bg-cover bg-center"
+      style={{ backgroundImage: "url('/gedungfts.jpg')" }}
     ></div>
-   <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/90 to-transparent"></div>
+   <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b"></div>
     {/* Overlay Hitam Transparan */}
     <div className="absolute inset-0 bg-black/60"></div>
     <div className="absolute top-6 left-8 z-20">

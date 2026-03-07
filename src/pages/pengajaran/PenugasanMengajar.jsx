@@ -358,10 +358,7 @@ function PenugasanMengajar() {
             <Plus size={18} /> Tambah Penugasan
           </button>
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <select  className="w-full px-3 py-2.5 border border-gray-300
-           rounded-lg bg-white text-gray-900 focus:outline-none
-           focus:ring-2 focus:ring-green-500
-           focus:border-green-500 transition"
+          <select   className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
             value={filterJenis} onChange={e => setFilterJenis(e.target.value)}>
             <option value="">Semua Jenis Kelas</option>
             {jenisKelasList.map(jenis => (
@@ -369,13 +366,7 @@ function PenugasanMengajar() {
             ))}
           </select>
 
-          <select  className="w-full px-3 py-2.5 border
-           border-gray-300
-            rounded-lg bg-white text-gray-900
-             focus:outline-none
-                    focus:ring-2 focus:ring-green-500
-                    focus:border-green-500 transition"
-                    
+          <select   className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
                 value={filterKode} onChange={e => setFilterKode(e.target.value)}>
             <option value="">Semua Kelas</option>
             {kodeKelasList.map(kode => (
@@ -383,10 +374,7 @@ function PenugasanMengajar() {
             ))}
           </select>
 
-          <select className="w-full px-3 py-2.5 border border-gray-300
-                  rounded-lg bg-white text-gray-900 focus:outline-none
-                  focus:ring-2 focus:ring-green-500
-                  focus:border-green-500 transition"
+          <select  className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
              value={filterAngkatan} onChange={e => setFilterAngkatan(e.target.value)}>
             <option value="">Semua Angkatan</option>
             {angkatanList.map(tahun => (

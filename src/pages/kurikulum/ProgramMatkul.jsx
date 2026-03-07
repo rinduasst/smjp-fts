@@ -25,11 +25,8 @@ function ProgramMatkul() {
     prodiId: "",
     kurikulumId: "",
     periodeId: "",
-    jenis: "WAJIB",
+    mataKuliahId: "",
     jumlahKelompokKelas: 1,
-    kode: "",
-    nama: "",
-    sks: "",
   });
 
   const [prodiList, setProdiList] = useState([]);
@@ -80,14 +77,20 @@ function ProgramMatkul() {
   };
 
   const fetchMataKuliah = async () => {
-    const res = await api.get("/api/kurikulum/mata-kuliah");
+    const res = await api.get("/api/kurikulum/mata-kuliah", {
+      params: {
+        prodiId: form.prodiId || undefined,
+      },
+    });
     setMataKuliahList(res.data?.data?.items || []);
   };
 
   useEffect(() => {
-    fetchMaster();
-    fetchMataKuliah();
-  }, []);
+    fetchMaster()
+    if (form.prodiId) {
+      fetchMataKuliah();
+    }
+  }, [form.prodiId]);
 
   useEffect(() => {
     fetchData(page);
@@ -115,62 +118,31 @@ function ProgramMatkul() {
       prodiId: "",
       kurikulumId: "",
       periodeId: "",
-      jenis: "WAJIB",
+      mataKuliahId: "",
       jumlahKelompokKelas: 1,
-      kode: "",
-      nama: "",
-      sks: "",
     });
     setIsEdit(false);
     setSelectedId(null);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!form.mataKuliahId) {
+        alert("Mata kuliah wajib dipilih");
+        return;
+      }
       if (isEdit) {
         await api.put(`/api/kurikulum/program-matkul/${selectedId}`, {
           prodiId: form.prodiId,
           kurikulumId: form.kurikulumId,
           periodeId: form.periodeId,
+          mataKuliahId: form.mataKuliahId,
           jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
         });
-
-        alert("Program matkul berhasil diupdate");
+       alert("Program matkul berhasil diupdate");
         fetchData();
         return;
       }
-      const normalizedKode = form.kode.trim().toUpperCase();
-      let mataKuliahId = null;
-      try {
-        const check = await api.get(
-          `/api/kurikulum/mata-kuliah?kode=${normalizedKode}`
-        );
-      
-        const items = check.data?.data?.items || [];
-        const exactMatch = items.find(
-          (mk) => mk.kode === normalizedKode
-        );
-        if (exactMatch) {
-          mataKuliahId = exactMatch.id;
-        }
-      } catch (err) {
-        console.error("CHECK MK ERROR:", err.response?.data || err);
-      }
-      if (!mataKuliahId) {
-        const mkRes = await api.post("/api/kurikulum/mata-kuliah", {
-          kode: normalizedKode,
-          nama: form.nama,
-          jenis: "WAJIB",
-          sks: Number(form.sks),
-        });
-        mataKuliahId = mkRes.data?.data?.id;
-      }
-
-      if (!mataKuliahId) {
-        throw new Error("Mata kuliah tidak berhasil dibuat.");
-      }
-
       const existingProgram = await api.get(
         "/api/kurikulum/program-matkul",
         {
@@ -178,36 +150,30 @@ function ProgramMatkul() {
             prodiId: form.prodiId,
             kurikulumId: form.kurikulumId,
             periodeId: form.periodeId,
-            mataKuliahId,
+            mataKuliahId: form.mataKuliahId,
           },
         }
       );
-
       if (existingProgram.data?.data?.items?.length > 0) {
         alert("Program mata kuliah sudah ada.");
         return;
       }
-
       await api.post("/api/kurikulum/program-matkul", {
         prodiId: form.prodiId,
         kurikulumId: form.kurikulumId,
         periodeId: form.periodeId,
+        mataKuliahId: form.mataKuliahId,
         jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
-        mataKuliahId,
       });
-
-      alert("Berhasil tambah dan assign mata kuliah!");
+      alert("Program mata kuliah berhasil dibuat");
       fetchData();
       resetForm();
       setShowAddModal(false);
-      setShowEditModal(false);
     } catch (err) {
       console.error("ERROR:", err.response?.data || err);
       alert("Terjadi kesalahan, cek console.");
     }
   };
-  
-
   const handleEdit = (row) => {
     setIsEdit(true);
     setSelectedId(row.id);
@@ -215,10 +181,8 @@ function ProgramMatkul() {
       prodiId: row.prodiId,
       kurikulumId: row.kurikulumId,
       periodeId: row.periodeId,
+      mataKuliahId: row.mataKuliahId,
       jumlahKelompokKelas: row.jumlahKelompokKelas,
-      kode: row.mataKuliah?.kode || "",
-      nama: row.mataKuliah?.nama || "",
-      sks: row.mataKuliah?.sks || "",
     });
     setShowEditModal(true);
   };
@@ -253,8 +217,8 @@ function ProgramMatkul() {
       <div className=" bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Data Mata Kuliah</h1>
-          <p className="text-gray-600 mt-2">Pengelolaan mata kuliah pada program studi berdasarkan kurikulum dan periode akademik.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Program Mata Kuliah</h1>
+          <p className="text-gray-600 mt-2">Pengelolaan mata kuliah yang dibuka pada periode akademik tertentu.</p>
         </div>
 
         {/* Action Bar */}
@@ -276,10 +240,7 @@ function ProgramMatkul() {
             <select
           value={filterProdi}
           onChange={(e) => setFilterProdi(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300
-           rounded-lg bg-white text-gray-900 focus:outline-none
-           focus:ring-2 focus:ring-green-500
-           focus:border-green-500 transition"
+          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
         >
           <option value="">Semua Prodi</option>
           {prodiList.map((p) => (
@@ -294,12 +255,8 @@ function ProgramMatkul() {
             <select
               value={filterKurikulum}
               onChange={(e) => setFilterKurikulum(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300
-           rounded-lg bg-white text-gray-900 focus:outline-none
-           focus:ring-2 focus:ring-green-500
-           focus:border-green-500 transition"
-        >
-
+              className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+          >
             <option value="">Semua Kurikulum</option>
               {uniqueKurikulum.map((k) => (
                 <option key={k.nama} value={k.nama}>
@@ -312,11 +269,8 @@ function ProgramMatkul() {
             <select
               value={filterPeriode}
               onChange={(e) => setFilterPeriode(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300
-              rounded-lg bg-white text-gray-900 focus:outline-none
-              focus:ring-2 focus:ring-green-500
-              focus:border-green-500 transition"
-           >
+              className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+              >
               <option value="">Semua Periode</option>
               {periodeList.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -444,7 +398,13 @@ function ProgramMatkul() {
                 <select
                   required
                   value={form.prodiId}
-                  onChange={(e) => setForm({ ...form, prodiId: e.target.value })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      prodiId: e.target.value,
+                      mataKuliahId: "",
+                    })
+                  }
                   className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Pilih Program Studi</option>
@@ -473,46 +433,6 @@ function ProgramMatkul() {
                   ))}
                 </select>
               </div>
-
-            {/* Mata Kuliah */}
-       
-              {/* Kode Mata Kuliah */}
-              <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kode Mata Kuliah</label>
-                  <input
-                    required
-                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={form.kode}
-                    onChange={(e) => setForm({ ...form, kode: e.target.value })}
-                    placeholder="Masukan Kode Mata Kuliah"
-                  />
-                </div>
-
-                {/* Nama Mata Kuliah */}
-                <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Mata Kuliah</label>
-                  <input
-                    required
-                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={form.nama}
-                    onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                    placeholder="Masukan Nama Mata Kuliah"
-                  />
-                </div>
-
-                {/* SKS */}
-                <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">SKS</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                    required
-                    value={form.sks}
-                    onChange={(e) => setForm({ ...form, sks: Number(e.target.value) })}
-                    placeholder="Masukan Jumlah SKS Mata Kuliah"
-                  />
-                </div>
-           
 
               {/* Periode */}
               <div>

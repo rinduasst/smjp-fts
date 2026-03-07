@@ -61,7 +61,6 @@ export default function DetailKurikulum() {
             <th className="border-b px-3 py-2">Nama Mata Kuliah</th>
             <th className="border-b px-3 py-2 text-center">SKS</th>
             <th className="border-b px-3 py-2 text-center">Semester</th>
-            <th className="border-b px-3 py-2 text-center">Min Semester</th>
           </tr>
         </thead>
       
@@ -82,17 +81,11 @@ export default function DetailKurikulum() {
               <td className="px-3 py-2">
                 {mk.mataKuliah?.nama}
               </td>
-      
               <td className="px-3 py-2 text-center">
                 {mk.mataKuliah?.sks ?? "-"}
               </td>
-      
               <td className="px-3 py-2 text-center">
                 {mk.semester ?? "-"}
-              </td>
-      
-              <td className="px-3 py-2 text-center text-gray-600">
-                {mk.minimalSemester ?? "-"}
               </td>
             </tr>
           ))}

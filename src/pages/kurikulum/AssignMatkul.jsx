@@ -12,29 +12,26 @@ export default function AssignMatkul() {
   const [allMatkul, setAllMatkul] = useState([]);   // semua matkul
   const [selectedMatkul, setSelectedMatkul] = useState([]);
 
-  useEffect(() => {
-    getKurikulum();
-    getMatkulKurikulum();
-    getAllMatkul();
-  }, [id]);
-
+ 
   const getKurikulum = async () => {
     const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
-    setKurikulum(res.data.data);
+    const data = res.data.data;
+  
+    setKurikulum(data);
+    setMatkulList(data.matkul || []);
+  
+    // ambil matkul sesuai prodi kurikulum
+    getAllMatkul(data.prodi?.id);
   };
 
-  const getMatkulKurikulum = async () => {
-    const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
-  
-    setMatkulList(res.data.data.matkul);
-  };
-  const getAllMatkul = async () => {
+  const getAllMatkul = async (prodiId) => {
     let page = 1;
     let totalPages = 1;
     let allData = [];
+  
     do {
       const res = await api.get(
-        `/api/kurikulum/mata-kuliah?page=${page}&pageSize=100&q=`
+        `/api/kurikulum/mata-kuliah?page=${page}&pageSize=100&prodiId=${prodiId}`
       );
   
       allData = [...allData, ...res.data.data.items];
@@ -47,7 +44,9 @@ export default function AssignMatkul() {
   const getSelected = (id) => {
     return selectedMatkul.find((s) => s.id === id);
   };
-
+  useEffect(() => {
+    getKurikulum();
+  }, [id]);
   const handleAssign = async () => {
     if (selectedMatkul.length === 0) {
       alert("Pilih minimal 1 mata kuliah!");
@@ -57,8 +56,7 @@ export default function AssignMatkul() {
     const payload = {
       items: selectedMatkul.map((s) => ({
         mataKuliahId: s.id,
-        semester: s.semester,
-        minimalSemester: s.minimalSemester,
+        semester: s.semester
       })),
     };
 
@@ -68,7 +66,7 @@ export default function AssignMatkul() {
         payload
       );
       alert("Mata kuliah berhasil di-assign");
-     await  getMatkulKurikulum();
+     await  getKurikulum();
       setSelectedMatkul([]);
     } catch (err) {
       console.error(err);
@@ -123,25 +121,35 @@ export default function AssignMatkul() {
             <th className="border-b px-3 py-2">Nama Mata Kuliah</th>
             <th className="border-b px-3 py-2 text-center">SKS</th>
             <th className="border-b px-3 py-2 text-center">Semester</th>
-            <th className="border-b px-3 py-2 text-center">Min Semester</th>
           </tr>
         </thead>
 
         <tbody className="divide-y">
-        {availableMatkul.map((mk, index) => {
-            const selected = getSelected(mk.id);
-            const isAssigned = matkulList.some((m) => m.mataKuliahId === mk.id);
-            const isSelected = selectedMatkul.some((s) => s.id === mk.id);
-            const checked = isAssigned || isSelected;
-            
-
-            return (
-              <tr
-                key={mk.id}
-                className={`${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } hover:bg-blue-50 transition-colors`}
+          {availableMatkul.length === 0 ? (
+            <tr>
+              <td
+                colSpan="6"
+                className="text-center py-10 text-gray-500 font-normal"
               >
+                Semua mata kuliah sudah di-assign ke kurikulum ini.
+              </td>
+            </tr>
+          ) : (
+            availableMatkul.map((mk, index) => {
+              const selected = getSelected(mk.id);
+              const isAssigned = matkulList.some(
+                (m) => m.mataKuliah?.id === mk.id
+              );
+              const isSelected = selectedMatkul.some((s) => s.id === mk.id);
+              const checked = isAssigned || isSelected;
+
+              return (
+                <tr
+                  key={mk.id}
+                  className={`${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  } hover:bg-blue-50 transition-colors`}
+                >
                 <td className="px-3 py-2 text-center">
                 <input
                 type="checkbox"
@@ -151,7 +159,7 @@ export default function AssignMatkul() {
                   if (e.target.checked) {
                     setSelectedMatkul((prev) => [
                       ...prev,
-                      { id: mk.id, semester: 1, minimalSemester: 1 },
+                      { id: mk.id, semester: 1 },
                     ]);
                   } else {
                     setSelectedMatkul((prev) =>
@@ -166,60 +174,39 @@ export default function AssignMatkul() {
                 <td className="px-3 py-2 text-gray-800">{mk.nama}</td>
                 <td className="px-3 py-2 text-center">{mk.sks}</td>
                 <td className="px-3 py-2 text-center">
-                  {checked ? (
-                    <input
-                      type="number"
-                      min={1}
-                      value={selected?.semester ?? 1}
-                      onChange={(e) =>
-                        setSelectedMatkul((prev) =>
-                          prev.map((s) =>
-                            s.id === mk.id
-                              ? { ...s, semester: +e.target.value }
-                              : s
-                          )
-                        )
-                      }
-                      className="
-                        w-16 text-center
-                        border border-gray-300 rounded-md
-                        px-1 py-0.5
-                        focus:outline-none focus:ring-1 focus:ring-blue-400
-                      "
-                    />
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-center">
-                  {isSelected ? (
-                    <input
-                      type="number"
-                      min={1}
-                      value={selected?.minimalSemester ?? 1}
-                      onChange={(e) =>
-                        setSelectedMatkul((prev) =>
-                          prev.map((s) =>
-                            s.id === mk.id
-                              ? { ...s, minimalSemester: +e.target.value }
-                              : s
-                          )
-                        )
-                      }
-                      className="
-                        w-16 text-center
-                        border border-gray-300 rounded-md
-                        px-1 py-0.5
-                        focus:outline-none focus:ring-1 focus:ring-blue-400
-                      "
-                    />
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
+  {checked ? (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={selected?.semester ?? ""}
+      onChange={(e) => {
+        const val = e.target.value.replace(/\D/g, ""); // hanya angka
+
+        setSelectedMatkul((prev) =>
+          prev.map((s) =>
+            s.id === mk.id
+              ? { ...s, semester: Number(val ||0) }
+              : s
+          )
+        );
+      }}
+      className="
+        w-16 text-center
+        border border-gray-300 rounded-md
+        px-1 py-0.5
+        focus:outline-none focus:ring-1 focus:ring-blue-400
+      "
+    />
+  ) : (
+    <span className="text-gray-400">—</span>
+  )}
+</td>
+              
               </tr>
             );
-          })}
+          })
+        )}
+
         </tbody>
       </table>
       </div>
@@ -233,6 +220,7 @@ export default function AssignMatkul() {
         </button>
         <button
           onClick={handleAssign}
+          disabled={availableMatkul.length === 0}
           className="
             flex items-center gap-2
             bg-green-600 text-white
@@ -240,6 +228,7 @@ export default function AssignMatkul() {
             text-sm font-medium
             hover:bg-green-700
             transition-colors
+            disabled:bg-gray-400 disabled:cursor-not-allowed
           "
         >
           Simpan Perubahan

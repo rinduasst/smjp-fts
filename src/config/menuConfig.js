@@ -39,9 +39,9 @@ import {
       icon: Library,
       roles: ["ADMIN", "TU_PRODI", "TU_FAKULTAS"],
       children: [
+        { name: "Mata Kuliah", path: "/kurikulum/mata-kuliah", roles: ["ADMIN", "TU_PRODI", "TU_FAKULTAS"] },
         { name: "Kurikulum", path: "/kurikulum/kurikulum", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
-        // { name: "Mata Kuliah", path: "/kurikulum/mata-kuliah", roles: ["ADMIN", "TU_PRODI", "TU_FAKULTAS"] },
-        { name: "Mata Kuliah", path: "/kurikulum/program-matkul", roles: ["ADMIN", "TU_PRODI", "TU_FAKULTAS"] },
+        { name: "Program Mata Kuliah", path: "/kurikulum/program-matkul", roles: ["ADMIN", "TU_PRODI", "TU_FAKULTAS"] },
       ],
     },
   
