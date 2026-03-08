@@ -9,8 +9,11 @@ function ProgramMatkul() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
   const [isEdit, setIsEdit] = useState(false);
   const [mataKuliahList, setMataKuliahList] = useState([]);
+  const [selectedMatkul, setSelectedMatkul] = useState([]);
+  const [programMatkulList, setProgramMatkulList] = useState([]);
 
   const [selectedId, setSelectedId] = useState(null);
   const [filterProdi, setFilterProdi] = useState("");
@@ -25,8 +28,6 @@ function ProgramMatkul() {
     prodiId: "",
     kurikulumId: "",
     periodeId: "",
-    mataKuliahId: "",
-    jumlahKelompokKelas: 1,
   });
 
   const [prodiList, setProdiList] = useState([]);
@@ -40,7 +41,7 @@ function ProgramMatkul() {
     ).values()
   ];
 
-  // ================= FETCH DATA =================
+  //fetch data
   const fetchData = async (currentPage = page) => {
     try {
       const res = await api.get("/api/kurikulum/program-matkul", {
@@ -75,23 +76,47 @@ function ProgramMatkul() {
       console.error("Error fetching master data:", err);
     }
   };
-
-  const fetchMataKuliah = async () => {
-    const res = await api.get("/api/kurikulum/mata-kuliah", {
-      params: {
-        prodiId: form.prodiId || undefined,
-      },
-    });
-    setMataKuliahList(res.data?.data?.items || []);
-  };
-
   useEffect(() => {
-    fetchMaster()
-    if (form.prodiId) {
-      fetchMataKuliah();
+    fetchMaster();
+  }, []);
+  
+  const toggleMatkul = (id) => {
+    setSelectedMatkul((prev) => {
+      const exist = prev.find((m) => m.mataKuliahId === id);
+      if (exist) {
+        return prev.filter((m) => m.mataKuliahId !== id);
+      }
+      return [
+        ...prev,
+        { mataKuliahId: id, jumlahKelompokKelas: 1 }
+      ];
+    });
+  };
+  const updateJumlahKelas = (id, value) => {
+    setSelectedMatkul((prev) =>
+      prev.map((m) =>
+        m.mataKuliahId === id
+          ? { ...m, jumlahKelompokKelas: Number(value) }
+          : m
+      )
+    );
+  };
+  const fetchMatkulKurikulum = async (kurikulumId) => {
+    try {
+      const res = await api.get(`/api/kurikulum/kurikulum/${kurikulumId}`);
+  
+      setMataKuliahList(res.data?.data?.matkul || []);
+    } catch (err) {
+      console.error(err);
     }
-  }, [form.prodiId]);
-
+  };
+  
+  useEffect(() => {
+    if (form.kurikulumId) {
+      fetchMatkulKurikulum(form.kurikulumId);
+      setSelectedMatkul([]);
+    }
+  }, [form.kurikulumId]);
   useEffect(() => {
     fetchData(page);
   }, [page]);
@@ -100,7 +125,31 @@ function ProgramMatkul() {
     setPage(1);
     fetchData(1);
   }, [searchTerm, filterProdi, filterKurikulum, filterPeriode]);
-
+  const fetchProgramMatkul = async () => {
+    try {
+      const res = await api.get("/api/kurikulum/program-matkul", {
+        params: {
+          prodiId: form.prodiId,
+          periodeId: form.periodeId,
+          pageSize: 50
+        }
+      });
+  
+      setProgramMatkulList(res.data?.data?.items || []);
+  
+    } catch (err) {
+      console.error("ERROR PROGRAM MATKUL:", err.response?.data || err);
+      // console.log("FULL ERROR:", err);
+      // console.log("RESPONSE:", err.response);
+      // console.log("DATA:", err.response?.data);
+      // console.log("VALIDATION DETAIL:", JSON.stringify(err.response?.data?.errors, null, 2));
+    }
+  };
+  useEffect(() => {
+    if (form.prodiId && form.periodeId) {
+      fetchProgramMatkul();
+    }
+  }, [form.periodeId, form.prodiId]);
   const filteredData = data.filter((d) => {
     const matchSearch =
       d.mataKuliah?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,14 +161,19 @@ function ProgramMatkul() {
   
     return matchSearch && matchKurikulum;
   });
+  const filteredMatkul = mataKuliahList.filter((mk) => {
+    const sudahDiprogam = programMatkulList.some(
+      (pm) => pm.mataKuliahId === mk.mataKuliah.id
+    );
+  
+    return !sudahDiprogam;
+  });
 
   const resetForm = () => {
     setForm({
       prodiId: "",
       kurikulumId: "",
       periodeId: "",
-      mataKuliahId: "",
-      jumlahKelompokKelas: 1,
     });
     setIsEdit(false);
     setSelectedId(null);
@@ -127,51 +181,40 @@ function ProgramMatkul() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (!form.mataKuliahId) {
-        alert("Mata kuliah wajib dipilih");
+      if (selectedMatkul.length === 0) {
+        alert("Pilih minimal 1 mata kuliah");
         return;
       }
-      if (isEdit) {
-        await api.put(`/api/kurikulum/program-matkul/${selectedId}`, {
+      const requests = selectedMatkul.map((mk) =>
+        api.post("/api/kurikulum/program-matkul", {
           prodiId: form.prodiId,
           kurikulumId: form.kurikulumId,
           periodeId: form.periodeId,
-          mataKuliahId: form.mataKuliahId,
-          jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
-        });
-       alert("Program matkul berhasil diupdate");
-        fetchData();
-        return;
-      }
-      const existingProgram = await api.get(
-        "/api/kurikulum/program-matkul",
-        {
-          params: {
-            prodiId: form.prodiId,
-            kurikulumId: form.kurikulumId,
-            periodeId: form.periodeId,
-            mataKuliahId: form.mataKuliahId,
-          },
-        }
+          mataKuliahId: mk.mataKuliahId,
+          jumlahKelompokKelas: Number(mk.jumlahKelompokKelas || 1),
+        })
       );
-      if (existingProgram.data?.data?.items?.length > 0) {
-        alert("Program mata kuliah sudah ada.");
-        return;
-      }
-      await api.post("/api/kurikulum/program-matkul", {
-        prodiId: form.prodiId,
-        kurikulumId: form.kurikulumId,
-        periodeId: form.periodeId,
-        mataKuliahId: form.mataKuliahId,
-        jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
-      });
-      alert("Program mata kuliah berhasil dibuat");
+  
+      await Promise.all(requests);
+      alert("Program matkul berhasil dibuat");
+  
       fetchData();
+      setSelectedMatkul([]);
       resetForm();
       setShowAddModal(false);
+  
     } catch (err) {
-      console.error("ERROR:", err.response?.data || err);
-      alert("Terjadi kesalahan, cek console.");
+      const res = err.response?.data;
+      console.error("BACKEND ERROR:", res);
+      alert(res?.message || "Terjadi kesalahan");
+      // reset form
+      setForm({
+        prodiId: "",
+        kurikulumId: "",
+        periodeId: ""
+      });
+      setSelectedMatkul([]);
+      setShowAddModal(false);
     }
   };
   const handleEdit = (row) => {
@@ -204,7 +247,6 @@ function ProgramMatkul() {
       alert("Gagal menghapus data");
     }
   };
-
   const { user, peran } = useAuth();
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
@@ -229,7 +271,7 @@ function ProgramMatkul() {
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Plus size={18} />
-            Tambah Mata Kuliah
+            Tambah Program
           </button>
 
         
@@ -320,8 +362,10 @@ function ProgramMatkul() {
             <td className="px-4 py-3">{row.mataKuliah?.kode} - {row.mataKuliah?.nama}</td>
             <td className="px-4 py-3 text-center">{row.mataKuliah?.sks}</td>
             {peran !== "TU_PRODI" && (
-              <td className="">{row.prodi?.nama}</td>
-            )}
+            <td className="px-4 py-3 text-center">
+              {row.prodi?.nama}
+            </td>
+          )}
             <td className="px-4 py-3">{row.kurikulum?.nama}</td>
             <td className="px-4 py-3 text-center">{row.periode?.nama}</td>
             <td className="px-4 py-3 text-center">{row.jumlahKelompokKelas}</td>
@@ -369,7 +413,7 @@ function ProgramMatkul() {
         {/* MODAL TAMBAH/EDIT */}
         {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg">
+         <div className="bg-white rounded-lg w-full max-w-5xl">
 
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -401,8 +445,7 @@ function ProgramMatkul() {
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      prodiId: e.target.value,
-                      mataKuliahId: "",
+                      prodiId: e.target.value
                     })
                   }
                   className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -413,28 +456,6 @@ function ProgramMatkul() {
                   ))}
                 </select>
               </div>
-
-              {/* Kurikulum */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Kurikulum
-                </label>
-                <select
-                  required
-                  value={form.kurikulumId}
-                  onChange={(e) => setForm({ ...form, kurikulumId: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Pilih Kurikulum</option>
-                  {kurikulumList.map((k) => (
-                   <option key={k.id} value={k.id}>
-                   {k.nama} - {k.prodi?.nama}
-                 </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Periode */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Periode
@@ -452,30 +473,132 @@ function ProgramMatkul() {
                 </select>
               </div>
 
-              {/* Jumlah Kelompok */}
+              {/* Kurikulum */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Jumlah Kelompok Kelas
+                  Kurikulum
                 </label>
-                <input
-                  type="number"
-                  min={1}
+                <select
                   required
-                  value={form.jumlahKelompokKelas}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      jumlahKelompokKelas: e.target.value === ""
-                        ? ""
-                        : Number(e.target.value),
-                    })
-                  }
-                  
-                  placeholder="Masukan Jumlah kelompok kelas"
+                  value={form.kurikulumId}
+                  onChange={(e) => {
+                    setForm({ ...form, kurikulumId: e.target.value });
+                    setSelectedMatkul([]);
+                  }}
                   className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                >
+                  <option value="">Pilih Kurikulum</option>
+                  {kurikulumList.map((k) => (
+                   <option key={k.id} value={k.id}>
+                   {k.nama} - {k.prodi?.nama}
+                 </option>
+                  ))}
+                </select>
               </div>
 
+              {/* Assign Matkul Kurikulum */}
+              {form.kurikulumId && (
+           <div className="bg-white rounded-lg shadow border overflow-hidden">
+           <div className="max-h-64 overflow-y-auto">
+           {mataKuliahList.length === 0 ? (
+  <div className="p-6 text-center text-red-500 text-sm">
+    Belum ada mata kuliah yang di-assign ke kurikulum ini!
+  </div>
+            ) : (
+              <>
+                {filteredMatkul.length === 0 && (
+                  <div className="p-6 text-center text-yellow-600 text-sm">
+                    Semua mata kuliah kurikulum ini sudah diprogram pada periode ini.
+                  </div>
+                )}
+
+                {filteredMatkul.length > 0 && (
+                  <table className="w-full text-sm border border-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr className="text-gray-700 uppercase text-xs tracking-wide">
+                        <th>
+                          <input
+                            type="checkbox"
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedMatkul(
+                                  filteredMatkul.map((mk) => ({
+                                    mataKuliahId: mk.mataKuliah.id,
+                                    jumlahKelompokKelas: 1
+                                  }))
+                                );
+                              } else {
+                                setSelectedMatkul([]);
+                              }
+                            }}
+                          />
+                        </th>
+
+                        <th className="border-b px-3 py-2">Kode</th>
+                        <th className="border-b px-3 py-2">Nama</th>
+                        <th className="border-b px-3 py-2 text-center">SKS</th>
+                        <th className="border-b px-3 py-2 text-center">Semester</th>
+                        <th className="border-b px-3 py-2 text-center">Total Kelas</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredMatkul.map((mk) => {
+                        const selected = selectedMatkul.find(
+                          (s) => s.mataKuliahId === mk.mataKuliah.id
+                        );
+
+                        return (
+                          <tr key={mk.mataKuliah.id} className="border-t border-gray-200">
+                            <td className="px-2 py-1 text-center">
+                              <input
+                                type="checkbox"
+                                checked={!!selected}
+                                onChange={() => toggleMatkul(mk.mataKuliah.id)}
+                              />
+                            </td>
+
+                            <td className="px-2 py-1 text-center">
+                              {mk.mataKuliah?.kode}
+                            </td>
+
+                            <td className="px-2 py-1">
+                              {mk.mataKuliah?.nama}
+                            </td>
+
+                            <td className="px-2 py-1 text-center">
+                              {mk.mataKuliah?.sks}
+                            </td>
+
+                            <td className="px-2 py-1 text-center">
+                              {mk.semester}
+                            </td>
+
+                            <td className="text-center">
+                              {selected && (
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={selected.jumlahKelompokKelas ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    updateJumlahKelas(mk.mataKuliah.id, val);
+                                  }}
+                                  className="w-10 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-400"
+                                />
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </>
+            )}
+              </div>
+              </div>
+              )}
               {/* Tombol */}
               <div className="flex justify-end gap-2 mt-4">
                 <button

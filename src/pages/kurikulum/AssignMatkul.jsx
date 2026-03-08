@@ -174,34 +174,33 @@ export default function AssignMatkul() {
                 <td className="px-3 py-2 text-gray-800">{mk.nama}</td>
                 <td className="px-3 py-2 text-center">{mk.sks}</td>
                 <td className="px-3 py-2 text-center">
-  {checked ? (
-    <input
-      type="text"
-      inputMode="numeric"
-      value={selected?.semester ?? ""}
-      onChange={(e) => {
-        const val = e.target.value.replace(/\D/g, ""); // hanya angka
+                {checked ? (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={selected?.semester ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, ""); // hanya angka
 
-        setSelectedMatkul((prev) =>
-          prev.map((s) =>
-            s.id === mk.id
-              ? { ...s, semester: Number(val ||0) }
-              : s
-          )
-        );
-      }}
-      className="
-        w-16 text-center
-        border border-gray-300 rounded-md
-        px-1 py-0.5
-        focus:outline-none focus:ring-1 focus:ring-blue-400
-      "
-    />
-  ) : (
-    <span className="text-gray-400">—</span>
-  )}
-</td>
-              
+                      setSelectedMatkul((prev) =>
+                        prev.map((s) =>
+                          s.id === mk.id
+                            ? { ...s, semester: Number(val ||0) }
+                            : s
+                        )
+                      );
+                    }}
+                    className="
+                      w-16 text-center
+                      border border-gray-300 rounded-md
+                      px-1 py-0.5
+                      focus:outline-none focus:ring-1 focus:ring-blue-400
+                    "
+                  />
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>     
               </tr>
             );
           })

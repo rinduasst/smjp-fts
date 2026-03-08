@@ -17,9 +17,7 @@ function Login() {
 
     try {
       const res = await api.post("/api/auth/login", { email, password });
-
-      const token =
-        res.data?.data?.token
+      const token = res.data?.data?.token;
 
       if (!token) {
         setError("Token tidak ditemukan.");
@@ -28,7 +26,7 @@ function Login() {
 
       localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       setError("Email atau password salah");
     } finally {
       setLoading(false);
@@ -36,119 +34,86 @@ function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-
-    {/* Background Image */}
-    <div
-      className="absolute top-0 left-0 right-0 bottom-0 bg-cover bg-center"
-      style={{ backgroundImage: "url('/gedungfts.jpg')" }}
-    ></div>
-   <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b"></div>
-    {/* Overlay Hitam Transparan */}
-    <div className="absolute inset-0 bg-black/60"></div>
-    <div className="absolute top-6 left-8 z-20">
-
+      <div className="relative min-h-screen flex items-center justify-center bg-gray-50">
+  
+        {/* Background Fullscreen */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/gedungfts.png')" }}
+        />
+        <div className="absolute inset-0 bg-green-900/50"></div>
+  
+        {/* Form Centered */}
+        <div className="relative z-10 w-full max-w-md p-8 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20">
+  
+    {/* Header */}
+    <div className="text-center mb-6">
+      <img src="/test.png" alt="Logo SMJP" className="w-800 mx-auto mb-3" />
+   
     </div>
-    {/* Content */}
-    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
 
-        {/* Header */}
-        <div className="px-10 pt-10 pb-6 text-center">
-          <img
-            src="/test.png"
-            alt="Logo SMJP"
-            className="w-90 mx-auto mb-2"
+    {/* Error */}
+    {error && (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-center text-red-600 text-sm">
+        {error}
+      </div>
+    )}
+
+    {/* Form */}
+    <form onSubmit={handleLogin} className="space-y-5">
+
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium text-gray-100 mb-2">Email</label>
+        <div className="relative">
+          <Mail className="absolute left-4 top-3.5 text-gray-200 w-5 h-5" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Masukkan email"
+            className="w-full bg-white/20 border border-white/30 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+            required
           />
-          <div className="border-t px-1 border-gray-200">
-          </div>
-        </div>
-  
-        <div className="px-8 pb-8">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-600 text-sm text-center">{error}</p>
-            </div>
-          )}
-  
-          <form onSubmit={handleLogin} className="space-y-5">
-            
-            {/* Email */}
-           {/* Email */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Email
-            </label>
-
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-green-600 transition" />
-              
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-700 focus:outline-none focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
-                placeholder="Masukkan email"
-                required
-              />
-            </div>
-          </div>
-
-{/* Password */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <button
-                type="button"
-                className="text-sm text-green-600 hover:underline"
-              >
-                Lupa?
-              </button>
-            </div>
-
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-green-600 transition" />
-
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-700 focus:outline-none focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
-                placeholder="Masukkan password"
-                required
-              />
-            </div>
-          </div>
-  
-            {/* Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 rounded-full font-medium text-white flex items-center justify-center transition ${
-                loading
-                  ? "bg-green-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Sign in"
-              )}
-            </button>
-          </form>
-  
-          <div className="text-center mt-6 text-sm text-gray-500">
-            Belum punya akun?{" "}
-            <span className="text-green-600 font-medium">
-              Hubungi Administrator
-            </span>
-          </div>
         </div>
       </div>
+
+      {/* Password */}
+      <div>
+        <label className="block text-sm font-medium text-gray-100 mb-2">Password</label>
+        <div className="relative">
+          <Lock className="absolute left-4 top-3.5 text-gray-200 w-5 h-5" />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Masukkan password"
+            className="w-full bg-white/20 border border-white/30 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full py-3 rounded-xl font-semibold text-white transition ${
+          loading ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+        }`}
+      >
+        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Masuk"}
+      </button>
+
+    </form>
+
+    <p className="text-center text-sm text-gray-200 mt-6">
+      Belum punya akun? <span className="text-green-300 font-medium">Hubungi Administrator</span>
+    </p>
+      </div>
+
     </div>
-  )
-              };
+  );
+}
+
 export default Login;
-              
