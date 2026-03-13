@@ -6,7 +6,7 @@ export const exportAllProdi = async (data, batchInfo) => {
   const workbook = new ExcelJS.Workbook();
 
   const fakultas = batchInfo?.fakultas?.nama || "";
-  const prodi = data[0]?.penugasanMengajar?.programMatkul?.prodi?.nama || "";
+  const prodi = data?.[0]?.prodi || "";
   const periode = batchInfo?.periode?.nama || "";
 
   const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -42,30 +42,19 @@ function hitungSemester(angkatan, tahunMulai, paruh) {
   };
 
   /* ================= GROUP DATA ================= */
-
   const grouped = {};
 
   data.forEach((j) => {
-
-    j.penugasanMengajar?.kelasList?.forEach((k) => {
-
-      const angkatan = k.kelompokKelas?.angkatan;
-      const tahunMulai = batchInfo?.periode?.tahunMulai;
-      const paruh = batchInfo?.periode?.paruh;
-
-      const semester = toRomawi(
-        hitungSemester(angkatan, tahunMulai, paruh)
-      );
-
-      const kelas = k.kelompokKelas?.kode || "UNKNOWN";
-
-      if (!grouped[semester]) grouped[semester] = {};
-      if (!grouped[semester][kelas]) grouped[semester][kelas] = [];
-
-      grouped[semester][kelas].push(j);
-
-    });
-
+  
+    const semester = toRomawi(j.semester || 1);
+  
+    const kelas = j.kelas || "A";
+  
+    if (!grouped[semester]) grouped[semester] = {};
+    if (!grouped[semester][kelas]) grouped[semester][kelas] = [];
+  
+    grouped[semester][kelas].push(j);
+  
   });
   /* ================= LOOP SEMESTER ================= */
   const romawiToNumber = {
@@ -173,7 +162,7 @@ function hitungSemester(angkatan, tahunMulai, paruh) {
 
       jadwalList.forEach((j) => {
 
-        const hari = j.hari?.nama || "-";
+        const hari = j.hari || "-";
 
         if (!groupedByHari[hari]) groupedByHari[hari] = [];
 
@@ -186,13 +175,25 @@ function hitungSemester(angkatan, tahunMulai, paruh) {
       hariUrut.forEach((hari) => {
 
         const items = groupedByHari[hari] || [];
-        const startRow = rowIndex;
-
-        if (items.length === 0) {
-
+      
+        if (items.length === 0) return; // <<< penting
+      
+        const startRow = sheet.lastRow.number + 1;
+      
+        items.forEach((j) => {
+      
           const rowData = sheet.addRow([
-            hari, "", "", "", "", "", "", "", ""
+            hari,
+            `${j.jamMulai} - ${j.jamSelesai}`,
+            j.kodeMk || "",
+            j.mataKuliah || "",
+            j.sks || "",
+            j.dosen || "",
+            j.dosen || "",
+            j.jumlahMahasiswa || "",
+            j.ruangan || ""
           ]);
+      
           rowData.eachCell((cell) => {
             borderAll(cell);
             cell.alignment = {
@@ -200,68 +201,37 @@ function hitungSemester(angkatan, tahunMulai, paruh) {
               vertical: "middle"
             };
           });
-          sheet.getRow(rowData.number).height = 35;
-
-          rowIndex++;
-
-        } else {
-
-          items.forEach((j) => {
-
-            const rowData = sheet.addRow([
-              hari,
-              `${j.slotWaktu?.jamMulai}-${j.slotWaktu?.jamSelesai}`,
-              j.penugasanMengajar?.programMatkul?.mataKuliah?.kode,
-              j.penugasanMengajar?.programMatkul?.mataKuliah?.nama,
-              j.penugasanMengajar?.programMatkul?.mataKuliah?.sks,
-              j.penugasanMengajar?.dosen?.nama,
-              j.penugasanMengajar?.dosen?.nama,
-              "",
-              j.ruang?.nama
-            ]);
-
-            rowData.eachCell((cell) => {
-              borderAll(cell);
-              cell.alignment = {
-                horizontal: "left",
-                vertical: "middle"
-              };
-            });
-            sheet.getRow(rowData.number).height = 35;
-            rowIndex++;
-
-          });
-
-          const endRow = rowIndex - 1;
-
-          if (items.length > 1) {
-            sheet.mergeCells(`A${startRow}:A${endRow}`);
-          }
-
+      
+        });
+      
+        const endRow = sheet.lastRow.number;
+      
+        if (endRow > startRow) {
+          sheet.mergeCells(`A${startRow}:A${endRow}`);
         }
+      
+      });
+
+      row = sheet.lastRow.number + 2;
+
+        });
+
+        sheet.columns = [
+          { width: 12 },
+          { width: 15 },
+          { width: 12 },
+          { width: 35 },
+          { width: 6 },
+          { width: 35 },
+          { width: 35 },
+          { width: 10 },
+          { width: 10 }
+        ];
 
       });
 
-      row = rowIndex + 1;
+      const buffer = await workbook.xlsx.writeBuffer();
 
-    });
+      saveAs(new Blob([buffer]), "Jadwal_Prodi.xlsx");
 
-    sheet.columns = [
-      { width: 12 },
-      { width: 15 },
-      { width: 12 },
-      { width: 35 },
-      { width: 6 },
-      { width: 35 },
-      { width: 35 },
-      { width: 10 },
-      { width: 10 }
-    ];
-
-  });
-
-  const buffer = await workbook.xlsx.writeBuffer();
-
-  saveAs(new Blob([buffer]), "Jadwal_Prodi.xlsx");
-
-};
+    };

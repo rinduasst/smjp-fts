@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import api from "../../api/api";
 import MainLayout from "../../components/MainLayout";
 import { Plus, Search, Edit, Trash2, Loader2, X, ChevronRight, ChevronDown } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 const ConstraintDosen = () => {
   const [data, setData] = useState([]);
@@ -15,7 +16,7 @@ const ConstraintDosen = () => {
   const [jamList, setJamList] = useState([]);
   const [ruangList, setRuangList] = useState([]);
   const [filterJenis, setFilterJenis] = useState("");
-
+  const { user, peran } = useAuth();
   const [openGroups, setOpenGroups] = useState({});
 
   const [formData, setFormData] = useState({
@@ -491,12 +492,14 @@ const ConstraintDosen = () => {
         
        {/* ACTION BAR */} 
        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"> 
+       {peran !== "ADMIN" && peran !== "TU_FAKULTAS" && (
        <button 
        onClick={() => { resetForm(); setShowModal(true); }} 
        className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 
        rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition font-medium" > 
        <Plus size={18} /> Tambah Aturan </button>
-       <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+       )}
+       <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
        <select
         value={filterJenis}
         onChange={(e) => setFilterJenis(e.target.value)}

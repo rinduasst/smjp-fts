@@ -3,9 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Download, Loader2 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import {
-  exportAllProdi,
- } from "../../utils/exportExcel/jadwal/exportAllProdi.js";
+
 
 const JadwalProdi = () => {
   const [data, setData] = useState([]);
@@ -97,7 +95,7 @@ const fetchJadwal = async () => {
   };
   return (
     <MainLayout>
-      <div className="bg-gray-50 min-h-screen p-6">
+      <div className="bg-gray-50 min-h-screen">
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">Jadwal Perkuliahan</h1>
           <p className="text-sm text-gray-600">Daftar jadwal perkuliahan yang telah disusun untuk periode aktif.</p>

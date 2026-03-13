@@ -501,9 +501,9 @@ function ProgramMatkul() {
            <div className="bg-white rounded-lg shadow border overflow-hidden">
            <div className="max-h-64 overflow-y-auto">
            {mataKuliahList.length === 0 ? (
-  <div className="p-6 text-center text-red-500 text-sm">
-    Belum ada mata kuliah yang di-assign ke kurikulum ini!
-  </div>
+          <div className="p-6 text-center text-red-500 text-sm">
+            Belum ada mata kuliah yang di-assign ke kurikulum ini!
+          </div>
             ) : (
               <>
                 {filteredMatkul.length === 0 && (
@@ -624,9 +624,6 @@ function ProgramMatkul() {
           </div>
         </div>
       )}
-
-    
-
       </div>
     </MainLayout>
   );

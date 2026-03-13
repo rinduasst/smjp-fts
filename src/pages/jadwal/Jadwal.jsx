@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Download,Loader2 } from "lucide-react";
+import { exportAllProdi } from "../../utils/exportExcel/jadwal/exportAllProdi.js";
 
 const Jadwal = () => {
   const [data, setData] = useState([]);
@@ -110,6 +111,26 @@ const Jadwal = () => {
       })
       .join(", ");
   };
+  const handleExportExcel = async () => {
+    if (!batchInfo) return;
+  
+    try {
+      const res = await api.get("/api/view-jadwal/all", {
+        params: {
+          periodeAkademikId: batchInfo.periodeId,
+          statusBatch: "FINAL",
+          page: 1,
+          pageSize: 200, // ambil semua
+          sortBy: "hari",
+          sortOrder: "asc",
+        },
+      });
+      const items = res.data?.data?.items || [];
+      await exportAllProdi(items, batchInfo);
+    } catch (err) {
+      console.error("Gagal export", err);
+    }
+  };
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen">
@@ -118,19 +139,19 @@ const Jadwal = () => {
             Jadwal Perkuliahan
           </h1>
           <p className="text-sm text-gray-600">
-          Daftar jadwal perkuliahan yang telah disusun untuk periode aktif.
+          Daftar jadwal perkuliahan program studi yang telah disusun untuk periode aktif.
           </p>
         </div>
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
         <div className="flex flex-col lg:flex-row gap-3">
         <button
-         
-          className="flex items-center gap-2 bg-gradient-to-r
-           from-green-500 to-green-600 text-white px-5 py-2.5
-            rounded-lg shadow-sm hover:from-green-600
-             hover:to-green-700 transition-all duration-200 font-medium"
-          >
+         onClick={handleExportExcel}
+         className="flex items-center gap-2 bg-gradient-to-r
+         from-green-500 to-green-600 text-white px-5 py-2.5
+         rounded-lg shadow-sm hover:from-green-600
+         hover:to-green-700 transition-all duration-200 font-medium"
+       >
          <Download size={18} />
           Export Excel
         </button>

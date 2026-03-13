@@ -76,6 +76,7 @@ function App() {
         <Route path="/pengajaran/penugasan-mengajar" element={<PenugasanMengajar />} />
         <Route path="/pengajaran/preferensi-dosen" element={<PreferensiDosen />} />
         <Route path="/pengajaran/aturan-mengajar-dosen" element={<ConstraintDosen />} />
+        
 
         {/* Scheduler */}
         <Route path="/scheduler/generate" element={<GenerateJadwal />} />

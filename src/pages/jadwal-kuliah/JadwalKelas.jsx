@@ -3,7 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
 import { Download, Loader2 } from "lucide-react";
-
+import { exportPerSemester } from "../../utils/exportExcel/jadwal/exportPerSemester.js";
 const JadwalKelas = () => {
   const { user } = useAuth();
 
@@ -12,7 +12,9 @@ const JadwalKelas = () => {
   const [semesterAktif, setSemesterAktif] = useState(null);
   const [loading, setLoading] = useState(false);
   // ambil batch final
+  console.log("USER LOGIN:", user);
   const fetchFinalBatch = async () => {
+
     try {
       const res = await api.get("/api/scheduler/batch", {
         params: { status: "FINAL", page: 1, pageSize: 100 },
@@ -65,8 +67,9 @@ const JadwalKelas = () => {
   
     return a.localeCompare(b);
   };
-
-
+  const handleExport = () => {
+    exportPerSemester(data, batchInfo, user?.nama);
+  };
   const toRomawi = (num) => {
     const map = ["","I","II","III","IV","V","VI","VII","VIII"];
     return map[num] || num;
@@ -161,6 +164,7 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
           Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
         </p>
             <button
+            onClick={handleExport}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
             >
             <Download size={18} />

@@ -41,7 +41,7 @@ function Login() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/gedungfts.png')" }}
         />
-        <div className="absolute inset-0 bg-green-900/50"></div>
+        <div className="absolute inset-0 bg-green-900/30"></div>
   
         {/* Form Centered */}
         <div className="relative z-10 w-full max-w-md p-8 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20">
