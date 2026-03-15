@@ -88,12 +88,7 @@ const DashboardSMJP = () => {
               <p className="text-gray-600 mt-1">
                 Sistem Manajemen Jadwal Perkuliahan
               </p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-700">
-                {stats.activeBatch ? "Periode Aktif: Ganjil 2025/2026" : "Tidak Ada Periode Aktif"}
-              </span>
+
             </div>
           </div>
         </div>
@@ -126,70 +121,6 @@ const DashboardSMJP = () => {
               icon={Calendar}
               color="indigo"
             />
-          </div>
-
-          {/* Info Section */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Info Card 1 */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-emerald-700" />
-                </div>
-                <h3 className="font-semibold text-gray-800">Ringkasan Akademik</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Total Pengguna</span>
-                  <span className="font-semibold text-gray-800">156 Orang</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Rata-rata MK/Dosen</span>
-                  <span className="font-semibold text-gray-800">
-                    {stats.totalDosen ? Math.round(stats.totalMatakuliah / stats.totalDosen) : 0}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Utilisasi Ruangan</span>
-                  <span className="font-semibold text-gray-800">
-                    {stats.totalRuangan ? Math.round((stats.totalJadwal / (stats.totalRuangan * 10)) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Info Card 2 */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Clock className="w-5 h-5 text-blue-700" />
-                </div>
-                <h3 className="font-semibold text-gray-800">Informasi Sistem</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Versi Aplikasi</span>
-                  <span className="font-semibold text-gray-800">v2.1.0</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Update Terakhir</span>
-                  <span className="font-semibold text-gray-800">
-                    {new Date().toLocaleDateString('id-ID', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Status Server</span>
-                  <span className="font-semibold text-green-600 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                    Online
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Footer */}
