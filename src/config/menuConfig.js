@@ -57,7 +57,7 @@ import {
     },
   
     {
-      name: "Penjadwalan",
+      name: "Generate Jadwal",
       icon: CalendarCog,
       roles: ["ADMIN", "TU_FAKULTAS",],
       children: [
@@ -67,7 +67,7 @@ import {
       ],
     },
     {
-    name: "Jadwal",
+    name: "Jadwal ",
     icon: LayoutList,
     roles: ["ADMIN", "TU_FAKULTAS","TU_PRODI"],
     children: [
