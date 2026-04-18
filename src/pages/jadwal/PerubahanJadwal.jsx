@@ -55,9 +55,47 @@
         setLoading(false);
       }
     };
+    const formatJam = (jam) => {
+      if (!jam) return "-";
+    
+      // kalau ISO (ada T)
+      if (jam.includes("T")) {
+        return jam.substring(11, 16); // ambil HH:mm
+      }
+    
+      // kalau format 21.00
+      return jam.replace(".", ":");
+    };
 
     useEffect(() => {
       fetchData();
+    }, [filterStatus, periodeId]);
+    const fetchHari = async () => {
+      const res = await api.get("/api/master-data/hari");
+      setHariList(res.data?.data?.data || []);
+    };
+    
+    const fetchSlot = async () => {
+      const res = await api.get("/api/master-data/slot-waktu");
+      setSlotList(res.data?.data?.items || []);
+    };
+    
+    const fetchRuang = async () => {
+      const res = await api.get("/api/master-data/ruang");
+      setRuangList(res.data?.data?.items || []);
+    };
+    useEffect(() => {
+      fetchData();
+      fetchHari();
+      fetchSlot();
+      fetchRuang();
+     
+      const getSlotLabel = (id) => {
+        const slot = slotList.find(s => s.id === id);
+        if (!slot) return "-";
+      
+        return `${formatJam(slot.jamMulai)} - ${formatJam(slot.jamSelesai)}`;
+      };
     }, [filterStatus, periodeId]);
     const filteredData = data.filter((item) => {
       const matchSearch = searchTerm
@@ -302,54 +340,64 @@
                         <tr key={row.id} className="hover:bg-gray-50">         
                                           
                         {/* dosen */}
-                        <td>{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
+                        <td className="py-2 px-4">{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
                         <td>{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
-                        {/* jdwl lama LAMA */}
-                        <td className="px-6 py-4">
-                          <div className="space-y-1 text-sm">
-                            <div>
-                              <span className="text-gray-400">Hari:</span>
-                              <span className="ml-2 font-medium">
+                        {/* jdwl lama  */}
+                         <td className="px-4 py-3">
+                        <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700 leading-relaxed">
+                          
+                          <div>
+                            <span className="text-gray-400">Hari:</span>{" "}
+                            <span className="font-semibold">
                               {row.jadwalKuliah?.hari?.nama || "-"}
-                              </span>
-                            </div>
-                            <div>
-                            <span className="text-gray-400">Jam:</span>
-                              <span className="ml-2 whitespace-nowrap">
-                              {row.jadwalKuliah?.slotWaktu?.nama || "-"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400"></span>
-                              <span className="ml-2 text-blue-600 whitespace-nowrap font-medium">
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-gray-400">Waktu:</span>{" "}
+                            <span>
+                            {row.jadwalKuliah?.slotWaktu
+                            ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
+                            : "-"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-gray-400">Ruangan:</span>{" "}
+                            <span className="text-blue-600 font-medium">
                               {row.jadwalKuliah?.ruang?.nama || "-"}
-                              </span>
-                            </div>
+                            </span>
                           </div>
-                        </td>
-                        {/* jdwl baru  */}
-                        <td className="px-6 py-4">
-                          <div className="space-y-1 text-sm">
-                            <div>
-                              <span className="text-gray-400">Hari:</span>
-                              <span className="ml-2 font-medium">
-                              {row.hariBaruId ? getHariNama(row.hariBaruId) : "-"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400">Jam:</span>
-                              <span className="ml-2 whitespace-nowrap">
-                              {row.slotWaktuBaruId || "-"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400"></span>
-                              <span className="ml-2 whitespace-nowrap text-blue-600 font-medium">
-                              {row.ruangBaruId ? getRuangNama(row.ruangBaruId) : "-"}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
+
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                      <div className="bg-green-50 p-3 rounded-md text-xs">
+                        <div>
+                          <span className="text-gray-400">Hari:</span>{" "}
+                          <span className="font-medium text-green-700">
+                            {row.hariBaruId ? getHariNama(row.hariBaruId) : "-"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-gray-400">Waktu:</span>{" "}
+                          <span>
+                          {row.jadwalKuliah?.slotWaktu
+                      ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
+                      : "-"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-gray-400">Ruangan:</span>{" "}
+                          <span className="text-green-700 font-medium">
+                            {row.ruangBaruId ? getRuangNama(row.ruangBaruId) : "-"}
+                          </span>
+                        </div>
+
+                      </div>
+                    </td>
                         {/* alasan */}
                         <td className="px-6 py-4">
                           {row.alasanPengaju}

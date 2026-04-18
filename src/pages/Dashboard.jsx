@@ -3,7 +3,7 @@ import MainLayout from "../components/MainLayout";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import {Users,  Calendar,  Building,  BookOpen, CheckCircle, Wand2, Layers, CalendarDays, Building2 } from "lucide-react";
-
+import { useAuth } from "../hooks/useAuth";
 const DashboardSMJP = () => {
   const [stats, setStats] = useState({
     totalMatakuliah: 0,
@@ -17,6 +17,7 @@ const DashboardSMJP = () => {
   const [loading, setLoading] = useState(true);
   const [batch, setBatch] = useState(null);
   const navigate = useNavigate();
+  const {user, peran} = useAuth()
 
   const fetchFinalBatch = async () => {
     try {
@@ -154,53 +155,7 @@ const DashboardSMJP = () => {
       </div>
     );
   };
-  const QuickAccess = () => {
-    const menus = [
-      { name: "Generate Jadwal", color: "bg-blue-500", path: "/scheduler/generate", icon: Wand2 },
-      { name: "Batch Jadwal", color: "bg-purple-500", path: "/scheduler/batch", icon: Layers },
-      { name: "Jadwal Kuliah", color: "bg-green-600", path: "/jadwal-kuliah/jadwal", icon: CalendarDays },
-      { name: "Jadwal Ruangan", color: "bg-indigo-500 ", path: "/jadwal-kuliah/jadwal-ruangan", icon: Building2 }
-    ];
-  
-    return (
-      <div className="grid grid-cols-2 gap-3">
-        {menus.map((menu, i) => {
-          const Icon = menu.icon;
-  
-          return (
-            <div
-              key={i}
-              onClick={() => navigate(menu.path)}
-              className={`
-                bg-gradient-to-br ${menu.color}
-                relative overflow-hidden
-                text-white
-                rounded-xl
-                shadow-sm
-                hover:scale-[1.04]
-                hover:shadow-md
-                transition
-                cursor-pointer
-                flex flex-col items-center justify-end
-                text-center
-                px-3 py-3
-                min-h-[95px]
-              `}
-            >
-              {/* icon atas, transparan */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 opacity-20">
-                <Icon className="w-10 h-10" />
-              </div>
-              <p className="text-[11px] font-semibold relative z-10">
-                {menu.name}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-  // jadwal matrix
+ 
   const JadwalHariIniMatrix = ({ jadwalList }) => {
     const sesiList = [
       "08.00-08.50","08.50-09.40","09.40-10.30","10.30-11.20",
@@ -229,9 +184,13 @@ const DashboardSMJP = () => {
       const end = sesiList.findIndex(s => s.endsWith(selesai));
       return end - start + 1;
     };
-
     const todayName = new Date().toLocaleDateString("id-ID", {
-      weekday: "long"
+      weekday: "long",
+    });
+    const todayFull = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
     const jadwalHari = jadwalList.filter(
@@ -267,10 +226,30 @@ const DashboardSMJP = () => {
     });
 
     return (
-      <div className="bg-white rounded-2xl shadow-sm  border-gray-400  p-6">
-        <h3 className="text-lg font-semibold mb-4">
-          Jadwal Hari Ini ({todayName})
-        </h3>
+      <div className="bg-white rounded-2xl shadow-sm mt-2 border-gray-400  p-6">
+         <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-xl">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">
+                Jadwal Aktif
+              </p>
+
+              {batch ? (
+                <p className="text-sm font-semibold text-gray-800">
+               Periode  {batch?.periode?.nama} | {batch?.fakultas?.nama}
+                </p>
+                
+              ) : (
+                <p className="text-sm text-gray-400">Memuat...</p>
+              )}
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">
+          Jadwal Hari Ini {todayName}, {todayFull}</h3>
+            </div>
+          </div>
+      
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs border">
@@ -385,55 +364,18 @@ const DashboardSMJP = () => {
           />
 
         </div>
-        <div className="bg-white/70 backdrop-blur-md rounded-2xl px-6 py-4 mt-4 shadow-sm mb-6 flex items-center justify-between">
 
-          {/* LEFT */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wide">
-                Jadwal Aktif
-              </p>
-
-              {batch ? (
-                <p className="text-sm font-semibold text-gray-800">
-                  {batch?.periode?.nama} • {batch?.periode?.tahunMulai} • {batch?.periode?.paruh}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-400">Memuat...</p>
-              )}
-            </div>
-          </div>
-          {/* 
-          <div className="text-xs text-gray-400">
-            Jadwal
-          </div> */}
-
-          </div>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 items-start">
-
+        
         {/* LEFT - Jadwal */}
         <div className="lg:col-span-3">
           <JadwalHariIniMatrix jadwalList={jadwalList} compact />
         
         </div>
-
-        {/* RIGHT - Quick Access */}
-        <div className="lg:col-span-2 space-y-4">
-
-        {/* Quick Access */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">
-            Akses Cepat
-          </h3>
-          <QuickAccess />
         </div>
+    
 
         {/* Pengajuan */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 mt-4 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
           <span>Pengajuan Perubahan Jadwal</span>
           {pengajuanList.length > 0 && (
@@ -445,7 +387,7 @@ const DashboardSMJP = () => {
 
           <PengajuanPending data={pengajuanList} />
 
-          <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="mt-3 pt-3 border-t  border-gray-200">
           <button
             onClick={() => navigate("/pengajuan-perubahan-jadwal")}
             className="w-full text-center text-sm text-gray-600 hover:text-red-600 transition"
@@ -454,11 +396,7 @@ const DashboardSMJP = () => {
           </button>
         </div>
         </div>
-        </div>
 
-        </div>
-
-      </div>
     </MainLayout>
   );
 };

@@ -91,7 +91,8 @@ function MataKuliah() {
       kode: row.kode,
       nama: row.nama,
       sks: row.sks,
-      jenis: row.jenis
+      jenis: row.jenis,
+      prodiId: row.prodiId 
     });
     setShowModal(true);
   };
@@ -117,7 +118,7 @@ function MataKuliah() {
       };
   
       if (selected) {
-        await api.put(`/api/kurikulum/mata-kuliah/${selected.id}`, payload);
+        await api.patch(`/api/kurikulum/mata-kuliah/${selected.id}`, payload);
       } else {
         await api.post("/api/kurikulum/mata-kuliah", payload);
       }
@@ -166,7 +167,6 @@ function MataKuliah() {
       alert("Data berhasil dihapus");
     } catch (err) {
       console.error(err);
-  
       const status = err.response?.status;
       const message = err.response?.data?.message;
   

@@ -15,6 +15,23 @@ const ROLE_LABEL = {
     level: "TU Prodi",
   },
 };
+const getUserInfo = (user) => {
+  if (!user) return "-";
+
+  switch (user.peran) {
+    case "TU_PRODI":
+      return  " TU Program Studi";
+
+    case "TU_FAKULTAS":
+      return "TU Fakultas";
+
+    case "ADMIN":
+      return "Admin"; // 🔥 ini kunci
+
+    default:
+      return "-";
+  }
+};
 
 export default function Header({ toggleSidebar }) {
   const { user, peran, logout } = useAuth();
@@ -41,24 +58,31 @@ export default function Header({ toggleSidebar }) {
 
         {/* USER INFO + LOGOUT */}
         <div className="flex items-center gap-3 border-l pl-4">
-          
-          <div className="text-sm leading-tight">
-            <p className="font-semibold">
-              Halo, {ROLE_LABEL[peran]?.title || "User"}
-            </p>
-            <p className="text-xs text-gray-500">
-              Level User: {ROLE_LABEL[peran]?.level || "-"}
-            </p>
+
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm font-semibold">
+          {user?.nama?.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Info */}
+        <div className="leading-tight">
+          <p className="text-sm font-semibold text-gray-800">
+            {user?.nama || "User"}
+          </p>
+
+          <div className="flex items-center gap-2 mt-0.5">
+
+            {/* Badge Role */}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">
+              {ROLE_LABEL[peran]?.title}
+            </span>
+            {/* <span className="text-xs text-gray-500">
+              {getUserInfo(user)}
+            </span> */}
+
           </div>
+        </div>
 
-
-          {/* <button
-            onClick={handleLogout}
-            className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded" title="Logout"
-          >
-            <LogOut size={16} />
-           
-          </button> */}
 
         </div>
       </div>

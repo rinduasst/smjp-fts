@@ -34,7 +34,6 @@ function PenugasanMengajar() {
   const [loadingProgramMatkul, setLoadingProgramMatkul] = useState(false);
   const [filterJenisKelas, setFilterJenisKelas] = useState("");
   const [filterAngkatan, setFilterAngkatan] = useState("");
-  const [filterJenis, setFilterJenis] = useState("");
   const [filterKode, setFilterKode] = useState("");
 
   const fetchData = async (
@@ -64,7 +63,7 @@ function PenugasanMengajar() {
   };
   useEffect(() => {
     fetchData(page, pageSize);
-  }, [page, pageSize, searchTerm, filterJenis, filterKode, filterAngkatan]);
+  }, [page, pageSize, searchTerm, filterJenisKelas, filterAngkatan]);
 
   const totalPage = Math.ceil(totalData / pageSize);
   const resetForm = () => {
@@ -96,7 +95,6 @@ function PenugasanMengajar() {
       isKelasGabungan: row.isKelasGabungan ?? false
     });
     setShowModal(true);
-    setSelectedDosen(row.dosen);
     setSelectedProgramMatkul({
       id: row.programMatkul.id,
       mataKuliah: row.programMatkul.mataKuliah,
@@ -105,41 +103,34 @@ function PenugasanMengajar() {
   };
 
   const handleSubmit = async (payload) => {
-
     setIsSubmitting(true);
   
     try {
-  
-      for (const item of payload) {
-  
-        const body = {
-          dosenId: item.dosenId,
-          programMatkulId: item.programMatkulId,
-          kelompokKelasIds: item.kelompokKelasIds,
-          jumlahSesiPerMinggu: item.jumlahSesiPerMinggu,
-          preferensiRuangJenis: item.preferensiRuangJenis,
-          status: item.status
-        };
-  
-        await api.post("/api/pengajaran/penugasan-mengajar", body);
-  
+      if (selectedItem) {
+        // EDIT
+        await api.patch(
+          `/api/pengajaran/penugasan-mengajar/${selectedItem.id}`,
+          payload[0]
+        );
+      } else {
+        // TAMBAH
+        await Promise.all(
+          payload.map(item =>
+            api.post("/api/pengajaran/penugasan-mengajar", item)
+          )
+        );
       }
   
+      alert("Berhasil disimpan!");
       await fetchData();
-  
       setShowModal(false);
   
     } catch (err) {
-  
-      console.error(err.response?.data || err);
-      alert("Gagal menyimpan data penugasan mengajar");
-  
+      console.error(err);
+      alert("Gagal menyimpan");
     } finally {
-  
       setIsSubmitting(false);
-  
     }
-  
   };
   const handleDelete = async (row) => {
 
@@ -190,20 +181,8 @@ function PenugasanMengajar() {
       item.kelasList?.map(k => k.kelompokKelas.kode)
     ).filter(Boolean))
   ];  
-  const filteredData = data.filter(item => {
-    const matchAngkatan = !filterAngkatan || item.kelasList?.some(k => k.kelompokKelas.angkatan === Number(filterAngkatan));
-    const matchJenis = !filterJenis || item.kelasList?.some(k => k.kelompokKelas.jenisKelas === filterJenis);
-    const matchKode   = !filterKode || item.kelasList?.some(k => k.kelompokKelas.kode === filterKode);
-  
-    const matchSearch =
-      item.dosen?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.programMatkul?.mataKuliah?.nama?.toLowerCase().includes(searchTerm.toLowerCase());
-  
-    return matchAngkatan && matchJenis && matchKode && matchSearch;
-  });
 
   const [dosenDropdown, setDosenDropdown] = useState([]);
-  const [selectedDosen, setSelectedDosen] = useState(null);
   const [loadingDosen, setLoadingDosen] = useState(false);
   //Buat Function Search Dosen
 
@@ -272,6 +251,24 @@ function PenugasanMengajar() {
   
     return `${romawi}_${jenis}_${kelas.kode}`;
   };
+  const filteredData = data.filter(item => {
+  // Filter jenis kelas
+  const matchJenis =
+    !filterJenisKelas ||
+    item.kelasList?.some(k => k.kelompokKelas.jenisKelas === filterJenisKelas);
+
+  // Filter angkatan
+  const matchAngkatan =
+    !filterAngkatan ||
+    item.kelasList?.some(k => k.kelompokKelas.angkatan === filterAngkatan);
+
+  // Filter kode kelas
+  const matchKode =
+    !filterKode ||
+    item.kelasList?.some(k => k.kelompokKelas.kode === filterKode);
+
+  return matchJenis && matchAngkatan && matchKode;
+});
   const [pengajaranList, setPengajaranList] = useState([
     {
       programMatkulId: "",
@@ -295,17 +292,17 @@ function PenugasanMengajar() {
 
         {/* Action Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row justify-between gap-4">
-        {peran !== "ADMIN" && peran !== "TU_FAKULTAS" && (
+       
         <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition"
         >
           <Plus size={18} /> Tambah Penugasan
         </button>
-      )}
+ 
            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
           <select   className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-            value={filterJenis} onChange={e => setFilterJenis(e.target.value)}>
+            value={filterJenisKelas} onChange={e => setFilterJenisKelas(e.target.value)}>
             <option value="">Semua Jenis Kelas</option>
             {jenisKelasList.map(jenis => (
               <option key={jenis} value={jenis}>{jenis}</option>
@@ -385,7 +382,7 @@ function PenugasanMengajar() {
                       );
 
                       return `${toRomawi(smt)}_${k.kelompokKelas.jenisKelas === "REGULER" ? "REG" : "KAR"}_${k.kelompokKelas.kode}`;
-                    }).join("dan ")}
+                    }).join(" dan ")}
                     </td>
                       <td className="text-center">{row.jumlahSesiPerMinggu}</td>
                       <td className="text-center">                  
@@ -479,6 +476,8 @@ function PenugasanMengajar() {
         selectedProgramMatkul={selectedProgramMatkul}
         setSelectedProgramMatkul={setSelectedProgramMatkul}
         dataPenugasan={data}
+        isEdit={!!selectedItem}
+    
       />
       </div>
       <PenugasanDetailModal

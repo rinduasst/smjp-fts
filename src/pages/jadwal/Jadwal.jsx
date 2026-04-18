@@ -176,11 +176,10 @@ const Jadwal = () => {
         </div>
         </div>
 
-        <div className="bg-white shadow-sm border border-gray-200">
-          <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left border border-gray-300 bg-white">
-            <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
-              <tr>
+        <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
+            <table className="min-w-full text-sm border border-gray-300">
+              <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
+                <tr>
                 <th className="px-3 py-2 border">Hari</th>
                 <th className="px-3 py-2 border text-center">Jam</th>
                 <th className="px-3 py-2 border">Mata Kuliah</th>
@@ -193,18 +192,18 @@ const Jadwal = () => {
             </thead>
             <tbody>
             {loading ? (
-             <tr>
-             <td colSpan="8" className="p-8">
-               <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
-                 <Loader2 className="animate-spin" size={24} />
-                 <span className="text-sm">Memuat data jadwal...</span>
-               </div>
-             </td>
-           </tr>
-              ) : hasFetched && data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    Tidak ada data
+                  <td colSpan="8" className="p-8">
+                    <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+                      <Loader2 className="animate-spin" size={24} />
+                      <span className="text-sm">Memuat data jadwal...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-10 text-gray-500">
+                    Tidak ada jadwal
                   </td>
                 </tr>
               ) : (
@@ -275,8 +274,7 @@ const Jadwal = () => {
               </button>
             </div>
           </div>
-        </div>
-
+    
     </MainLayout>
   );
 };

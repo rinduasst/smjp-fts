@@ -38,13 +38,13 @@ function Login() {
   
         {/* Background Fullscreen */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute blur-xs inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/gedungfts.png')" }}
         />
         <div className="absolute inset-0 bg-green-900/30"></div>
   
         {/* Form Centered */}
-        <div className="relative z-10 w-full max-w-md p-8 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20">
+        <div className="relative z-10 w-full max-w-md p-8 bg-white backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20">
   
     {/* Header */}
     <div className="text-center mb-6">
@@ -64,15 +64,15 @@ function Login() {
 
       {/* Email */}
       <div>
-        <label className="block text-sm font-medium text-gray-100 mb-2">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
         <div className="relative">
-          <Mail className="absolute left-4 top-3.5 text-gray-200 w-5 h-5" />
+          <Mail className="absolute left-4 top-3.5 text-gray-600 w-5 h-5" />
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Masukkan email"
-            className="w-full bg-white/20 border border-white/30 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+            className="w-full bg-white/10 border border-black/30 rounded-xl pl-12 pr-4 py-3 text-gray placeholder-black/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
             required
           />
         </div>
@@ -80,15 +80,15 @@ function Login() {
 
       {/* Password */}
       <div>
-        <label className="block text-sm font-medium text-gray-100 mb-2">Password</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
         <div className="relative">
-          <Lock className="absolute left-4 top-3.5 text-gray-200 w-5 h-5" />
+          <Lock className="absolute left-4 top-3.5 text-gray-600 w-5 h-5" />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Masukkan password"
-            className="w-full bg-white/20 border border-white/30 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+            className="w-full bg-white/10 border border-black/30 rounded-xl pl-12 pr-4 py-3 text-gray placeholder-black/70 focus:outline-none focus:bg-white/30 focus:border-green-400 focus:ring-1 focus:ring-green-400"
             required
           />
         </div>
@@ -107,8 +107,8 @@ function Login() {
 
     </form>
 
-    <p className="text-center text-sm text-gray-200 mt-6">
-      Belum punya akun? <span className="text-green-300 font-medium">Hubungi Administrator</span>
+    <p className="text-center text-sm text-gray-700 mt-6">
+      Belum punya akun? <span className="text-green-700 font-medium">Hubungi Administrator</span>
     </p>
       </div>
 

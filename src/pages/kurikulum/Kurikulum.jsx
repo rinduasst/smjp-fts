@@ -14,6 +14,8 @@ function Kurikulum() {
   const [selected, setSelected] = useState(null);
   const [filterProdi, setFilterProdi] = useState("");
   const navigate = useNavigate();
+  
+  const { user,peran } = useAuth();
 
   const [formData, setFormData] = useState({
     prodiId: "",
@@ -28,10 +30,8 @@ function Kurikulum() {
   // contoh data prodi (nanti dari API)
   const fetchKurikulum = async () => {
     setLoading(true);
-  
     const effectiveProdiId =
       peran === "TU_PRODI" ? user?.prodiId : filterProdi;
-  
     try {
       const res = await api.get("/api/kurikulum/kurikulum", {
         params: {
@@ -64,9 +64,7 @@ function Kurikulum() {
     // fetch kurikulum kalau filter berubah
     useEffect(() => {
       fetchKurikulum();
-    }, [filterProdi]);
-  
- 
+    }, [filterProdi, peran, user?.prodiId]);
     const filteredData = data.filter(item =>
       item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -74,7 +72,7 @@ function Kurikulum() {
 
   const resetForm = () => {
     setFormData({
-      prodiId: "",
+      prodiId: peran === "TU_PRODI" ? user?.prodiId || "" : "",
       nama: "",
       angkatanMulai: "",
       angkatanSelesai: "",
@@ -99,8 +97,9 @@ function Kurikulum() {
       item.nama.toLowerCase() === formData.nama.toLowerCase() &&
       item.prodi?.id === formData.prodiId &&
       Number(item.angkatanMulai) === Number(formData.angkatanMulai) &&
-      Number(item.angkatanSelesai) === Number(formData.angkatanSelesai) &&
-      item.id !== selected?.id // biar gak ketemu sendiri saat edit
+      (item.angkatanSelesai || null) ===
+        (formData.angkatanSelesai ? Number(formData.angkatanSelesai) : null) &&
+      item.id !== selected?.id
     );
   
     if (isDuplicate) {
@@ -110,14 +109,17 @@ function Kurikulum() {
   
     setIsSubmitting(true);
   
+    const tahunMulai = Number(formData.angkatanMulai);
+    const tahunSelesai = Number(formData.angkatanSelesai);
+    
     const payload = {
       prodiId: peran === "TU_PRODI" ? user?.prodiId : formData.prodiId,
       nama: formData.nama.trim(),
-      angkatanMulai: Number(formData.angkatanMulai),
-   angkatanSelesai: formData.angkatanSelesai
-  ? Number(formData.angkatanSelesai)
-  : null,
+      angkatanMulai: tahunMulai,
       aktif: formData.aktif,
+      ...(formData.angkatanSelesai && tahunSelesai >= 1900 && {
+        angkatanSelesai: tahunSelesai
+      })
     };
   
     try {
@@ -148,7 +150,10 @@ function Kurikulum() {
   const handleEdit = (row) => {
     setSelected(row);
     setFormData({
-      prodiId: row.prodiId || row.prodi?.id || "",
+      prodiId:
+        peran === "TU_PRODI"
+          ? user?.prodiId
+          : row.prodiId,
       nama: row.nama || "",
       angkatanMulai: row.angkatanMulai || "",
       angkatanSelesai: row.angkatanSelesai || "",
@@ -179,15 +184,7 @@ function Kurikulum() {
     }
   };
 
-  const { user,peran } = useAuth();
-  useEffect(() => {
-    if (peran === "TU_PRODI" && user?.prodiId) {
-      setFormData((prev) => ({
-        ...prev,
-        prodiId: user.prodiId
-      }));
-    }
-  }, [peran, user]);
+
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
@@ -205,10 +202,16 @@ function Kurikulum() {
           flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
   
           <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
+           onClick={() => {
+            resetForm();
+            if (peran === "TU_PRODI" && user?.prodiId) {
+              setFormData((prev) => ({
+                ...prev,
+                prodiId: user.prodiId
+              }));
+            }
+            setShowModal(true);
+          }}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600
             text-white px-5 py-2.5 rounded-lg shadow-sm
             hover:from-green-600 hover:to-green-700 transition-all font-medium"
@@ -305,7 +308,7 @@ function Kurikulum() {
                     <tr key={row.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">{row.nama}</td>
                       <td className="px-6 py-4">
-                      {row.angkatanMulai} - {row.angkatanSelesai ?? "Sekarang"}
+                      {row.angkatanMulai} - {row.angkatanSelesai ? row.angkatanSelesai : "Sekarang"}
                     </td>
                       <td className="px-6 py-4">
                         {row.prodi?.nama || "-"}
@@ -466,10 +469,10 @@ function Kurikulum() {
                       name="angkatanSelesai"
                       value={formData.angkatanSelesai}
                       onChange={handleInputChange}
-                      placeholder="Selesai"
+                      placeholder="Sekarang"
                       className="px-3 py-2 bg-gray-100 rounded
                       focus:outline-none focus:ring-2 focus:ring-green-500"
-                      required
+                      
                     />
                   </div>
                 </div>

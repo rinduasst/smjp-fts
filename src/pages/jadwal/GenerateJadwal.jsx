@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../../hooks/useAuth";
 
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
@@ -15,6 +16,7 @@ const GenerateJadwal = () => {
   const [preset, setPreset] = useState("CEPAT");
   const [jobId, setJobId] = useState(null);
   const [namaBatch, setNamaBatch] = useState("");
+  const {user, peran} = useAuth();
 
   useEffect(() => {
     fetchFakultas();
@@ -106,7 +108,11 @@ const GenerateJadwal = () => {
           ])
       ).values()
     ];
-
+    useEffect(() => {
+      if (peran === "TU_FAKULTAS" && user?.fakultasId) {
+        setFakultasId(user.fakultasId);
+      }
+    }, [peran, user]);
 
   return (
     <MainLayout>
@@ -137,8 +143,7 @@ const GenerateJadwal = () => {
 
       
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
-
-        {/* Fakultas */}
+        {peran !== "TU_FAKULTAS" && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Fakultas
@@ -156,6 +161,7 @@ const GenerateJadwal = () => {
             ))}
           </select>
         </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

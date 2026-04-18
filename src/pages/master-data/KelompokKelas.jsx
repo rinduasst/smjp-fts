@@ -94,7 +94,7 @@ function KelompokKelas() {
     setFormData({
       kode: "",
       angkatan: "",
-      prodiId: "",
+      prodiId: peran === "TU_PRODI" ? user?.prodiId || "" : "",
       kapasitas: ""
     });
     setFormErrors({});
@@ -106,13 +106,16 @@ function KelompokKelas() {
     setFormData({
       kode: row.kode,
       angkatan: row.angkatan,
-      prodiId: row.prodiId,
+      prodiId:
+        peran === "TU_PRODI"
+          ? user?.prodiId
+          : row.prodiId,
       kapasitas: row.kapasitas,
       jenisKelas: row.jenisKelas
     });
+  
     setShowModal(true);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -127,7 +130,9 @@ function KelompokKelas() {
       const payload = {
         kode: formData.kode.toUpperCase().trim(),
         angkatan: Number(formData.angkatan),
-        prodiId: formData.prodiId,
+        ...(peran === "TU_PRODI"
+        ?{ prodiId: user?.prodiId }
+        :{ prodiId: formData.prodiId}),
         kapasitas: Number(formData.kapasitas),
         jenisKelas: formData.jenisKelas
       };
@@ -188,11 +193,6 @@ function KelompokKelas() {
     }
   };
   const { user, peran } = useAuth();
-  useEffect(() => {
-    if (peran === "TU_PRODI" && user?.prodiId) {
-      setFilterProdi(user.prodiId);
-    }
-  }, [peran, user]);
 
 
   return (
@@ -209,7 +209,18 @@ function KelompokKelas() {
         {/* Action Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <button
-            onClick={() => { resetForm(); setShowModal(true); }}
+           onClick={() => {
+            resetForm();
+          
+            if (peran === "TU_PRODI" && user?.prodiId) {
+              setFormData((prev) => ({
+                ...prev,
+                prodiId: user.prodiId
+              }));
+            }
+          
+            setShowModal(true);
+          }}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Plus size={18} />
@@ -422,8 +433,9 @@ function KelompokKelas() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-            </div>
-              
+             </div>
+             {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
+             <div>
             <label className="block text-sm font-medium text-gray-700">Program Studi </label>
                 <select
                   name="prodiId"
@@ -438,6 +450,8 @@ function KelompokKelas() {
                     </option>
                   ))}
                 </select>
+                </div>
+             )}
                 <div>
               <label className="block text-sm font-medium text-gray-700">
                 Jenis Kelas

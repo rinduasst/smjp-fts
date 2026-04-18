@@ -112,10 +112,10 @@ const fetchJadwal = async () => {
           </button>
         </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left border border-gray-300 bg-white">
-            <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
-              <tr>
+        <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
+            <table className="min-w-full text-sm border border-gray-300">
+              <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
+                <tr>
               <th className="px-4 py-3 border">Hari</th>
                 <th className="px-4 py-3 border">Jam</th>
                 <th className="px-4 py-3 border">Mata Kuliah</th>

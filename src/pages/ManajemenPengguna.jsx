@@ -144,7 +144,7 @@ function ManajemenPengguna() {
         await api.post("/api/pengguna", formData);
         alert("Pengguna berhasil ditambahkan");
       }
-      fetchPengguna();
+     await fetchPengguna();
       setShowModal(false);
     } catch (err) {
       alert("Gagal menyimpan pengguna. Pastikan password memenuhi aturan.");

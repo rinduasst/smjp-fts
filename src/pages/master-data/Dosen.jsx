@@ -84,7 +84,9 @@ useEffect(() => {
       const payload = {
         nama: formData.nama,
         nidn: formData.nidn,
-        prodiId: formData.prodiId,
+        ...(peran === "TU_PRODI"
+        ? { prodiId: user?.prodiId }
+        : { prodiId: formData.prodiId}),
         bebanMengajarMaks: Number(formData.bebanMengajarMaks),
       };
   
@@ -148,10 +150,17 @@ useEffect(() => {
   };
   const { user, peran } = useAuth();
   useEffect(() => {
-    if (peran === "TU_PRODI" && user?.prodiId) {
-      setFilterProdi(user.prodiId);
+    if (
+      peran === "TU_PRODI" &&
+      user?.prodiId &&
+      formData.prodiId !== user.prodiId
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        prodiId: user.prodiId
+      }));
     }
-  }, [peran, user]);
+  }, [peran, user?.prodiId, formData.prodiId]);
   
   
 
@@ -338,6 +347,7 @@ useEffect(() => {
                     required
                   />
                 </div>
+                {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
                 <div>
                   <label className="text-sm font-medium">Program Studi</label>
                   <select
@@ -353,6 +363,7 @@ useEffect(() => {
                     ))}
                   </select>
                 </div>
+                )}
                 <div>
                   <label className="text-sm font-medium">Beban Mengajar Maks</label>
                   <input

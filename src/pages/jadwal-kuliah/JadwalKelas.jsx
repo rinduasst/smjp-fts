@@ -80,24 +80,36 @@ const JadwalKelas = () => {
     return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
   };
   const semesterSet = new Set();
-    data.forEach((hari) => {
+  data.forEach((hari) => {
     hari.slots.forEach((slot) => {
-        slot.kelas?.forEach((k) => {
+      const kelasList = Array.isArray(slot.kelas)
+        ? slot.kelas
+        : slot.kelas
+        ? [slot.kelas]
+        : [];
+  
+      kelasList.forEach((k) => {
         const semester = hitungSemester(
-            k.angkatan,
-            batchInfo?.periode?.tahunMulai,
-            batchInfo?.periode?.paruh
+          k.angkatan,
+          batchInfo?.periode?.tahunMulai,
+          batchInfo?.periode?.paruh
         );
         semesterSet.add(semester);
-        });
+      });
     });
-    });
+  });
 
 const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
   const semuaKelas = new Set();
   data.forEach((hari) => {
     hari.slots.forEach((slot) => {
-      slot.kelas?.forEach((k) => {
+      const kelasList = Array.isArray(slot.kelas)
+        ? slot.kelas
+        : slot.kelas
+        ? [slot.kelas]
+        : [];
+  
+      kelasList.forEach((k) => {
         semuaKelas.add(k.kode);
       });
     });
@@ -105,32 +117,37 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
   const groupedSemester = {};
   data.forEach((hari) => {
     hari.slots.forEach((slot) => {
-      slot.kelas?.forEach((k) => {
-        const angkatan = k.angkatan;
+      const kelasList = Array.isArray(slot.kelas)
+        ? slot.kelas
+        : slot.kelas
+        ? [slot.kelas]
+        : [];
+  
+      kelasList.forEach((k) => {
         const semesterAngka = hitungSemester(
-          angkatan,
+          k.angkatan,
           batchInfo?.periode?.tahunMulai,
           batchInfo?.periode?.paruh
         );
-        const semester = semesterAngka;
-        if (!groupedSemester[semester]) {
-          groupedSemester[semester] = {};
-        }
-        const kelasKey = k.kode?.toLowerCase() === "karyawan"
-          ? "KARYAWAN"
-          : `REG_${k.kode}`;
   
-        if (!groupedSemester[semester][kelasKey]) {
-          groupedSemester[semester][kelasKey] = [];
+        if (!groupedSemester[semesterAngka]) {
+          groupedSemester[semesterAngka] = {};
         }
   
-        groupedSemester[semester][kelasKey].push({
+        const kelasKey =
+          k.kode?.toLowerCase() === "karyawan"
+            ? "KARYAWAN"
+            : `REG_${k.kode}`;
+  
+        if (!groupedSemester[semesterAngka][kelasKey]) {
+          groupedSemester[semesterAngka][kelasKey] = [];
+        }
+  
+        groupedSemester[semesterAngka][kelasKey].push({
           ...slot,
-          hari: hari.nama
+          hari: hari.nama,
         });
-  
       });
-  
     });
   });
   useEffect(() => {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/api";
 import {ArrowLeft  } from "lucide-react";
 import MainLayout from "../../components/MainLayout";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function AssignMatkul() {
   const { id } = useParams();
@@ -12,7 +13,8 @@ export default function AssignMatkul() {
   const [allMatkul, setAllMatkul] = useState([]);   // semua matkul
   const [selectedMatkul, setSelectedMatkul] = useState([]);
 
- 
+   
+  const {user, peran}= useAuth();
   const getKurikulum = async () => {
     const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
     const data = res.data.data;
@@ -65,7 +67,8 @@ export default function AssignMatkul() {
         `/api/kurikulum/kurikulum/${id}/assignMatkul`,
         payload
       );
-      alert("Mata kuliah berhasil di-assign");
+      alert("Mata kuliah berhasil ditambahkan ke kurikulum");
+      navigate(`/kurikulum/${id}`);
      await  getKurikulum();
       setSelectedMatkul([]);
     } catch (err) {
@@ -80,10 +83,10 @@ export default function AssignMatkul() {
         (m) => m.mataKuliah?.id === mk.id
       )
   );
-  console.log("ASSIGNED:", matkulList);
+
   return (
     <MainLayout>
-      <h1 className="text-2xl font-bold mb-1">Penugasan Mata Kuliah</h1>
+      <h1 className="text-2xl font-bold mb-1">Daftar Mata Kuliah Kurikulum</h1>
       <p className="text-sm text-gray-600 mb-6">
         Pilih dan atur mata kuliah yang akan digunakan dalam kurikulum.
       </p>
@@ -106,7 +109,7 @@ export default function AssignMatkul() {
         <b>Petunjuk Penggunaan:</b>
         <ul className="list-disc ml-4 mt-1 space-y-1">
           <li>Centang mata kuliah untuk menambahkan ke kurikulum.</li>
-          <li>Isi semester dan minimal semester sesuai ketentuan.</li>
+          <li>Tentukan semester penempatan mata kuliah.</li>
           <li>Perubahan disimpan setelah klik <b>Simpan Perubahan</b>.</li>
         </ul>
       </div>
@@ -116,7 +119,27 @@ export default function AssignMatkul() {
       <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
         <thead className="bg-gray-50">
           <tr className="text-gray-700 uppercase text-xs tracking-wide">
-            <th className="border-b px-3 py-2 w-10 text-center"></th>
+          <th className="border-b px-3 py-2 w-10 text-center">
+          <input
+            type="checkbox"
+            checked={
+              availableMatkul.length > 0 &&
+              selectedMatkul.length === availableMatkul.length
+            }
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedMatkul(
+                  availableMatkul.map((mk) => ({
+                    id: mk.id,
+                    semester: 1, // default semester
+                  }))
+                );
+              } else {
+                setSelectedMatkul([]);
+              }
+            }}
+          />
+        </th>
             <th className="border-b px-3 py-2">Kode</th>
             <th className="border-b px-3 py-2">Nama Mata Kuliah</th>
             <th className="border-b px-3 py-2 text-center">SKS</th>

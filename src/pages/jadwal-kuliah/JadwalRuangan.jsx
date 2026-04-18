@@ -9,9 +9,8 @@ const JadwalRuangan = () => {
   const [batch, setBatch] = useState(null);
   const [jadwalList, setJadwalList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [slotList, setSlotList] = useState([]);
   const navigate = useNavigate();
-  
-
   const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
   const warnaProdi = {
@@ -87,26 +86,44 @@ const JadwalRuangan = () => {
     jadwalGroupedByHari[hari].push(j);
   });
 
-  const sesiList = [
-    "08.00-08.50",
-    "08.50-09.40",
-    "09.40-10.30",
-    "10.30-11.20",
-    "13.00-13.50",
-    "13.50-14.40",
-    "14.40-15.30",
-    "16.00-16.50",
-    "16.50-17.40",
-    "18.30-19.20",
-    "19.20-20.10",
-    "20.10-21.00",
-    "21.00-21.50"
-  ];
+  const fetchSlotWaktu = async () => {
+    try {
+      const res = await api.get("/api/master-data/slot-waktu");
+      const data = res.data?.data?.items || [];
+      const urutanSesi = {
+        PAGI: 1,
+        SIANG: 2,
+        MALAM: 3
+      };
+  
+      const sorted = data.sort((a, b) => {
+        if (urutanSesi[a.sesi] !== urutanSesi[b.sesi]) {
+          return urutanSesi[a.sesi] - urutanSesi[b.sesi];
+        }
+        return a.urutanDalamSesi - b.urutanDalamSesi;
+      });
+  
+      setSlotList(sorted);
+  
+    } catch (err) {
+      console.error("ERROR SLOT:", err);
+    }
+  };
+  useEffect(() => {
+    fetchSlotWaktu();
+  }, []);
+  const sesiList = slotList.map(s => ({
+    id: s.id,
+    label: `${s.jamMulai}-${s.jamSelesai}`,
+    mulai: s.jamMulai,
+    selesai: s.jamSelesai
+  }));
   const hitungRowSpan = (mulai, selesai) => {
-    const start = sesiList.findIndex(s => s.startsWith(mulai));
-    const end = sesiList.findIndex(s => s.endsWith(selesai));
+    const start = sesiList.findIndex(s => s.mulai === mulai);
+    const end = sesiList.findIndex(s => s.selesai === selesai);
     return end - start + 1;
   };
+
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen">
@@ -156,11 +173,6 @@ const JadwalRuangan = () => {
         {hariUrut.map(hari => {
           const jadwalHari = jadwalGroupedByHari[hari] || [];
           if (!jadwalHari.length) return null;
-
-          // Buat list ruangan dan slot
-          // const ruangList = Array.from(new Set(jadwalHari.map(j => j.ruangan)));
-          // const slotList = Array.from(new Set(jadwalHari.map(j => `${j.jamMulai}-${j.jamSelesai}`)))
-          //   .sort((a,b) => a.localeCompare(b));
           const ruangList = Array.from(new Set(jadwalHari.map(j => j.ruangan)));
           const slotList = sesiList;
           // Matrix
@@ -168,9 +180,8 @@ const JadwalRuangan = () => {
           const skipCell = {};
 
           jadwalHari.forEach(j => {
-            const startIndex = sesiList.findIndex(s => s.startsWith(j.jamMulai));
-
-            const slotKey = sesiList[startIndex]; // pakai slot asli
+            const startIndex = sesiList.findIndex(s => s.mulai === j.jamMulai);
+            const slotKey = sesiList[startIndex]?.label;
 
             if (!matrix[slotKey]) matrix[slotKey] = {};
 
@@ -195,23 +206,23 @@ const JadwalRuangan = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {slotList.map(slotKey => (
-                      <tr key={slotKey} className="hover:bg-gray-50">
-                        <td className="p-2 border font-medium whitespace-nowrap">
-                        {slotKey}
-                          </td>
+                  {slotList.map(slot => (
+                    <tr key={slot.id} className="hover:bg-gray-50">
+                      <td className="p-2 border font-medium whitespace-nowrap">
+                        {slot.label}
+                      </td>
                           {ruangList.map(ruang => {
-                          const key = `${slotKey}-${ruang}`;
+                          const key = `${slot.label}-${ruang}`;
                           if (skipCell[key]) return null;
-                          const jadwal = matrix[slotKey]?.[ruang];
+                          const jadwal = matrix[slot.label]?.[ruang];
                           if (!jadwal) {
                             return <td key={ruang} className="p-2 border text-center"></td>;
                           }
                           // tandai slot berikutnya supaya tidak dirender
-                          const startIndex = sesiList.findIndex(s => s.startsWith(jadwal.jamMulai));
+                          const startIndex = sesiList.findIndex(s => s.mulai === jadwal.jamMulai);
                           for (let i = 1; i < jadwal.rowspan; i++) {
                             const nextSlot = sesiList[startIndex + i];
-                            skipCell[`${nextSlot}-${ruang}`] = true;
+                            skipCell[`${nextSlot.label}-${ruang}`] = true;
                           }
                           return (
                             <td

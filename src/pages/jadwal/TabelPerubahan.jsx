@@ -3,7 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Search, X} from "lucide-react";
-
+import { useAuth } from "../../hooks/useAuth";
 const TabelPerubahan = () => {
 
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const TabelPerubahan = () => {
   const [hariList, setHariList] = useState([]);
   const [slotList, setSlotList] = useState([]);
 
-  const [selectedJadwal, setSelectedJadwal] = useState("");
+  const [selectedJadwal, setSelectedJadwal] = useState(null);
   const [hariBaru, setHariBaru] = useState("");
   const [slotBaru, setSlotBaru] = useState("");
   const [ruangBaru, setRuangBaru] = useState("");
@@ -26,18 +26,34 @@ const TabelPerubahan = () => {
   const [selectedHari, setSelectedHari] = useState("")
   const [search, setSearch] = useState("")
 
+  const [availableData, setAvailableData] = useState([]);
+  const [selectedSlotGroup, setSelectedSlotGroup] = useState(null);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const { user } = useAuth();
   const fetchJadwal = async () => {
     if (!activeBatchId) return;
+  
     try {
       setLoading(true);
-      const res = await api.get("/api/view-jadwal/all", {
-        params: {
-          periodeAkademikId: activeBatchId,
-          statusBatch: "FINAL",
-          page: 1,
-          pageSize: 200
-        }
-      });
+  
+      const params = {
+        periodeAkademikId: activeBatchId,
+        statusBatch: "FINAL",
+        page: 1,
+        pageSize: 200,
+      };
+  
+     //filter role
+      if (user?.peran === "TU_PRODI") {
+        params.prodiId = user.prodiId;
+      }
+  
+      if (user?.peran === "TU_FAKULTAS") {
+        params.fakultasId = user.fakultasId;
+      }
+  
+      const res = await api.get("/api/view-jadwal/all", { params });
+  
       setJadwalList(res.data?.data?.items || []);
       setHasFetched(true);
     } catch (err) {
@@ -46,6 +62,11 @@ const TabelPerubahan = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (user?.peran === "TU_PRODI") {
+      setSelectedProdi(user.prodiNama);
+    }
+  }, [user]);
   const fetchFinalBatch = async () => {
     try {
       const res = await api.get("/api/scheduler/batch", {
@@ -59,10 +80,7 @@ const TabelPerubahan = () => {
       console.error(err);
     }
   };
-  useEffect(() => {
-    fetchFinalBatch();
-    fetchProdi();
-  }, []);
+
   
   useEffect(() => {
     if (activeBatchId) {
@@ -70,23 +88,63 @@ const TabelPerubahan = () => {
     }
   }, [activeBatchId]);
 
+  const fetchHari = async () => {
+    try {
+      const res = await api.get("/api/master-data/hari");
+      setHariList(res.data?.data?.data || []);
+    } catch (err) {
+      console.error("Gagal ambil hari", err);
+    }
+  };
+  const fetchSlot = async () => {
+    try {
+      const res = await api.get("/api/master-data/slot-waktu");
+      setSlotList(res.data?.data?.items || []);
+    } catch (err) {
+      console.error("Gagal ambil slot", err);
+    }
+  };
+  useEffect(() => {
+    fetchFinalBatch();
+    fetchProdi();
+    fetchHari();
+    fetchSlot(); 
+  }, []);
   const handleSubmit = async () => {
     if (!selectedJadwal || !hariBaru || !slotBaru || !ruangBaru || !alasan) {
       alert("Lengkapi data dulu");
       return;
     }
+  
+    const payload = {
+      jadwalKuliahId: selectedJadwal.id,
+      hariBaruId: hariBaru,
+      slotWaktuBaruId: selectedSlotGroup?.slotIds[0], // 🔥 fix penting
+      ruangBaruId: ruangBaru,
+      alasanPengaju: alasan
+    };
+  
+    console.log("=== DATA YANG DIKIRIM ===");
+    console.log("PAYLOAD FINAL:", JSON.stringify(payload, null, 2));
+    console.log(payload);
+  
     try {
-      await api.post("/api/pengajuan-perubahan-jadwal", {
-        jadwalKuliahId: selectedJadwal.id,
-        hariBaruId: hariBaru,
-        slotWaktuBaruId: slotBaru,
-        ruangBaruId: ruangBaru,
-        alasanPengaju: alasan
-      });
+      const res = await api.post("/api/pengajuan-perubahan-jadwal", payload);
+  
+      console.log("=== RESPONSE SUCCESS ===");
+      console.log(res.data);
+  
       alert("Pengajuan berhasil");
       navigate("/perubahan-jadwal");
     } catch (err) {
-      console.error(err);
+      console.log("=== ERROR DETAIL ===");
+  
+      if (err.response) {
+        console.log("STATUS:", err.response.status);
+        console.log("DATA:", err.response.data); // 🔥 INI PALING PENTING
+      } else {
+        console.log(err);
+      }
     }
   };
   const fetchProdi = async () => {
@@ -97,56 +155,21 @@ const TabelPerubahan = () => {
       console.error("Gagal ambil prodi", err)
     }
   }
-  const fetchAvailableSlots = async (slotWaktuId) => {
-    try {
-      const res = await api.get("/api/view-jadwal/available-slots", {
-        params: {
-          periodeAkademikId: activeBatchId,
-          slotWaktuId: slotWaktuId
-        }
-      });
+
+  const slotFiltered =
+  availableData.find(d => d.hariId === hariBaru)?.slots ?? [];
+  const selectedSlot = slotFiltered.find(s => s.slotId === slotBaru);
+  const ruangTersedia = selectedSlot?.rooms || [];
   
-      const data = res.data?.data?.availableByDay || [];
-  
-      // isi hari list
-      const hari = data.map(d => ({
-        id: d.hariId,
-        nama: d.hari
-      }));
-      setHariList(hari);
-      const slots = data.flatMap(day =>
-        day.slots
-          .filter(slot => slot.availableCount > 0)
-          .map(slot => ({
-            id: slot.slotId,
-            jamMulai: slot.jamMulai,
-            jamSelesai: slot.jamSelesai,
-            rooms: slot.rooms,
-            hari: day.hari,
-            hariId: day.hariId
-          }))
-      );
-      setSlotList(slots);
-  
-    } catch (err) {
-      console.error("Gagal ambil slot tersedia", err);
-    }
-  };
-  const selectedSlot =
-  slotList.find(s => s.id === slotBaru)
-  const ruangTersedia = selectedSlot?.rooms || []
-  const slotFiltered = slotList.filter(
-    slot => slot.hariId === hariBaru
-  )
   const filteredJadwal = jadwalList.filter((j) => {
 
     const matchProdi =
       !selectedProdi ||
       j.prodi?.toLowerCase() === selectedProdi.toLowerCase()
   
-    const matchHari =
+      const matchHari =
       !selectedHari ||
-      j.hari === selectedHari
+      j.hariId === selectedHari;
   
     const matchSearch =
       !search ||
@@ -155,6 +178,34 @@ const TabelPerubahan = () => {
   
     return matchProdi && matchHari && matchSearch
   })
+  const resetForm = () => {
+    setSelectedJadwal(null);
+    setHariBaru("");
+    setSlotBaru("");
+    setRuangBaru("");
+    setAlasan("");
+  };
+  
+  const fetchAvailableSlots = async (slotWaktuId) => {
+    try {
+      const res = await api.get("/api/view-jadwal/available-slots", {
+        params: {
+          periodeAkademikId: activeBatchId,
+          slotWaktuId
+        }
+      });
+  
+      setAvailableData(res.data?.data?.availableByDay || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  useEffect(() => {
+    if (hariBaru && selectedJadwal?.slotWaktuId) {
+      fetchAvailableSlots(selectedJadwal.slotWaktuId);
+    }
+  }, [hariBaru]);
+
   const toRomawi = (num) => {
     if (!num || num <= 0) return "";
     const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
@@ -185,7 +236,67 @@ const TabelPerubahan = () => {
     acc[hari].push(item)
     return acc  
   }, {})
-
+  const formatJam = (jam) => {
+    if (!jam) return "-";
+  
+    if (jam.includes("T")) {
+      return new Date(jam).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Jakarta",
+      });
+    }
+  
+    return jam.replace(".", ":");
+  };
+  const sks = selectedJadwal?.sks || 1;
+  const generateSlotRange = () => {
+    if (!slotList.length) return [];
+  
+    const sortedSlot = [...slotList].sort((a, b) => {
+      const jamA = new Date(`1970-01-01T${a.jamMulai.replace(".", ":")}:00`);
+      const jamB = new Date(`1970-01-01T${b.jamMulai.replace(".", ":")}:00`);
+      return jamA - jamB;
+    });
+  
+    const result = [];
+  
+    for (let i = 0; i <= sortedSlot.length - sks; i++) {
+      const group = sortedSlot.slice(i, i + sks);
+  
+      result.push({
+        startId: group[0].id,
+        slotIds: group.map(s => s.id), // 🔥 INI PENTING
+        label: `${formatJam(group[0].jamMulai)} - ${formatJam(group[group.length - 1].jamSelesai)}`
+      });
+    }
+  
+    return result;
+  };
+ 
+  const getRoomsForSelectedGroup = () => {
+    if (!selectedSlotGroup || !availableData.length) return [];
+  
+    const hariData = availableData.find(d => d.hariId === hariBaru);
+    if (!hariData) return [];
+  
+    const selectedSlots = hariData.slots.filter(slot =>
+      selectedSlotGroup.slotIds.includes(slot.slotId)
+    );
+  
+    if (selectedSlots.length === 0) return [];
+  
+    let commonRooms = selectedSlots[0].rooms;
+  
+    for (let i = 1; i < selectedSlots.length; i++) {
+      commonRooms = commonRooms.filter(room =>
+        selectedSlots[i].rooms.some(r => r.id === room.id)
+      );
+    }
+  
+    return commonRooms;
+  };
+  const ruangFinal = getRoomsForSelectedGroup();
   return (
     <MainLayout>
 
@@ -376,17 +487,17 @@ const TabelPerubahan = () => {
                 <select
                     value={hariBaru}
                     onChange={(e) => {
-                    setHariBaru(e.target.value)
-                    setSlotBaru("")
-                    setRuangBaru("")
+                      setHariBaru(e.target.value);
+                      setSlotBaru("");
+                      setRuangBaru("");
                     }}
                     className="w-full px-3 py-2 bg-gray-100 rounded
                             focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     <option value="">Pilih Hari</option>
-                    {hariList.map(h => (
-                    <option key={h.id} value={h.id}>
-                        {h.nama}
+                    {hariList.map(hari => (
+                    <option key={hari.id} value={hari.id}>
+                        {hari.nama}
                     </option>
                     ))}
                 </select>
@@ -400,18 +511,21 @@ const TabelPerubahan = () => {
                     <select
                     value={slotBaru}
                     onChange={(e) => {
-                        setSlotBaru(e.target.value)
-                        setRuangBaru("")
+                      const selected = generateSlotRange().find(s => s.startId === e.target.value);
+                  
+                      setSlotBaru(e.target.value);
+                      setSelectedSlotGroup(selected); // 🔥 INI WAJIB
+                      setRuangBaru("");
                     }}
                     className="w-full px-3 py-2 bg-gray-100 rounded
                                 focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                     <option value="">Pilih Jam</option>
-                    {slotFiltered.map(slot => (
-                        <option key={slot.id} value={slot.id}>
-                        {slot.jamMulai} - {slot.jamSelesai}
-                        </option>
-                    ))}
+                    {generateSlotRange().map(slot => (
+                    <option key={slot.startId} value={slot.startId}>
+                      {slot.label}
+                    </option>
+                  ))}
                     </select>
                 </div>
                 )}
@@ -422,17 +536,20 @@ const TabelPerubahan = () => {
                     Ruangan
                     </label>
                     <select
-                    value={ruangBaru}
-                    onChange={(e) => setRuangBaru(e.target.value)}
+                   value={ruangBaru}
+                   onChange={(e) => setRuangBaru(e.target.value)}
+                 
                     className="w-full px-3 py-2 bg-gray-100 rounded
                                 focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
+                  
                     <option value="">Pilih Ruang</option>
-                    {ruangTersedia.map(r => (
-                        <option key={r.id} value={r.id}>
-                        {r.kode} - {r.nama}
-                        </option>
-                    ))}
+                  {ruangFinal.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.kode} - {r.nama}
+                    </option>
+                  ))}
+
                     </select>
                 </div>
                 )}
@@ -443,7 +560,13 @@ const TabelPerubahan = () => {
                 </label>
                 <textarea
                     value={alasan}
-                    onChange={(e) => setAlasan(e.target.value)}
+                    onChange={(e) => {
+                      const text = e.target.value;
+                    
+                      setAlasan(
+                        text.charAt(0).toUpperCase() + text.slice(1)
+                      );
+                    }}
                     placeholder="Masukan alasan perubahan jadwal"
                     className="w-full px-3 py-2 bg-gray-100 rounded
                             focus:outline-none focus:ring-2 focus:ring-green-500"

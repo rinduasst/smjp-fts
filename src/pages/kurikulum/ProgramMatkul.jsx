@@ -23,11 +23,13 @@ function ProgramMatkul() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [totalData, setTotalData] = useState(0);
+  const { user, peran } = useAuth();
 
   const [form, setForm] = useState({
     prodiId: "",
     kurikulumId: "",
     periodeId: "",
+    jumlahKelompokKelas: 1
   });
 
   const [prodiList, setProdiList] = useState([]);
@@ -119,18 +121,14 @@ function ProgramMatkul() {
   }, [form.kurikulumId]);
   useEffect(() => {
     fetchData(page);
-  }, [page]);
-
-  useEffect(() => {
-    setPage(1);
-    fetchData(1);
-  }, [searchTerm, filterProdi, filterKurikulum, filterPeriode]);
+  }, [page, searchTerm, filterProdi, filterKurikulum, filterPeriode]);
   const fetchProgramMatkul = async () => {
     try {
       const res = await api.get("/api/kurikulum/program-matkul", {
         params: {
-          prodiId: form.prodiId,
+          prodiId: form.prodiId || user?.prodiId,
           periodeId: form.periodeId,
+          kurikulumId: form.kurikulumId, 
           pageSize: 50
         }
       });
@@ -139,17 +137,15 @@ function ProgramMatkul() {
   
     } catch (err) {
       console.error("ERROR PROGRAM MATKUL:", err.response?.data || err);
-      // console.log("FULL ERROR:", err);
-      // console.log("RESPONSE:", err.response);
-      // console.log("DATA:", err.response?.data);
-      // console.log("VALIDATION DETAIL:", JSON.stringify(err.response?.data?.errors, null, 2));
+      console.log("PROGRAM:", programMatkulList);
     }
   };
   useEffect(() => {
-    if (form.prodiId && form.periodeId) {
+    if ((form.prodiId || user?.prodiId) && form.periodeId) {
       fetchProgramMatkul();
     }
-  }, [form.periodeId, form.prodiId]);
+  }, [form.prodiId, form.periodeId, form.kurikulumId]);
+
   const filteredData = data.filter((d) => {
     const matchSearch =
       d.mataKuliah?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -162,12 +158,21 @@ function ProgramMatkul() {
     return matchSearch && matchKurikulum;
   });
   const filteredMatkul = mataKuliahList.filter((mk) => {
-    const sudahDiprogam = programMatkulList.some(
-      (pm) => pm.mataKuliahId === mk.mataKuliah.id
-    );
+    if (!mk.mataKuliah) return false;
+  
+    const sudahDiprogam = programMatkulList.some((pm) => {
+      const pmMatkulId = pm.mataKuliahId || pm.mataKuliah?.id;
+  
+      return (
+        pmMatkulId === mk.mataKuliah.id &&
+        pm.periodeId === form.periodeId &&
+        pm.prodiId === (form.prodiId || user?.prodiId)
+      );
+    });
   
     return !sudahDiprogam;
   });
+
 
   const resetForm = () => {
     setForm({
@@ -180,11 +185,32 @@ function ProgramMatkul() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     try {
+      // EDIT (PATCH)
+      if (isEdit) {
+        await api.patch(`/api/kurikulum/program-matkul/${selectedId}`, {
+          prodiId: form.prodiId,
+          kurikulumId: form.kurikulumId,
+          periodeId: form.periodeId,
+          jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
+        });
+  
+        alert("Data berhasil diupdate");
+  
+        setShowEditModal(false);
+        resetForm();
+        fetchData();
+        return;
+      }
+
+      //  TAMBAH (POST)
+    
       if (selectedMatkul.length === 0) {
         alert("Pilih minimal 1 mata kuliah");
         return;
       }
+  
       const requests = selectedMatkul.map((mk) =>
         api.post("/api/kurikulum/program-matkul", {
           prodiId: form.prodiId,
@@ -196,32 +222,31 @@ function ProgramMatkul() {
       );
   
       await Promise.all(requests);
+  
       alert("Program matkul berhasil dibuat");
   
-      fetchData();
+      setShowAddModal(false);
       setSelectedMatkul([]);
       resetForm();
-      setShowAddModal(false);
+      fetchData();
   
     } catch (err) {
       const res = err.response?.data;
       console.error("BACKEND ERROR:", res);
+  
       alert(res?.message || "Terjadi kesalahan");
-      // reset form
-      setForm({
-        prodiId: "",
-        kurikulumId: "",
-        periodeId: ""
-      });
+  
       setSelectedMatkul([]);
-      setShowAddModal(false);
     }
   };
   const handleEdit = (row) => {
     setIsEdit(true);
     setSelectedId(row.id);
     setForm({
-      prodiId: row.prodiId,
+      prodiId:
+      peran === "TU_PRODI"
+        ? user?.prodiId
+        : row.prodiId,
       kurikulumId: row.kurikulumId,
       periodeId: row.periodeId,
       mataKuliahId: row.mataKuliahId,
@@ -247,13 +272,22 @@ function ProgramMatkul() {
       alert("Gagal menghapus data");
     }
   };
-  const { user, peran } = useAuth();
+
+  const filteredKurikulum = kurikulumList.filter((k) =>
+  peran === "TU_PRODI"
+    ? k.prodi?.id === user?.prodiId
+    : true
+);
+
+
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
-      setFilterProdi(user.prodiId);
+      setForm((prev) => ({
+        ...prev,
+        prodiId: user.prodiId
+      }));
     }
-  }, [peran, user]);
-
+  }, [peran, user?.prodiId]);
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
@@ -434,192 +468,259 @@ function ProgramMatkul() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
 
-              {/* Prodi */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Program Studi
-                </label>
-                <select
-                  required
-                  value={form.prodiId}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      prodiId: e.target.value
-                    })
-                  }
-                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Pilih Program Studi</option>
-                  {prodiList.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nama}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Periode
-                </label>
-                <select
-                  required
-                  value={form.periodeId}
-                  onChange={(e) => setForm({ ...form, periodeId: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Pilih Periode</option>
-                  {periodeList.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nama}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Kurikulum */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Kurikulum
-                </label>
-                <select
-                  required
-                  value={form.kurikulumId}
-                  onChange={(e) => {
-                    setForm({ ...form, kurikulumId: e.target.value });
-                    setSelectedMatkul([]);
-                  }}
-                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Pilih Kurikulum</option>
-                  {kurikulumList.map((k) => (
-                   <option key={k.id} value={k.id}>
-                   {k.nama} - {k.prodi?.nama}
-                 </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Assign Matkul Kurikulum */}
-              {form.kurikulumId && (
-           <div className="bg-white rounded-lg shadow border overflow-hidden">
-           <div className="max-h-64 overflow-y-auto">
-           {mataKuliahList.length === 0 ? (
-          <div className="p-6 text-center text-red-500 text-sm">
-            Belum ada mata kuliah yang di-assign ke kurikulum ini!
-          </div>
-            ) : (
+            {!isEdit ? (
+              // ======================
+              // 🟢 FORM TAMBAH (ASLI KAMU)
+              // ======================
               <>
-                {filteredMatkul.length === 0 && (
-                  <div className="p-6 text-center text-yellow-600 text-sm">
-                    Semua mata kuliah kurikulum ini sudah diprogram pada periode ini.
+                {peran !== "TU_PRODI" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Program Studi
+                    </label>
+                    <select
+                      required
+                      value={form.prodiId}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          prodiId: e.target.value
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">Pilih Program Studi</option>
+                      {prodiList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nama}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-                {filteredMatkul.length > 0 && (
-                  <table className="w-full text-sm border border-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr className="text-gray-700 uppercase text-xs tracking-wide">
-                        <th>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedMatkul(
-                                  filteredMatkul.map((mk) => ({
-                                    mataKuliahId: mk.mataKuliah.id,
-                                    jumlahKelompokKelas: 1
-                                  }))
-                                );
-                              } else {
-                                setSelectedMatkul([]);
-                              }
-                            }}
-                          />
-                        </th>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Periode
+                  </label>
+                  <select
+                    required
+                    value={form.periodeId}
+                    onChange={(e) => setForm({ ...form, periodeId: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Pilih Periode</option>
+                    {periodeList.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nama}</option>
+                    ))}
+                  </select>
+                </div>
 
-                        <th className="border-b px-3 py-2">Kode</th>
-                        <th className="border-b px-3 py-2">Nama</th>
-                        <th className="border-b px-3 py-2 text-center">SKS</th>
-                        <th className="border-b px-3 py-2 text-center">Semester</th>
-                        <th className="border-b px-3 py-2 text-center">Total Kelas</th>
-                      </tr>
-                    </thead>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Kurikulum
+                  </label>
+                  <select
+                    required
+                    value={form.kurikulumId}
+                    onChange={(e) => {
+                      setForm({ ...form, kurikulumId: e.target.value });
+                      setSelectedMatkul([]);
+                    }}
+                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Pilih Kurikulum</option>
+                    {filteredKurikulum.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.nama} - {k.prodi?.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                    <tbody>
-                      {filteredMatkul.map((mk) => {
-                        const selected = selectedMatkul.find(
-                          (s) => s.mataKuliahId === mk.mataKuliah.id
-                        );
+                {/* TABEL MATKUL */}
+                {form.kurikulumId && (
+                  <div className="bg-white rounded-lg shadow border overflow-hidden">
+                    <div className="max-h-64 overflow-y-auto">
 
-                        return (
-                          <tr key={mk.mataKuliah.id} className="border-t border-gray-200">
-                            <td className="px-2 py-1 text-center">
-                              <input
-                                type="checkbox"
-                                checked={!!selected}
-                                onChange={() => toggleMatkul(mk.mataKuliah.id)}
-                              />
-                            </td>
+                      {mataKuliahList.length === 0 ? (
+                        <div className="p-6 text-center text-red-500 text-sm">
+                          Belum ada mata kuliah yang di-assign ke kurikulum ini!
+                        </div>
+                      ) : (
+                        <>
+                          {filteredMatkul.length === 0 && (
+                            <div className="p-6 text-center text-yellow-600 text-sm">
+                              Semua mata kuliah kurikulum ini sudah diprogram pada periode ini.
+                            </div>
+                          )}
 
-                            <td className="px-2 py-1 text-center">
-                              {mk.mataKuliah?.kode}
-                            </td>
+                          {filteredMatkul.length > 0 && (
+                            <table className="w-full text-sm border border-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr className="text-gray-700 uppercase text-xs tracking-wide">
+                                  <th>
+                                    <input
+                                      type="checkbox"
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedMatkul(
+                                            filteredMatkul.map((mk) => ({
+                                              mataKuliahId: mk.mataKuliah.id,
+                                              jumlahKelompokKelas: 1
+                                            }))
+                                          );
+                                        } else {
+                                          setSelectedMatkul([]);
+                                        }
+                                      }}
+                                    />
+                                  </th>
+                                  <th className="border-b px-3 py-2">Kode</th>
+                                  <th className="border-b px-3 py-2">Nama</th>
+                                  <th className="border-b px-3 py-2 text-center">SKS</th>
+                                  <th className="border-b px-3 py-2 text-center">Semester</th>
+                                  <th className="border-b px-3 py-2 text-center">Total Kelas</th>
+                                </tr>
+                              </thead>
 
-                            <td className="px-2 py-1">
-                              {mk.mataKuliah?.nama}
-                            </td>
+                              <tbody>
+                                {filteredMatkul.map((mk) => {
+                                  const selected = selectedMatkul.find(
+                                    (s) => s.mataKuliahId === mk.mataKuliah.id
+                                  );
 
-                            <td className="px-2 py-1 text-center">
-                              {mk.mataKuliah?.sks}
-                            </td>
+                                  return (
+                                    <tr key={mk.mataKuliah.id} className="border-t border-gray-200">
+                                      <td className="px-2 py-1 text-center">
+                                        <input
+                                          type="checkbox"
+                                          checked={!!selected}
+                                          onChange={() => toggleMatkul(mk.mataKuliah.id)}
+                                        />
+                                      </td>
 
-                            <td className="px-2 py-1 text-center">
-                              {mk.semester}
-                            </td>
+                                      <td className="px-2 py-1 text-center">
+                                        {mk.mataKuliah?.kode}
+                                      </td>
 
-                            <td className="text-center">
-                              {selected && (
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  value={selected.jumlahKelompokKelas ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(/\D/g, "");
-                                    updateJumlahKelas(mk.mataKuliah.id, val);
-                                  }}
-                                  className="w-10 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-400"
-                                />
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                                      <td className="px-2 py-1">
+                                        {mk.mataKuliah?.nama}
+                                      </td>
+
+                                      <td className="px-2 py-1 text-center">
+                                        {mk.mataKuliah?.sks}
+                                      </td>
+
+                                      <td className="px-2 py-1 text-center">
+                                        {mk.semester}
+                                      </td>
+
+                                      <td className="text-center">
+                                        {selected && (
+                                          <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={selected.jumlahKelompokKelas ?? ""}
+                                            onChange={(e) => {
+                                              const val = e.target.value.replace(/\D/g, "");
+                                              updateJumlahKelas(mk.mataKuliah.id, val);
+                                            }}
+                                            className="w-10 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-400"
+                                          />
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </>
+                      )}
+
+                    </div>
+                  </div>
                 )}
               </>
-            )}
-              </div>
-              </div>
-              )}
-              {/* Tombol */}
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  
-                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
-                >
-                  Batal
-                </button>
+            ) : (
+//form edit
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Mata Kuliah</label>
+                  <input
+                    value={data.find(d => d.id === selectedId)?.mataKuliah?.nama || ""}
+                    disabled
+                    className="w-full px-3 py-2 bg-gray-100 rounded"
+                  />
+                </div>
 
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                  Simpan
-                </button>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Periode</label>
+                  <select
+                    value={form.periodeId}
+                    onChange={(e) =>
+                      setForm({ ...form, periodeId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    {periodeList.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nama}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Kurikulum</label>
+                  <select
+                    value={form.kurikulumId}
+                    onChange={(e) =>
+                      setForm({ ...form, kurikulumId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    {filteredKurikulum.map((k) => (
+                      <option key={k.id} value={k.id}>{k.nama}- {k.prodi?.nama}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Jumlah Kelas</label>
+                  <input
+                    type="number"
+                    value={form.jumlahKelompokKelas}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        jumlahKelompokKelas: e.target.value
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* TOMBOL (TETAP) */}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                }}
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
+              >
+                Batal
+              </button>
+
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              >
+                Simpan
+              </button>
+            </div>
+
             </form>
           </div>
         </div>

@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../../api/api";
 import MainLayout from "../../components/MainLayout";
 import { Plus, Search, Edit, Trash2, Loader2, X, ChevronRight, ChevronDown } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import Select from "react-select";
 
 const ConstraintDosen = () => {
   const [data, setData] = useState([]);
@@ -47,7 +48,7 @@ const ConstraintDosen = () => {
         ]);
 
         setDosenList(dosenRes.data?.data?.items || []);
-        setHariList(hariRes.data?.data || []);
+        setHariList(hariRes.data?.data?.data || []);
         setJamList(jamRes.data?.data?.items || []);
         setRuangList(ruangRes.data?.data?.items|| []);
       } catch (err) {
@@ -172,8 +173,31 @@ const ConstraintDosen = () => {
       fetchData();
     } catch (err) {
       console.error("Gagal hapus Aturan ini", err);
+    
     }
   };
+  const [selectedDosen, setSelectedDosen] = useState(null);
+  const [inputDosen, setInputDosen] = useState("");
+  const [dosenDropdown, setDosenDropdown] = useState([]);
+  const [showDosenDropdown, setShowDosenDropdown] = useState(false);
+  const [loadingDosen, setLoadingDosen] = useState(false);
+  const searchDosen = async (keyword) => {
+    try {
+      setLoadingDosen(true);
+  
+      const res = await api.get("/api/master-data/dosen", {
+        params: { q: keyword, page: 1, pageSize: 50 }
+      });
+  
+      setDosenDropdown(res.data?.data?.items || []);
+    } catch (err) {
+      console.error("ERROR DOSEN:", err);
+    } finally {
+      setLoadingDosen(false);
+    }
+  };
+
+const timeoutRef = useRef(null);
   const mapJenisConstraint = (jenis) => {
     switch (jenis) {
       case "WAJIB_HARI":
@@ -264,6 +288,28 @@ const ConstraintDosen = () => {
   
       case "MAKS_SESI_PERHARI":
         return `${row.nilaiConstraint} sesi`;
+  
+      case "HINDARI_SESI":
+        switch (row.nilaiConstraint) {
+          case "PAGI":
+            return "Semua Sesi Pagi";
+          case "SIANG":
+            return "Semua Sesi Siang";
+          case "MALAM":
+            return "Semua Sesi Malam";
+          default:
+            return "-";
+        }
+  
+      case "WAJIB_SLOT":
+        const slot = jamList.find(j => j.id === row.nilaiConstraint);
+        return slot ? `${slot.nama} (${slot.jamMulai})` : "-";
+  
+      case "HINDARI_HARI":
+        return hariList.find(h => h.id === row.nilaiConstraint)?.nama || "-";
+  
+      case "MAKS_HARI_PERMINGGU":
+        return `${row.nilaiConstraint} Hari`;
   
       default:
         return "-";
@@ -403,7 +449,7 @@ const ConstraintDosen = () => {
               <option value="">Pilih Slot</option>
               {jamList.map(j => (
                 <option key={j.id} value={j.id}>
-                   {j.jamMulai}-{j.jamSelesai}
+                   {j.jamMulai}
                 </option>
               ))}
             </select>
@@ -411,25 +457,23 @@ const ConstraintDosen = () => {
           case "HINDARI_SESI":
           return (
             <select
-              className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              value={formData.constraints.HINDARI_SESI}
-              onChange={(e) =>
-                setFormData(prev => ({
-                  ...prev,
-                  constraints: {
-                    ...prev.constraints,
-                    HINDARI_SESI: e.target.value
-                  }
-                }))
-              }
-            >
-              <option value="">Pilih Sesi</option>
-              {jamList.map(j => (
-                <option key={j.id} value={j.id}>
-                  {j.nama} ({j.jamMulai}-{j.jamSelesai})
-                </option>
-              ))}
-            </select>
+            className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            value={formData.constraints.HINDARI_SESI}
+            onChange={(e) =>
+              setFormData(prev => ({
+                ...prev,
+                constraints: {
+                  ...prev.constraints,
+                  HINDARI_SESI: e.target.value // "PAGI" / "SIANG" / "MALAM"
+                }
+              }))
+            }
+          >
+            <option value="">Pilih Sesi</option>
+            <option value="PAGI">Pagi </option>
+            <option value="SIANG">Siang </option>
+            <option value="MALAM">Malam </option>
+          </select>
           );
           case "HINDARI_HARI":
           return (
@@ -492,13 +536,13 @@ const ConstraintDosen = () => {
         
        {/* ACTION BAR */} 
        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"> 
-       {peran !== "ADMIN" && peran !== "TU_FAKULTAS" && (
+      
        <button 
        onClick={() => { resetForm(); setShowModal(true); }} 
        className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 
        rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition font-medium" > 
        <Plus size={18} /> Tambah Aturan </button>
-       )}
+       
        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
        <select
         value={filterJenis}
@@ -616,27 +660,62 @@ const ConstraintDosen = () => {
             }}
             className="flex-1 overflow-y-auto p-6 space-y-2"
           >
-            {/* DOSEN */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Dosen
-              </label>
-              <select
-                value={formData.dosenId}
-                onChange={(e) =>
-                  setFormData({ ...formData, dosenId: e.target.value })
-                }
+          {/* DOSEN */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Dosen
+            </label>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari dosen..."
+                value={selectedDosen ? selectedDosen.nama : inputDosen}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  setSelectedDosen(null);
+                  setInputDosen(value);
+                  setShowDosenDropdown(true);
+
+                  if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+                  timeoutRef.current = setTimeout(() => {
+                    if (value.trim().length >= 2) {
+                      searchDosen(value);
+                    }
+                  }, 300);
+                }}
                 className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                required
-              >
-                <option value="">Pilih Dosen</option>
-                {dosenList.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.nama}
-                  </option>
-                ))}
-              </select>
+              />
+
+                {showDosenDropdown && (
+                  <div className="absolute w-full bg-white shadow max-h-60 overflow-y-auto z-50">
+                    {loadingDosen && <div className="px-3 py-2">Loading...</div>}
+
+                    {!loadingDosen && dosenDropdown.length === 0 && (
+                      <div className="px-3 py-2">Dosen tidak ditemukan</div>
+                    )}
+
+                  {dosenDropdown.map((d) => (
+                    <div
+                      key={d.id}
+                      onClick={() => {
+                        setSelectedDosen(d);
+                        setFormData({ ...formData, dosenId: d.id });
+
+                        setShowDosenDropdown(false);
+                        setInputDosen("");
+                      }}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {d.nama}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
             {/* ATURAN MENGAJAR */}
             <div className="space-y-4">
@@ -756,7 +835,7 @@ const ConstraintDosen = () => {
               )}
               {formData.tipe === "SOFT" && (
                 <div className="mt-3">
-                  <div className="mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+                  <div className="mt-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-600">
                   <b>Catatan:</b>
                   <p>
                     Aturan <strong>Soft</strong> adalah aturan preferensi yang bisa dilanggar jika terjadi konflik jadwal.
