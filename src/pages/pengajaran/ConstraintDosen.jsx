@@ -631,9 +631,13 @@ const timeoutRef = useRef(null);
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-4 border-d bg-gray-50 text-sm">
-            Menampilkan <b>{filteredData.length}</b> dari <b>{data.length}</b> data
-          </div>
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Menampilkan <span className="font-semibold">{filteredData.length}</span> dari <span className="font-semibold">{data.length}</span> Aturan Dosen
+              </div>
+            </div>
+            </div>
         </div>
         {showModal && (
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">

@@ -262,12 +262,12 @@ function Fakultas() {
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
                       <td className="py-4 px-6 whitespace-nowrap">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm">
-                          {row.kode || "N/A"}
+                        <span className="">
+                          {row.kode || "-"}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-sm ">{row.nama}</div>
+                        <div className=" ">{row.nama}</div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">

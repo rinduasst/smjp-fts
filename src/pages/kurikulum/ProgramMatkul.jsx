@@ -419,7 +419,8 @@ function ProgramMatkul() {
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-700">
-        Menampilkan {(page - 1) * pageSize + 1}     - {Math.min(page * pageSize, totalData)} dari {totalData} data mata kuliah
+        Menampilkan <span className="font-semibold">{(page - 1) * pageSize + 1}     - {Math.min(page * pageSize, totalData)}</span> dari <span className="font-semibold">
+        {totalData}   </span>Program  mata kuliah
           </div>
 
           <div className="flex items-center gap-2">
