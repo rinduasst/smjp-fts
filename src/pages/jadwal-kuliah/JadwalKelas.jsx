@@ -61,12 +61,6 @@ const JadwalKelas = () => {
     if (batchInfo) fetchJadwal();
   }, [batchInfo]);
 
-  const sortKelas = (a, b) => {
-    if (a === "KARYAWAN") return 1;
-    if (b === "KARYAWAN") return -1;
-  
-    return a.localeCompare(b);
-  };
   const handleExport = () => {
     exportPerSemester(data, batchInfo, user?.nama);
   };
@@ -79,82 +73,60 @@ const JadwalKelas = () => {
     if (!angkatan || !tahunMulai) return 0;
     return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
   };
-  const semesterSet = new Set();
-  data.forEach((hari) => {
-    hari.slots.forEach((slot) => {
-      const kelasList = Array.isArray(slot.kelas)
-        ? slot.kelas
-        : slot.kelas
-        ? [slot.kelas]
-        : [];
-  
-      kelasList.forEach((k) => {
-        const semester = hitungSemester(
-          k.angkatan,
-          batchInfo?.periode?.tahunMulai,
-          batchInfo?.periode?.paruh
-        );
-        semesterSet.add(semester);
-      });
-    });
-  });
 
-const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
-  const semuaKelas = new Set();
+  const grouped = {};
   data.forEach((hari) => {
     hari.slots.forEach((slot) => {
-      const kelasList = Array.isArray(slot.kelas)
-        ? slot.kelas
-        : slot.kelas
-        ? [slot.kelas]
-        : [];
-  
-      kelasList.forEach((k) => {
-        semuaKelas.add(k.kode);
-      });
-    });
-  });
-  const groupedSemester = {};
-  data.forEach((hari) => {
-    hari.slots.forEach((slot) => {
-      const kelasList = Array.isArray(slot.kelas)
-        ? slot.kelas
-        : slot.kelas
-        ? [slot.kelas]
-        : [];
-  
-      kelasList.forEach((k) => {
-        const semesterAngka = hitungSemester(
-          k.angkatan,
+      const semester = hitungSemester(
+        slot.kelas.angkatan,
+        batchInfo?.periode?.tahunMulai,
+        batchInfo?.periode?.paruh
+      );
+      const kelasList = slot.kelas.kode
+  .split(",")
+  .map((k) => k.trim());
+
+      //loop perkelas
+      kelasList.forEach((kelasKey) => {
+
+        const semester = hitungSemester(
+          slot.kelas.angkatan,
           batchInfo?.periode?.tahunMulai,
           batchInfo?.periode?.paruh
         );
-  
-        if (!groupedSemester[semesterAngka]) {
-          groupedSemester[semesterAngka] = {};
+      
+        if (!grouped[semester]) {
+          grouped[semester] = {};
         }
-  
-        const kelasKey =
-          k.kode?.toLowerCase() === "karyawan"
-            ? "KARYAWAN"
-            : `REG_${k.kode}`;
-  
-        if (!groupedSemester[semesterAngka][kelasKey]) {
-          groupedSemester[semesterAngka][kelasKey] = [];
+      
+        if (!grouped[semester][kelasKey]) {
+          grouped[semester][kelasKey] = [];
         }
-  
-        groupedSemester[semesterAngka][kelasKey].push({
+      
+        grouped[semester][kelasKey].push({
           ...slot,
           hari: hari.nama,
+          kelas: kelasKey,
         });
-      });
+      
+      }); 
+     
     });
   });
+  const semesterList = Object.keys(grouped)
+  .map(Number)
+  .sort((a, b) => a - b);
   useEffect(() => {
     if (semesterList.length > 0 && !semesterAktif) {
       setSemesterAktif(semesterList[0]);
     }
   }, [semesterList]);
+  const sortKelas = (a, b) => {
+    if (a === "KARYAWAN") return 1;
+    if (b === "KARYAWAN") return -1;
+  
+    return a.localeCompare(b);
+  };
 
   return (
     <MainLayout>
@@ -209,7 +181,7 @@ const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
             </button>
         ))}
         </div>
-        {Object.entries(groupedSemester[semesterAktif] || {})
+         {  Object.entries(grouped[semesterAktif] || {})
             .sort(([a], [b]) => sortKelas(a, b))
             .map(([kelas, jadwal]) => (
             <div key={kelas} className="mb-8 last:mb-0">

@@ -196,9 +196,9 @@ const GenerateJadwal = () => {
               onChange={(e) => setPreset(e.target.value)}
               className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="CEPAT">Cepat (Proses cepat)</option>
-              <option value="STANDAR">Standar (Seimbang)</option>
-              <option value="OPTIMAL">Optimal (Memerlukan waktu lebih lama)</option>
+              <option value="CEPAT">Cepat </option>
+              <option value="STANDAR">Standar </option>
+              <option value="OPTIMAL">Optimal </option>
             </select>
 
             <p className="text-xs text-gray-500 mt-1">

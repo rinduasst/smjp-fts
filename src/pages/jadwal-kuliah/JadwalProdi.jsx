@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 
@@ -12,6 +12,7 @@ const JadwalProdi = () => {
  
   const [batchInfo, setBatchInfo] = useState(null);
   const { user, peran } = useAuth();
+  const [search, setSearch] = useState("");
 //ambil batch final
   const fetchFinalBatch = async () => {
     try {
@@ -73,26 +74,72 @@ const fetchJadwal = async () => {
   };
 
   const formatKelas = (slot) => {
-    if (!slot.kelas) return "-";
+    const kelas = slot?.kelas;
   
-    return slot.kelas
-      .map((k) => {
-        const romawi = toRomawi(
-          hitungSemester(
-            k.angkatan,
-            batchInfo?.periode?.tahunMulai,
-            batchInfo?.periode?.paruh
-          )
+    if (!kelas) return "-";
+  
+    // CASE 1: array
+    if (Array.isArray(kelas)) {
+      return kelas
+        .map((k) => {
+          const romawi = toRomawi(
+            hitungSemester(
+              k.angkatan,
+              batchInfo?.periode?.tahunMulai,
+              batchInfo?.periode?.paruh
+            )
+          );
+  
+          if (k.kode?.toLowerCase() === "karyawan") {
+            return `${romawi}_KARYAWAN`;
+          }
+  
+          return `${romawi}_REG_${k.kode}`;
+        })
+        .join(", ");
+    }
+  
+    // CASE 2: object tunggal
+    if (typeof kelas === "object") {
+      const romawi = toRomawi(
+        hitungSemester(
+          kelas.angkatan,
+          batchInfo?.periode?.tahunMulai,
+          batchInfo?.periode?.paruh
+        )
+      );
+  
+      if (kelas.kode?.toLowerCase() === "karyawan") {
+        return `${romawi}_KARYAWAN`;
+      }
+  
+      return `${romawi}_REG_${kelas.kode}`;
+    }
+  
+    // CASE 3: string langsung
+    return String(kelas);
+  };
+  const filteredData = data.map((hari) => {
+    return {
+      ...hari,
+      slots: hari.slots.filter((slot) => {
+        const kelasList = Array.isArray(slot.kelas)
+          ? slot.kelas
+          : slot.kelas
+          ? [slot.kelas]
+          : [];
+  
+        const matchKelas = kelasList.some((k) =>
+          k.kode?.toLowerCase().includes(search.toLowerCase())
         );
   
-        if (k.kode?.toLowerCase() === "karyawan") {
-          return `${romawi}_KARYAWAN`;
-        }
+        const matchMatkul = slot.matkul?.nama?.toLowerCase().includes(search.toLowerCase());
+        const matchDosen = slot.dosen?.nama?.toLowerCase().includes(search.toLowerCase());
   
-        return `${romawi}_REG_${k.kode}`;
-      })
-      .join(", ");
-  };
+        return matchKelas || matchMatkul || matchDosen;
+      }),
+    };
+  });
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen">
@@ -110,6 +157,27 @@ const fetchJadwal = async () => {
             <Download size={18} />
             Export Excel
           </button>
+          <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-3 text-gray-400" size={18}/>
+           
+              <input
+                className="
+                block w-full
+                pl-10 pr-4 py-2.5
+                border border-gray-300
+                rounded-lg
+                bg-white
+                placeholder-gray-500
+                text-gray-900
+                focus:border-green-500
+                focus:outline-none
+                transition "
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari mata kuliah / dosen...."  />
+                </div>
+     
         </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
@@ -142,7 +210,7 @@ const fetchJadwal = async () => {
                 </td>
               </tr>
             ) : (
-              data.map((hari) =>
+              filteredData.map((hari) =>
                 hari.slots.map((slot, idx) => (
                   <tr key={`${hari.id}-${idx}`} className="hover:bg-gray-50">
                     {idx === 0 && (
