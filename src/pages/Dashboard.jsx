@@ -187,6 +187,7 @@ const DashboardSMJP = () => {
     const todayName = new Date().toLocaleDateString("id-ID", {
       weekday: "long",
     });
+    // const todayName = "Senin";
     const todayFull = new Date().toLocaleDateString("id-ID", {
       day: "numeric",
       month: "long",
@@ -255,7 +256,7 @@ const DashboardSMJP = () => {
           <table className="w-full text-xs border">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-2 border w-[120px]">Jam</th>
+                <th className="p-2 border w-[120px] whitespace-nowrap min-w-[90px] break-keep">Jam</th>
                 {ruangList.map(r => (
                   <th key={r} className="p-2 border">{r}</th>
                 ))}
