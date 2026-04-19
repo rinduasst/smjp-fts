@@ -90,7 +90,7 @@ function App() {
         <Route path="/jadwal-kuliah/jadwal-dosen" element={<JadwalDosen />} />
         <Route path="/jadwal-kuliah/jadwal-ruangan" element={<JadwalRuangan />} />
         <Route path="/jadwal-kuliah/jadwal-kelas" element={<JadwalKelas />} />
-        <Route path="/pengajuan-perubahan-jadwal" element={<PerubahanJadwal />} />
+        <Route path="/perubahan-jadwal" element={<PerubahanJadwal />} />
         <Route path="/perubahan-jadwal/ajukan" element={<TabelPerubahan />} />
 
         {/* Pengaturan */}

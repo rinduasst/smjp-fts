@@ -344,35 +344,39 @@
                         <td>{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
                         {/* jdwl lama  */}
                          <td className="px-4 py-3">
-                        <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700 leading-relaxed">
-                          
-                          <div>
-                            <span className="text-gray-400">Hari:</span>{" "}
-                            <span className="font-semibold">
-                              {row.jadwalKuliah?.hari?.nama || "-"}
-                            </span>
-                          </div>
+                         <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
 
-                          <div>
-                            <span className="text-gray-400">Waktu:</span>{" "}
-                            <span>
-                            {row.jadwalKuliah?.slotWaktu
-                            ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
-                            : "-"}
-                            </span>
-                          </div>
-
-                          <div>
-                            <span className="text-gray-400">Ruangan:</span>{" "}
-                            <span className="text-blue-600 font-medium">
-                              {row.jadwalKuliah?.ruang?.nama || "-"}
-                            </span>
-                          </div>
-
+                        <div>
+                          <span className="text-gray-400">Hari:</span>{" "}
+                          <span className="font-semibold">
+                            {row.jadwalKuliah?.hari?.nama || "-"}
+                          </span>
                         </div>
+
+                        <div>
+                          <span className="text-gray-400">Waktu:</span>{" "}
+                          <span>
+                            {row.jadwalKuliah?.slotWaktu
+                              ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
+                              : "-"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-gray-400">Ruangan:</span>{" "}
+                          <span className="text-blue-600 font-medium">
+                            {row.jadwalKuliah?.ruang?.nama || "-"}
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
                       </td>
                       <td className="px-4 py-3">
                       <div className="bg-green-50 p-3 rounded-md text-xs">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+
                         <div>
                           <span className="text-gray-400">Hari:</span>{" "}
                           <span className="font-medium text-green-700">
@@ -383,9 +387,9 @@
                         <div>
                           <span className="text-gray-400">Waktu:</span>{" "}
                           <span>
-                          {row.jadwalKuliah?.slotWaktu
-                      ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
-                      : "-"}
+                            {row.jadwalKuliah?.slotWaktu
+                              ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
+                              : "-"}
                           </span>
                         </div>
 
@@ -397,9 +401,10 @@
                         </div>
 
                       </div>
+                    </div>
                     </td>
                         {/* alasan */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 font-xs">
                           {row.alasanPengaju}
                         </td>
                         {/* statusny */}
@@ -432,6 +437,7 @@
                                 : "Diajukan"
                             }
                           </span>
+                          
                         </td>
                        {/* AKSI */}
                       <td className="px-6 py-4">
@@ -581,6 +587,7 @@
                 </div>
 
                 {/* Status */}
+               {/* Status */}
                 <div className="grid grid-cols-3 gap-2 items-center">
                   <div className="text-gray-500">Status</div>
                   <div className="col-span-2">
@@ -596,6 +603,14 @@
                     </span>
                   </div>
                 </div>
+                {selectedItem.status === "DITOLAK" && (
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-gray-500">Alasan Penolakan</div>
+                    <div className="col-span-2 font-medium text-red-600">
+                      {selectedItem.alasanRespon || "-"}
+                    </div>
+                  </div>
+                )}
 
               </div>
 

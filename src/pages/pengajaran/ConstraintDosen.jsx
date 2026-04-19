@@ -22,7 +22,7 @@ const ConstraintDosen = () => {
 
   const [formData, setFormData] = useState({
     dosenId: "",
-    tipe: "HARD",
+    tipe: "",
     prioritas: "",
     constraints: {
       WAJIB_HARI: null,
@@ -80,24 +80,30 @@ const ConstraintDosen = () => {
   const resetForm = () => {
     setFormData({
       dosenId: "",
-      tipe: "HARD",
-      prioritas: "",
+      tipe: "",
+      prioritas: "500",
       constraints: {
         WAJIB_HARI: null,
-      WAJIB_RUANG: null,
-      WAJIB_LANTAI: null,
-      WAJIB_SLOT: null,
-      HINDARI_SLOT: null,
-      HINDARI_HARI: null,
-      HINDARI_SESI: null,
-      MAKS_SESI_PERHARI: null,
-      MAKS_HARI_PERMINGGU: null
+        WAJIB_RUANG: null,
+        WAJIB_LANTAI: null,
+        WAJIB_SLOT: null,
+        HINDARI_SLOT: null,
+        HINDARI_HARI: null,
+        HINDARI_SESI: null,
+        MAKS_SESI_PERHARI: null,
+        MAKS_HARI_PERMINGGU: null
       }
     });
+  
+    setSelectedDosen(null);
+    setInputDosen("");
+    setDosenDropdown([]);
+    setShowDosenDropdown(false);
+  
+    setOpenGroups({});
     setIsEdit(false);
     setSelectedId(null);
   };
-
   const handleEdit = (row) => {
     const emptyConstraints = {
       WAJIB_HARI: null,
@@ -126,46 +132,85 @@ const ConstraintDosen = () => {
     setShowModal(true);
   };
   
+  
   const handleSubmit = async () => {
-    const payload = Object.entries(formData.constraints)
-    .filter(([_, v]) => v !== null && v !== "")
-    .map(([jenis, nilai]) => ({
-      dosenId: formData.dosenId,
-      jenisConstraint: jenis,
-      nilaiConstraint: ["MAKS_SESI_PERHARI", "MAKS_HARI_PERMINGGU"].includes(jenis)
-        ? Number(nilai)
-        : nilai,
-      isHard: formData.tipe === "HARD",
-      prioritas: formData.tipe === "SOFT" ? Number(formData.prioritas) : null
-    }));
-    console.log("PAYLOAD:", payload);
-    if (!payload.length) {
-      alert("Minimal pilih 1 aturan");
+
+    if (!formData.tipe) {
+      alert("Pilih tipe aturan terlebih dahulu");
       return;
     }
   
-    try {
-      await Promise.all(
-        payload.map(item =>
-          api.post("/api/pengajaran/constraint-dosen", item)
-        )
-      );
-  
-      alert("Berhasil menyimpan aturan");
-      setShowModal(false);
-      fetchData();
-    } catch (err) {
-      const message = err.response?.data?.message;
-      if (err.response?.data?.code === "CONSTRAINT_EXISTS") {
-        alert("Aturan ini sudah ada untuk dosen tersebut.");
-      } else {
-        alert("Gagal menyimpan data");
-      }
-    
-      console.error(err.response?.data || err);
+    if (formData.tipe === "SOFT" && !formData.prioritas) {
+      alert("Pilih prioritas terlebih dahulu");
+      return;
     }
+    // ================= EDIT MODE =================
+    if (isEdit) {
+      try {
+        await api.patch(`/api/pengajaran/constraint-dosen/${selectedId}`, {
+          isHard: formData.tipe === "HARD",
+          prioritas:
+            formData.tipe === "SOFT"
+              ? Number(formData.prioritas || 500)
+              : 500
+        });
+  
+        alert("Berhasil update");
+  
+        setShowModal(false);
+        fetchData();
+        return;
+      } catch (err) {
+        const res = err.response?.data;
+        alert(res?.message || "Gagal update");
+        return;
+      }
+    }
+  
+    // ================= CREATE MODE =================
+    const payloads = [];
+  
+    Object.entries(formData.constraints).forEach(([jenis, nilai]) => {
+      if (nilai !== null && nilai !== "") {
+        payloads.push({
+          dosenId: formData.dosenId,
+          jenisConstraint: jenis,
+          nilaiConstraint: nilai,
+          isHard: formData.tipe === "HARD",
+          prioritas: formData.tipe === "SOFT"
+            ? Number(formData.prioritas || 500)
+            : 500
+        });
+      }
+    });
+  
+    if (!payloads.length) {
+      alert("Pilih minimal 1 aturan");
+      return;
+    }
+  
+    for (const item of payloads) {
+      try {
+        const res = await api.post("/api/pengajaran/constraint-dosen", item);
+      } catch (err) {
+        const res = err.response?.data;
+  
+        if (res?.code === "CONSTRAINT_EXISTS") {
+          const jenis = mapJenisConstraint(item.jenisConstraint);
+          alert(`Aturan ${jenis} yang dipilih sudah ada`);
+          return;
+        }
+  
+        alert(res?.message || "Gagal simpan");
+        return;
+      }
+    }
+  
+    alert("Berhasil simpan");
+    setShowModal(false);
+    fetchData();
+    resetForm();
   };
-
   const handleDelete = async (row) => {
     if (!window.confirm("Yakin hapus Aturan ini?")) return;
     try {
@@ -215,7 +260,7 @@ const timeoutRef = useRef(null);
       case "HINDARI_HARI":
         return "Hindari Hari";
       case "HINDARI_SESI":
-        return "Hindari Sesi";
+        return "Hindari Waktu";
       case "MAKS_HARI_PERMINGGU":
         return "Maks. Hari / Minggu";
       default:
@@ -224,7 +269,7 @@ const timeoutRef = useRef(null);
   };
 
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
+    const result = data.filter((item) => {
       const matchSearch =
         item.dosen?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         mapJenisConstraint(item.jenisConstraint)
@@ -236,6 +281,11 @@ const timeoutRef = useRef(null);
   
       return matchSearch && matchJenis;
     });
+
+    return result.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
   }, [data, searchTerm, filterJenis]);
   const mapPrioritas = (nilai) => {
     const map = {
@@ -664,8 +714,11 @@ const timeoutRef = useRef(null);
             }}
             className="flex-1 overflow-y-auto p-6 space-y-2"
           >
-          {/* DOSEN */}
-          <div>
+          
+{!isEdit ? (
+  <>
+   {/* DOSEN */}
+   <div>
             <label className="block text-sm font-medium text-gray-700">
               Dosen
             </label>
@@ -758,7 +811,7 @@ const timeoutRef = useRef(null);
                       <div className="p-4 space-y-3">
 
                         {jenisArray.map((jenis) => {
-                       const aktif = formData.constraints[jenis] !== null;
+                      const aktif = formData.constraints[jenis] !== null;
                           return (
                             <div
                               key={jenis}
@@ -772,21 +825,21 @@ const timeoutRef = useRef(null);
 
                               {/* checkbox + label */}
                               <div className="flex items-center gap-2">
-
-                                <input
-                                  type="checkbox"
-                                  checked={aktif}
-                                  onChange={(e) =>
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      constraints: {
-                                        ...prev.constraints,
-                                        [jenis]: e.target.checked ? "" : null
-                                      }
-                                    }))
-                                  }
-                                  className="w-4 h-4"
-                                />
+                              <input
+                                type="checkbox"
+                                checked={formData.constraints[jenis] !== null}
+                                onChange={(e) =>
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    constraints: {
+                                      ...prev.constraints,
+                                      [jenis]: e.target.checked ? "" : null
+                                    }
+                                  }))
+                                }
+                                className="w-4 h-4"
+                              />
+                      
 
                                 <span className="text-sm font-medium text-gray-700">
                                   {mapJenisConstraint(jenis)}
@@ -809,10 +862,62 @@ const timeoutRef = useRef(null);
                 );
               })}
             </div>
+
+              </>
+            ) : (
+              <>
+                {/* mode edit*/}
+
+                {/* DOSEN (READONLY) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dosen
+                  </label>
+                  <input
+                    type="text"
+                    value={data.find(d => d.id === selectedId)?.dosen?.nama || ""}
+                    disabled
+                    className="w-full px-3 py-2 mt-1 bg-gray-200 rounded-lg cursor-not-allowed"
+                  />
+                </div>
+
+                {/* JENIS CONSTRAINT (READONLY) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Jenis Aturan
+                  </label>
+                  <input
+                    type="text"
+                    value={mapJenisConstraint(
+                      data.find(d => d.id === selectedId)?.jenisConstraint
+                    )}
+                    disabled
+                    className="w-full px-3 py-2 mt-1 bg-gray-200 rounded-lg"
+                  />
+                </div>
+                {/* NILAI (READONLY) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nilai
+              </label>
+              <input
+                type="text"
+                value={getDisplayNilai(
+                  data.find(d => d.id === selectedId) || {}
+                )}
+                disabled
+                className="w-full px-3 py-2 mt-1 bg-gray-200 rounded-lg"
+              />
+            </div>
+              </>
+            )}
+
+
+       
             {/* TIPE */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Tipe Constraint
+                Tipe Aturan
               </label>
               <select
                 value={formData.tipe}
@@ -873,7 +978,10 @@ const timeoutRef = useRef(null);
             <div className="px-6 py-4 border-t  border-gray-300 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
                 className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
               >
                 Batal

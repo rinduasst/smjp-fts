@@ -111,15 +111,23 @@ const TabelPerubahan = () => {
     fetchSlot(); 
   }, []);
   const handleSubmit = async () => {
+
+    // validasi kosong
     if (!selectedJadwal || !hariBaru || !slotBaru || !ruangBaru || !alasan) {
       alert("Lengkapi data dulu");
       return;
     }
+
+    if (alasan.trim().length < 5) {
+      alert("Alasan minimal 5 karakter");
+      return;
+    }
   
+    // payload
     const payload = {
       jadwalKuliahId: selectedJadwal.id,
       hariBaruId: hariBaru,
-      slotWaktuBaruId: selectedSlotGroup?.slotIds[0], // 🔥 fix penting
+      slotWaktuBaruId: selectedSlotGroup?.slotIds[0],
       ruangBaruId: ruangBaru,
       alasanPengaju: alasan
     };
@@ -138,10 +146,13 @@ const TabelPerubahan = () => {
       navigate("/perubahan-jadwal");
     } catch (err) {
       console.log("=== ERROR DETAIL ===");
+      console.log("STATUS:", err.response?.status);
+      console.log("DATA:", err.response?.data);
+      console.log("ERRORS:", err.response?.data?.errors);
   
       if (err.response) {
         console.log("STATUS:", err.response.status);
-        console.log("DATA:", err.response.data); // 🔥 INI PALING PENTING
+        console.log("DATA:", err.response.data);
       } else {
         console.log(err);
       }

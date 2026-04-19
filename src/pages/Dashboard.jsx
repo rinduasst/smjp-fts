@@ -78,7 +78,7 @@ const DashboardSMJP = () => {
   }, [batch]);
   const fetchPengajuanPending = async () => {
     try {
-      const res = await api.get("/api/pengajuan-perubahan-jadwal", {
+      const res = await api.get("/api/pengjuan-perubahan-jadwal", {
         params: {
           status: "DIAJUKAN",
           page: 1,
@@ -390,7 +390,7 @@ const DashboardSMJP = () => {
 
           <div className="mt-3 pt-3 border-t  border-gray-200">
           <button
-            onClick={() => navigate("/pengajuan-perubahan-jadwal")}
+            onClick={() => navigate("/perubahan-jadwal")}
             className="w-full text-center text-sm text-gray-600 hover:text-red-600 transition"
           >
             Lihat Selengkapnya →
