@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 const api = axios.create({
-  baseURL: "http://43.129.55.147:3000"
+  baseURL: "http://43.129.55.147:3000/api-backend-smjp"
  
 });
 
