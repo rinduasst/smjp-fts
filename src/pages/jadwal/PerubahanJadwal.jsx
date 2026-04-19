@@ -67,9 +67,7 @@
       return jam.replace(".", ":");
     };
 
-    useEffect(() => {
-      fetchData();
-    }, [filterStatus, periodeId]);
+
     const fetchHari = async () => {
       const res = await api.get("/api/master-data/hari");
       setHariList(res.data?.data?.data || []);
@@ -89,6 +87,7 @@
       fetchHari();
       fetchSlot();
       fetchRuang();
+  
      
       const getSlotLabel = (id) => {
         const slot = slotList.find(s => s.id === id);
@@ -110,28 +109,41 @@
     });
 
       const jadwalFiltered = jadwalList;
-    const selectedObj = jadwalFiltered.find(
-      j => j.id === selectedJadwal
-      );
+
 
       const getHariNama = (id) => {
         return hariList.find(h => h.id === id)?.nama || "-";
       };
       
-      const getSlotLabel = (id) => {
-        const slot = slotList.find(s => s.id === id);
-        if (!slot) return "-";
+      const getSlotRangeLabel = (slotId, row) => {
+        const sortedSlotList = [...slotList].sort((a, b) =>
+          a.jamMulai.localeCompare(b.jamMulai)
+        );
       
-        const formatJam = (jam) =>
-          new Date(jam).toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Asia/Jakarta",
-          });
+        const index = sortedSlotList.findIndex(s => s.id === slotId);
+        if (index === -1) return "-";
       
-        return `${formatJam(slot.jamMulai)} - ${formatJam(slot.jamSelesai)}`;
+        const sks =
+          row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1;
+      
+        const start = sortedSlotList[index];
+        const end = sortedSlotList[index + sks - 1];
+      
+        if (!start || !end) return "-";
+      
+        return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
       };
+      const getSlotRange = (slotId, sks) => {
+        const index = slotList.findIndex(s => s.id === slotId);
+        if (index === -1) return "-";
       
+        const start = slotList[index];
+        const end = slotList[index + sks - 1];
+      
+        if (!start || !end) return "-";
+      
+        return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
+      };
       const getJadwalDetail = (jadwalKuliahId) => {
         return jadwalList.find(j => j.id === jadwalKuliahId);
       };
@@ -229,6 +241,7 @@
           prevHari = jadwal.hari;
         }
       });
+      console.log(filteredData.map(x => x.id));
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -357,9 +370,9 @@
                         <div>
                           <span className="text-gray-400">Waktu:</span>{" "}
                           <span>
-                            {row.jadwalKuliah?.slotWaktu
-                              ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
-                              : "-"}
+                          {row.jadwalKuliah?.slotWaktuId
+  ? getSlotRangeLabel(row.jadwalKuliah.slotWaktuId, row)
+  : "-"}
                           </span>
                         </div>
 
@@ -376,29 +389,28 @@
                       <td className="px-4 py-3">
                       <div className="bg-green-50 p-3 rounded-md text-xs">
                       <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <div>
+  <span className="text-gray-400">Hari:</span>{" "}
+  <span className="font-medium text-green-700">
+  {getHariNama(row.hariBaruId)}
+  </span>
+</div>
 
-                        <div>
-                          <span className="text-gray-400">Hari:</span>{" "}
-                          <span className="font-medium text-green-700">
-                            {row.hariBaruId ? getHariNama(row.hariBaruId) : "-"}
-                          </span>
-                        </div>
+<div>
+  <span className="text-gray-400">Waktu:</span>{" "}
+  <span>
+  {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+  </span>
+</div>
 
-                        <div>
-                          <span className="text-gray-400">Waktu:</span>{" "}
-                          <span>
-                            {row.jadwalKuliah?.slotWaktu
-                              ? `${formatJam(row.jadwalKuliah.slotWaktu.jamMulai)} - ${formatJam(row.jadwalKuliah.slotWaktu.jamSelesai)}`
-                              : "-"}
-                          </span>
-                        </div>
+<div>
+  <span className="text-gray-400">Ruangan:</span>{" "}
+  <span className="text-green-700 font-medium">
+  {getRuangNama(row.ruangBaruId)}
+  </span>
+</div>
 
-                        <div>
-                          <span className="text-gray-400">Ruangan:</span>{" "}
-                          <span className="text-green-700 font-medium">
-                            {row.ruangBaruId ? getRuangNama(row.ruangBaruId) : "-"}
-                          </span>
-                        </div>
+                    
 
                       </div>
                     </div>
@@ -562,19 +574,25 @@
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-gray-500">Jadwal Lama</div>
                 <div className="col-span-2 font-medium">
-                  {selectedItem.jadwalKuliah?.hari?.nama || "-"}, 
-                  {selectedItem.jadwalKuliah?.slotWaktu?.nama || "-"}, 
-                  {selectedItem.jadwalKuliah?.ruang?.nama || "-"}
-                </div>
+                {selectedItem.jadwalKuliah?.hari?.nama || "-"}, 
+              {getSlotRange(
+                selectedItem.jadwalKuliah?.slotWaktuId,
+                selectedItem.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1
+              )}, 
+              {selectedItem.jadwalKuliah?.ruang?.nama || "-"}
+                              </div>
               </div>
 
               {/* Jadwal Baru */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-gray-500">Jadwal Baru</div>
                 <div className="col-span-2 font-medium">
-                  {selectedItem.hariBaruId ? getHariNama(selectedItem.hariBaruId) : "-"}, 
-                  {selectedItem.slotWaktuBaruId || "-"}, 
-                  {selectedItem.ruangBaruId ? getRuangNama(selectedItem.ruangBaruId) : "-"}
+                {selectedItem.slotWaktuBaruId
+                ? getSlotRange(
+                    selectedItem.slotWaktuBaruId,
+                    selectedItem.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1
+                  )
+                : "-"}
                 </div>
               </div>
 

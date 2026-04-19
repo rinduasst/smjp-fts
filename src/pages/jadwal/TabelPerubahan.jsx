@@ -166,6 +166,7 @@ const TabelPerubahan = () => {
       console.error("Gagal ambil prodi", err)
     }
   }
+  
 
   const slotFiltered =
   availableData.find(d => d.hariId === hariBaru)?.slots ?? [];
@@ -261,30 +262,44 @@ const TabelPerubahan = () => {
     return jam.replace(".", ":");
   };
   const sks = selectedJadwal?.sks || 1;
-  const generateSlotRange = () => {
-    if (!slotList.length) return [];
+  const generateAvailableSlotRange = () => {
+    if (!selectedJadwal || !availableData.length || !hariBaru) return [];
   
-    const sortedSlot = [...slotList].sort((a, b) => {
-      const jamA = new Date(`1970-01-01T${a.jamMulai.replace(".", ":")}:00`);
-      const jamB = new Date(`1970-01-01T${b.jamMulai.replace(".", ":")}:00`);
-      return jamA - jamB;
-    });
+    const sks = selectedJadwal.sks || 1;
+  
+    const hariData = availableData.find(d => d.hariId === hariBaru);
+    if (!hariData) return [];
+  
+    // ambil slot yang available di hari itu
+    const slots = hariData.slots
+      .map(s => {
+        const slotDetail = slotList.find(sl => sl.id === s.slotId);
+        return slotDetail ? { ...slotDetail, rooms: s.rooms } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const jamA = new Date(`1970-01-01T${a.jamMulai.replace(".", ":")}:00`);
+        const jamB = new Date(`1970-01-01T${b.jamMulai.replace(".", ":")}:00`);
+        return jamA - jamB;
+      });
   
     const result = [];
   
-    for (let i = 0; i <= sortedSlot.length - sks; i++) {
-      const group = sortedSlot.slice(i, i + sks);
+    for (let i = 0; i <= slots.length - sks; i++) {
+      const group = slots.slice(i, i + sks);
   
-      result.push({
-        startId: group[0].id,
-        slotIds: group.map(s => s.id), // 🔥 INI PENTING
-        label: `${formatJam(group[0].jamMulai)} - ${formatJam(group[group.length - 1].jamSelesai)}`
-      });
+      // pastikan slot berurutan (opsional tapi bagus)
+      if (group.length === sks) {
+        result.push({
+          startId: group[0].id,
+          slotIds: group.map(s => s.id),
+          label: `${formatJam(group[0].jamMulai)} - ${formatJam(group[group.length - 1].jamSelesai)}`
+        });
+      }
     }
   
     return result;
   };
- 
   const getRoomsForSelectedGroup = () => {
     if (!selectedSlotGroup || !availableData.length) return [];
   
@@ -345,7 +360,7 @@ const TabelPerubahan = () => {
             <option value="">Semua Hari</option>
 
             {hariList.map((hari) => (
-                <option key={hari.id} value={hari.nama}>
+                <option key={hari.id} value={hari.id}>
                 {hari.nama}
                 </option>
             ))}
@@ -522,17 +537,21 @@ const TabelPerubahan = () => {
                     <select
                     value={slotBaru}
                     onChange={(e) => {
-                      const selected = generateSlotRange().find(s => s.startId === e.target.value);
-                  
-                      setSlotBaru(e.target.value);
-                      setSelectedSlotGroup(selected); // 🔥 INI WAJIB
+                      const value = e.target.value;
+                    
+                      const selected = generateAvailableSlotRange().find(
+                        s => String(s.startId) === String(value)
+                      );
+                    
+                      setSlotBaru(value);
+                      setSelectedSlotGroup(selected);
                       setRuangBaru("");
                     }}
                     className="w-full px-3 py-2 bg-gray-100 rounded
                                 focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                     <option value="">Pilih Jam</option>
-                    {generateSlotRange().map(slot => (
+                    {generateAvailableSlotRange().map(slot => (
                     <option key={slot.startId} value={slot.startId}>
                       {slot.label}
                     </option>
