@@ -70,6 +70,7 @@ const DetailKonflik = () => {
 
       setChanges(res.data.data.moves || []);
       setIsResolved(true);
+      await fetchKonflik();
     } catch (err) {
       console.error(err);
       alert("Gagal resolve konflik");
@@ -162,9 +163,8 @@ const DetailKonflik = () => {
           </div>
         )}
 
-        {/* loading */}
         {loading && (
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center justify-center min-h-[60vh] text-gray-500 gap-2">
             <Loader2 className="animate-spin" size={18} />
             Memuat data konflik...
           </div>
@@ -309,7 +309,7 @@ const DetailKonflik = () => {
                       {item.mataKuliah}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {item.kelas} — {item.dosen}
+                      {item.kelas}
                     </p>
                   </div>
 

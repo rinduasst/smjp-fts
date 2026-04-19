@@ -14,7 +14,8 @@ const BatchJadwalDetail = () => {
   const [search, setSearch] = useState("");
 
   const [slotList, setSlotList] = useState([]);
-
+  const [conflictCount, setConflictCount] = useState(0);
+  const totalKonflik = conflictCount;
   const warnaProdi = {
     "teknik mesin": "bg-yellow-300 text-black",
     "rekayasa pertanian dan biosistem": "bg-yellow-500 text-white",
@@ -70,6 +71,7 @@ const BatchJadwalDetail = () => {
       setLoading(false);
     }
   };
+  console.log(jadwalList.filter(i => i.hasConflict));
   const fetchSlotWaktu = async () => {
     try {
       const res = await api.get("/api/master-data/slot-waktu");
@@ -97,6 +99,7 @@ const BatchJadwalDetail = () => {
   useEffect(() => {
     fetchData();
     fetchSlotWaktu();
+    fetchConflictCount();
   }, [id]);
   const handleSetAktif = async () => {
     try {
@@ -108,7 +111,22 @@ const BatchJadwalDetail = () => {
     }
   };
 
-  const totalKonflik = jadwalList.filter((i) => i.hasConflict).length;
+  // const totalKonflik = jadwalList.filter((i) => i.hasConflict).length;
+  const fetchConflictCount = async () => {
+    try {
+      const res = await api.get(`/api/scheduler/batch/${id}/conflicts`);
+      const count = res.data?.data?.conflicts?.ruang?.count || 0;
+  
+      // kalau masih ada konflik, coba cek ulang (delay)
+      if (count > 0) {
+        setTimeout(fetchConflictCount, 1000); // retry 1 detik
+      }
+  
+      setConflictCount(count);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const filtered = jadwalList.filter((i) =>
     i.mataKuliah?.toLowerCase().includes(search.toLowerCase()) ||
