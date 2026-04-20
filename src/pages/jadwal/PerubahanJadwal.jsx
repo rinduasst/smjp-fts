@@ -273,7 +273,7 @@
               </button>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
 
                 {/* Filter Status */}
                 <select
@@ -358,37 +358,35 @@
                         {/* jdwl lama  */}
                          <td className="px-4 py-3">
                          <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700">
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <div className="flex flex-col gap-x-4 gap-y-1">
 
-                        <div>
-                          <span className="text-gray-400">Hari:</span>{" "}
-                          <span className="font-semibold">
-                            {row.jadwalKuliah?.hari?.nama || "-"}
-                          </span>
-                        </div>
+                      <div>
+  <span className="text-gray-400">Hari:</span>{" "}
+  <span className="font-semibold">
+    {getHariNama(row.hariLamaId)}
+  </span>
+</div>
 
-                        <div>
-                          <span className="text-gray-400">Waktu:</span>{" "}
-                          <span>
-                          {row.jadwalKuliah?.slotWaktuId
-  ? getSlotRangeLabel(row.jadwalKuliah.slotWaktuId, row)
-  : "-"}
-                          </span>
-                        </div>
+<div>
+  <span className="text-gray-400">Waktu:</span>{" "}
+  <span>
+    {getSlotRangeLabel(row.slotWaktuLamaId, row)}
+  </span>
+</div>
 
-                        <div>
-                          <span className="text-gray-400">Ruangan:</span>{" "}
-                          <span className="text-blue-600 font-medium">
-                            {row.jadwalKuliah?.ruang?.nama || "-"}
-                          </span>
-                        </div>
+<div>
+  <span className="text-gray-400">Ruangan:</span>{" "}
+  <span className="text-blue-600 font-medium">
+    {getRuangNama(row.ruangLamaId)}
+  </span>
+</div>
 
                       </div>
                     </div>
                       </td>
                       <td className="px-4 py-3">
                       <div className="bg-green-50 p-3 rounded-md text-xs">
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <div className="flex flex-col gap-x-4 gap-y-1">
                       <div>
   <span className="text-gray-400">Hari:</span>{" "}
   <span className="font-medium text-green-700">

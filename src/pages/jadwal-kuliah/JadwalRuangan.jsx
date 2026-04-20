@@ -173,7 +173,8 @@ const JadwalRuangan = () => {
         {hariUrut.map(hari => {
           const jadwalHari = jadwalGroupedByHari[hari] || [];
           if (!jadwalHari.length) return null;
-          const ruangList = Array.from(new Set(jadwalHari.map(j => j.ruangan)));
+          const ruangList = Array.from(new Set(jadwalList.map(j => j.ruangan)))
+          .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
           const slotList = sesiList;
           // Matrix
           const matrix = {};

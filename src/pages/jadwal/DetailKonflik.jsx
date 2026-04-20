@@ -113,9 +113,9 @@ const DetailKonflik = () => {
           <h1 className="text-xl font-bold">
             Detail Konflik Jadwal
           </h1>
-              <p className="text-sm text-gray-600">
-                {formatNamaBatch(data?.batchNama)} 
-              </p>
+              {/* <p className="text-sm text-gray-600">
+               Batch {formatNamaBatch(data?.batchNama)} 
+              </p> */}
         </div>
         </div>
 
@@ -309,7 +309,7 @@ const DetailKonflik = () => {
                       {item.mataKuliah}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {item.kelas}
+                      Kelas {item.kelas}
                     </p>
                   </div>
 

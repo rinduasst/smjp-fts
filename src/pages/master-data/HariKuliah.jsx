@@ -195,11 +195,12 @@ function HariKuliah() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
-                <tr>
-                <th className="px-6 py-4 text-left text-xs">No</th>
-                <th className="px-6 py-4 text-left text-xs">Nama</th>
-                <th className="px-6 py-4 text-left text-xs">Hari ke-</th>
-                <th className="px-6 py-4 text-left text-xs">Aksi</th>
+              <tr>
+                  
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Hari Ke-</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
 

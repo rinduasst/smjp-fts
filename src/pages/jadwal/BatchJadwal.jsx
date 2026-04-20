@@ -329,10 +329,6 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
       </div>
     </div>
 
-
-        <div className="mt-4 text-xs text-gray-500">
-          Batch aktif akan digunakan sebagai jadwal resmi.
-        </div>
       </div>
       {showModalEdit && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

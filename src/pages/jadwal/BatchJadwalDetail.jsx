@@ -177,7 +177,8 @@ const formatKelas = (jadwal) => {
     .join(", ");
 };
 const ruangListGlobal = React.useMemo(() => {
-  return [...new Set(jadwalList.map(i => i.ruangan))];
+  return [...new Set(jadwalList.map(i => i.ruangan))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }, [jadwalList]);
 const normalize = (val) => val?.toString().trim().toLowerCase();
 const matrix = React.useMemo(() => {

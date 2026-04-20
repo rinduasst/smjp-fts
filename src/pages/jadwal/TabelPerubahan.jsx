@@ -148,8 +148,19 @@ const TabelPerubahan = () => {
       console.log("=== ERROR DETAIL ===");
       console.log("STATUS:", err.response?.status);
       console.log("DATA:", err.response?.data);
-      console.log("ERRORS:", err.response?.data?.errors);
-  
+    
+      const msg =
+        err.response?.data?.message ||
+        "Gagal mengajukan perubahan jadwal";
+    
+      if (err.response?.data?.code === "JADWAL_BENTROK") {
+        alert("" + msg);
+        return;
+      }
+    
+      alert(msg);
+      resetForm();
+    
       if (err.response) {
         console.log("STATUS:", err.response.status);
         console.log("DATA:", err.response.data);
@@ -261,11 +272,21 @@ const TabelPerubahan = () => {
   
     return jam.replace(".", ":");
   };
-  const sks = selectedJadwal?.sks || 1;
+const getSksSlot = (jadwal) => {
+  if (!jadwal) return 1;
+
+  if (jadwal.sksEfektif) return jadwal.sksEfektif;
+
+  return jadwal.hasPraktikum
+    ? Math.ceil(jadwal.sks / 2)
+    : jadwal.sks || 1;
+
+  };
+  const sks = selectedJadwal?.sksEfektif ?? Math.ceil((selectedJadwal?.sks || 1) / 2);
   const generateAvailableSlotRange = () => {
     if (!selectedJadwal || !availableData.length || !hariBaru) return [];
   
-    const sks = selectedJadwal.sks || 1;
+    const sks = getSksSlot(selectedJadwal);
   
     const hariData = availableData.find(d => d.hariId === hariBaru);
     if (!hariData) return [];
@@ -287,8 +308,7 @@ const TabelPerubahan = () => {
   
     for (let i = 0; i <= slots.length - sks; i++) {
       const group = slots.slice(i, i + sks);
-  
-      // pastikan slot berurutan (opsional tapi bagus)
+    
       if (group.length === sks) {
         result.push({
           startId: group[0].id,
@@ -606,7 +626,7 @@ const TabelPerubahan = () => {
             {/* FOOTER */}
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
                 <button
-                onClick={() => setSelectedJadwal(null)}
+               onClick={resetForm}
                 className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
                 >
                 Batal
