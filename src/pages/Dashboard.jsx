@@ -78,7 +78,7 @@ const DashboardSMJP = () => {
   }, [batch]);
   const fetchPengajuanPending = async () => {
     try {
-      const res = await api.get("/api/pengjuan-perubahan-jadwal", {
+      const res = await api.get("/api/pengajuan-perubahan-jadwal", {
         params: {
           status: "DIAJUKAN",
           page: 1,

@@ -45,7 +45,7 @@ function PenugasanFormModal({
     fetchPeriode(); 
   
     if (peran === "TU_PRODI") {
-      setSelectedProdi(user?.prodi);
+      setSelectedProdi(user?.prodiId);
     }
   
   }, [showModal]);
@@ -277,7 +277,7 @@ const tambahKelas = (row) => {
   
     return `${romawi}_${jenis}_${kelas.kode}`;
   };
-
+console.log("PRODI:", selectedProdi);
   
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
