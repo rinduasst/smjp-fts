@@ -231,7 +231,7 @@ const fetchJadwal = async () => {
                     </td>
 
                     <td className="border px-4 py-2 text-center">
-                      {slot.matkul?.sksTotal}
+                      {slot?.sksEfektif}
                     </td>
 
                     <td className="border px-4 py-2">

@@ -224,7 +224,7 @@ const Jadwal = () => {
                         {jadwal.mataKuliah}
                       </td>
                       <td className="px-3 py-2 border text-center">
-                        {jadwal.sks}
+                        {jadwal.sksEfektif}
                       </td>
                       <td className="px-3 py-2 border text-center">
                       {formatKelas(jadwal)}

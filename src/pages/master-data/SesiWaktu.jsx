@@ -363,7 +363,7 @@ function SlotWaktu() {
                         </select>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mt-2">
                     <input
                       type="checkbox"
                       checked={formData.slotMalam}
@@ -372,8 +372,9 @@ function SlotWaktu() {
                       }
                     />
                     <label className="text-sm font-medium text-gray-700">
-                      Sesi Malam
+                      Tandai sebagai sesi malam
                     </label>
+                
                   </div>
                   </div>
 

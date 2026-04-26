@@ -139,6 +139,7 @@ function PenugasanFormModal({
           kelasList: kelas,
           kelasGabungan: [""],
           periode: pm.periode,
+          butuhLab: false,
           jumlahSesiPerMinggu: 1,
           preferensiRuangJenis: "TEORI",
           status: "SIAP"
@@ -185,6 +186,7 @@ const tambahKelas = (row) => {
       kelasList: row.kelasList,
       kelasGabungan: [""], // default 1 kelas
       periode: row.periode,
+      butuhLab: row.butuhLab,
       jumlahSesiPerMinggu: row.jumlahSesiPerMinggu,
       preferensiRuangJenis: row.preferensiRuangJenis,
       status: row.status
@@ -206,6 +208,7 @@ const tambahKelas = (row) => {
         dosenId: selectedDosen.id,
         programMatkulId: selectedItem.programMatkul?.id,
         kelompokKelasIds: editForm.kelasGabungan.filter(k => k !== ""),
+        butuhLab: editForm.butuhLab,
         jumlahSesiPerMinggu: editForm.jumlahSesiPerMinggu,
         preferensiRuangJenis: editForm.preferensiRuangJenis,
         status: editForm.status,
@@ -218,6 +221,7 @@ const tambahKelas = (row) => {
         dosenId: selectedDosen.id,
         programMatkulId: p.programMatkulId,
         kelompokKelasIds: p.kelasGabungan.filter(k => k !== ""),
+        butuhLab: p.butuhLab,
         jumlahSesiPerMinggu: p.jumlahSesiPerMinggu,
         preferensiRuangJenis: p.preferensiRuangJenis,
         status: p.status,
@@ -236,6 +240,7 @@ const tambahKelas = (row) => {
         kurikulumId: selectedItem.programMatkul?.kurikulum?.id || "",
         jumlahKelompokKelas: selectedItem.kelasList?.length || 1,
         kelasGabungan: selectedItem.kelasList?.map(k => k.kelompokKelas.id) || [""],
+        butuhLab: selectedItem.butuhLab ?? false,
         jumlahSesiPerMinggu: selectedItem.jumlahSesiPerMinggu,
         preferensiRuangJenis: selectedItem.preferensiRuangJenis,
         status: selectedItem.status
@@ -482,6 +487,19 @@ console.log("PRODI:", selectedProdi);
               <option value="LAB">LAB</option>
             </select>
           </div>
+          <div>
+  <label className="text-sm font-medium">Kelas Praktikum</label>
+  <div className="flex items-center gap-2 mt-1">
+    <input
+      type="checkbox"
+      checked={editForm.butuhLab || false}
+      onChange={(e) =>
+        setEditForm({ ...editForm, butuhLab: e.target.checked })
+      }
+    />
+    <span className="text-sm text-gray-600">Praktikum</span>
+  </div>
+</div>
         
           <div>
             <label className="text-sm font-medium">Status</label>
@@ -599,18 +617,29 @@ console.log("PRODI:", selectedProdi);
                       </td>
 
                       {/* ================= JENIS ================= */}
-                      <td className="text-center">
-                        <select
-                          value={row.preferensiRuangJenis}
-                          onChange={(e) =>
-                            updateRow(rowIndex, "preferensiRuangJenis", e.target.value)
-                          }
-                          className="border px-2 py-1 rounded"
-                        >
-                          <option value="TEORI">TEORI</option>
-                          <option value="LAB">LAB</option>
-                        </select>
-                      </td>
+                      <td className="text-center space-y-1">
+  <select
+    value={row.preferensiRuangJenis}
+    onChange={(e) =>
+      updateRow(rowIndex, "preferensiRuangJenis", e.target.value)
+    }
+    className="border px-2 py-1 rounded"
+  >
+    <option value="TEORI">TEORI</option>
+    <option value="LAB">LAB</option>
+  </select>
+
+  <div className="flex items-center justify-center gap-1">
+    <input
+      type="checkbox"
+      checked={row.butuhLab || false}
+      onChange={(e) =>
+        updateRow(rowIndex, "butuhLab", e.target.checked)
+      }
+    />
+    <span className="text-xs">Praktikum</span>
+  </div>
+</td>
 
                       {/* ================= STATUS ================= */}
                       <td className="text-center">

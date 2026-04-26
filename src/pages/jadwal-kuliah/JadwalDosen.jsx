@@ -146,7 +146,7 @@ const JadwalDosen = () => {
                 </tr>
               ) : (
                 filteredData.map((dosen, idx) => {
-                  const totalSKS = dosen.jadwal.reduce((acc, j) => acc + (j.sks || 0), 0);
+                  const totalSKS = dosen.jadwal.reduce((acc, j) => acc + (j.sksEfektif || 0), 0);
 
                   return dosen.jadwal.map((j, i) => (
                     <tr key={`${dosen.nama}-${i}`}>
@@ -163,7 +163,7 @@ const JadwalDosen = () => {
 
                       <td className="border px-3 py-2">{j.mataKuliah}</td>
                       <td className="border px-3 py-2">{formatKelas(j)}</td>
-                      <td className="border px-3 py-2 text-center">{j.sks}</td>
+                      <td className="border px-3 py-2 text-center">{j.sksEfektif}</td>
                       <td className="border px-3 py-2">{j.hari}</td>
                       <td className="border px-3 py-2 whitespace-nowrap">
                         {j.jamMulai} - {j.jamSelesai}
