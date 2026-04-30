@@ -49,6 +49,7 @@ function PenugasanMengajar() {
           pageSize: currentPageSize,
           jenisKelas: filterJenisKelas || undefined,
           angkatan: filterAngkatan || undefined,
+          kode: filterKode || undefined, 
           q: searchTerm || undefined
         }
       });
@@ -63,7 +64,7 @@ function PenugasanMengajar() {
   };
   useEffect(() => {
     fetchData(page, pageSize);
-  }, [page, pageSize, searchTerm, filterJenisKelas, filterAngkatan]);
+  }, [page, pageSize, searchTerm, filterJenisKelas, filterAngkatan, filterKode]);
 
   const totalPage = Math.ceil(totalData / pageSize);
   const resetForm = () => {
@@ -165,10 +166,12 @@ function PenugasanMengajar() {
   //untuk filter dara
   //ambil list angkatan
   const angkatanList = [
-    ...new Set(data.flatMap(item => 
-      item.kelasList?.map(k => k.kelompokKelas.angkatan)
-    ).filter(Boolean))
-  ].sort((a,b) => a - b);
+    ...new Set(
+      data.flatMap(item =>
+        item.kelasList?.map(k => String(k.kelompokKelas.angkatan))
+      ).filter(Boolean)
+    )
+  ].sort();
   //ambil list jenis kelas
   const jenisKelasList = [
     ...new Set(data.flatMap(item => 
@@ -259,8 +262,10 @@ function PenugasanMengajar() {
 
   // Filter angkatan
   const matchAngkatan =
-    !filterAngkatan ||
-    item.kelasList?.some(k => k.kelompokKelas.angkatan === filterAngkatan);
+  !filterAngkatan ||
+  item.kelasList?.some(
+    k => String(k.kelompokKelas.angkatan) === filterAngkatan
+  );
 
   // Filter kode kelas
   const matchKode =
@@ -481,10 +486,11 @@ function PenugasanMengajar() {
       />
       </div>
       <PenugasanDetailModal
-        showDetail={showDetail}
-        setShowDetail={setShowDetail}
-        selectedItem={selectedItem}
-      />
+  showDetail={showDetail}
+  setShowDetail={setShowDetail}
+  selectedItem={selectedItem}
+  formatKelas={formatKelas}
+/>
 
     </MainLayout>
   );

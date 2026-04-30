@@ -1,9 +1,9 @@
 import { X } from "lucide-react";
-
 function PenugasanDetailModal({
   showDetail,
   setShowDetail,
-  selectedItem
+  selectedItem,
+  formatKelas
 }) {
 
   if (!showDetail || !selectedItem) return null;
@@ -81,15 +81,17 @@ function PenugasanDetailModal({
           <div className="col-span-2">
             <p className="text-gray-500">Kelas</p>
             <p className="font-medium">
-              {selectedItem.kelasList?.length
-                ? selectedItem.kelasList
-                    .map(
-                      (k) =>
-                        `${k.kelompokKelas.kode} - ${k.kelompokKelas.angkatan}`
+            {selectedItem.kelasList?.length
+              ? selectedItem.kelasList
+                  .map((k) =>
+                    formatKelas(
+                      k.kelompokKelas,
+                      selectedItem.programMatkul?.periode
                     )
-                    .join(", ")
-                : "-"}
-            </p>
+                  )
+                  .join(" • ")
+              : "-"}
+          </p>
           </div>
 
           {/* JUMLAH SESI */}

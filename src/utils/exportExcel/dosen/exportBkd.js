@@ -1,14 +1,17 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export const exportJadwalDosenExcel = async (data, formatKelas) => {
+export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Jadwal Dosen");
-
-  // =================
-  // LOGO
-  // =================
+  const fakultas = batchInfo?.fakultas?.nama || "-";
+  const periode = batchInfo?.periode?.nama || "-";
+  // ambil prodi dari slot pertama
+  const prodiNama =
+  batchInfo?.prodi?.nama ||
+  data?.[0]?.jadwal?.[0]?.prodi ||
+  "-";
 
   const logo = await fetch("/logofts.png").then(res => res.arrayBuffer());
 
@@ -41,7 +44,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas) => {
 
     // Baris 2
     worksheet.mergeCells("B2:I2");
-    worksheet.getCell("B2").value = "PROGRAM STUDI TEKNIK INFORMATIKA";
+   worksheet.getCell("B2").value = `Program Studi ${prodiNama}`;
     worksheet.getCell("B2").font = {
     name: "Times New Roman",
     size: 16,
@@ -53,7 +56,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas) => {
 
     // Baris 3
     worksheet.mergeCells("B3:I3");
-    worksheet.getCell("B3").value = "FAKULTAS TEKNIK & SAINS";
+    worksheet.getCell("B3").value = `Fakultas ${fakultas}`;
     worksheet.getCell("B3").font = {
     name: "Times New Roman",
     size: 16,
@@ -65,7 +68,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas) => {
 
     // Baris 4
     worksheet.mergeCells("B4:I4");
-    worksheet.getCell("B4").value = "PERIODE GANJIL 2025/2026";
+    worksheet.getCell("B4").value = `Periode ${periode}`;
     worksheet.getCell("B4").font = {
     name: "Times New Roman",
     size: 14,
@@ -111,7 +114,7 @@ let startRow = worksheet.lastRow.number + 1;
 
 data.forEach((dosen, idx) => {
 
-  const totalSKS = dosen.jadwal.reduce((acc, j) => acc + (j.sks || 0), 0);
+  const totalSKS = dosen.jadwal.reduce((acc, j) => acc + (j.sksEfektif || 0), 0);
   const dosenStart = startRow;
 
   dosen.jadwal.forEach((j) => {
@@ -121,7 +124,7 @@ data.forEach((dosen, idx) => {
       dosen.nama,
       j.mataKuliah,
       formatKelas(j),
-      j.sks,
+      j.sksEfektif,
       j.hari,
       `${j.jamMulai} - ${j.jamSelesai}`,
       j.ruangan,

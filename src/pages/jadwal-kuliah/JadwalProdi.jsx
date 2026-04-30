@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Download, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { exportProdi} from "../../utils/exportExcel/jadwal/exportProdi.js";
 
 
 const JadwalProdi = () => {
@@ -151,7 +152,7 @@ const fetchJadwal = async () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <button
-            onClick={() => exportAllProdi(data, batchInfo)}
+            onClick={() => exportProdi(filteredData, batchInfo)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={18} />

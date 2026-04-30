@@ -282,8 +282,6 @@ const tambahKelas = (row) => {
   
     return `${romawi}_${jenis}_${kelas.kode}`;
   };
-console.log("PRODI:", selectedProdi);
-  
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-5xl">
@@ -428,257 +426,298 @@ console.log("PRODI:", selectedProdi);
           // ======================
           // 🔵 EDIT
           // ======================
-          <>
-          <div>
-            <label className="text-sm font-medium">Dosen</label>
-            <input
-              value={selectedDosen?.nama || ""}
-              disabled
-              className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-        
-          <div>
-            <label className="text-sm font-medium">Mata Kuliah</label>
-            <input
-              value={selectedItem?.programMatkul?.mataKuliah?.nama || ""}
-              disabled
-              className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-        
-          <div>
-            <label className="text-sm font-medium">Periode</label>
-            <select
-              value={editForm.periodeId}
-              onChange={(e) =>
-                setEditForm({ ...editForm, periodeId: e.target.value })
-              }
-              className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {periodeList.map((p) => (
-                <option key={p.id} value={p.id}>{p.nama}</option>
-              ))}
-            </select>
-          </div>
-        
-          <div>
-            <label className="text-sm font-medium">Jumlah Sesi</label>
-            <input
-              type="number"
-              value={editForm.jumlahSesiPerMinggu}
-              onChange={(e) =>
-                setEditForm({ ...editForm, jumlahSesiPerMinggu: e.target.value })
-              }
-              className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-        
-          <div>
-            <label className="text-sm font-medium">Jenis Ruang</label>
-            <select
-              value={editForm.preferensiRuangJenis}
-              onChange={(e) =>
-                setEditForm({ ...editForm, preferensiRuangJenis: e.target.value })
-              }
-              className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="TEORI">TEORI</option>
-              <option value="LAB">LAB</option>
-            </select>
-          </div>
-          <div>
-  <label className="text-sm font-medium">Kelas Praktikum</label>
-  <div className="flex items-center gap-2 mt-1">
+ <>
+  <div className="space-y-4">
+
+    {/* DOSEN */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Dosen</label>
+      <input
+        value={selectedDosen?.nama || ""}
+        disabled
+        className="w-full px-3 py-2 bg-gray-100  rounded text-sm"
+      />
+    </div>
+
+    {/* MATKUL */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Mata Kuliah</label>
+      <input
+        value={selectedItem?.programMatkul?.mataKuliah?.nama || ""}
+        disabled
+        className="w-full px-3 py-2 bg-gray-100  rounded text-sm"
+      />
+    </div>
+
+    {/* PERIODE */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Periode</label>
+      <select
+        value={editForm.periodeId}
+        onChange={(e) =>
+          setEditForm({ ...editForm, periodeId: e.target.value })
+        }
+        className="w-full px-3 py-2 border border-gray-400 rounded text-sm
+        focus:outline-none focus:ring-1 focus:ring-green-500 "
+      >
+        {periodeList.map((p) => (
+          <option key={p.id} value={p.id}>{p.nama}</option>
+        ))}
+      </select>
+    </div>
+
+    {/* JUMLAH SESI */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Jumlah Sesi</label>
+      <input
+        type="number"
+        min={1}
+        value={editForm.jumlahSesiPerMinggu}
+        onChange={(e) =>
+          setEditForm({ ...editForm, jumlahSesiPerMinggu: e.target.value })
+        }
+        className="w-full px-3 py-2 border  border-gray-400 rounded text-sm
+        focus:outline-none focus:ring-1 focus:ring-green-500"
+      />
+    </div>
+
+    {/* JENIS RUANG */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Jenis Ruang</label>
+      <select
+        value={editForm.preferensiRuangJenis}
+        onChange={(e) =>
+          setEditForm({ ...editForm, preferensiRuangJenis: e.target.value })
+        }
+        className="w-full px-3 py-2 border  border-gray-400 rounded text-sm
+        focus:outline-none focus:ring-1 focus:ring-green-500"
+      >
+        <option value="TEORI">TEORI</option>
+        <option value="LAB">LAB</option>
+      </select>
+    </div>
+
+    {/* PRAKTIKUM */}
+    <div>
+  <label className="block text-sm font-medium mb-1">Kelas Praktikum</label>
+
+  <div className="flex items-center justify-between border border-gray-400  rounded px-3 py-2">
+    <span className="text-sm text-gray-600">
+      Gunakan kelas praktikum
+    </span>
+
     <input
       type="checkbox"
       checked={editForm.butuhLab || false}
       onChange={(e) =>
         setEditForm({ ...editForm, butuhLab: e.target.checked })
       }
+      className="w-4 h-4"
     />
-    <span className="text-sm text-gray-600">Praktikum</span>
   </div>
 </div>
-        
-          <div>
-            <label className="text-sm font-medium">Status</label>
-            <select
-              value={editForm.status}
-              onChange={(e) =>
-                setEditForm({ ...editForm, status: e.target.value })
-              }
-              className="w-full px-3 py-2 bg-gray-100 rounded"
-            >
-              <option value="DRAF">DRAF</option>
-              <option value="SIAP">SIAP</option>
-            </select>
-          </div>
-        </>
+
+    {/* STATUS */}
+    <div>
+      <label className="block text-sm font-medium mb-1">Status</label>
+      <select
+        value={editForm.status}
+        onChange={(e) =>
+          setEditForm({ ...editForm, status: e.target.value })
+        }
+        className="w-full px-3 py-2 border  border-gray-400 rounded text-sm
+        focus:outline-none focus:ring-1 focus:ring-green-500"
+      >
+        <option value="DRAF">DRAF</option>
+        <option value="SIAP">SIAP</option>
+      </select>
+    </div>
+
+  </div>
+</>
         )}
 
         {/* ======================
             TABEL (BOTH)
         ====================== */}
-       {!isEdit && pengajaranList.length > 0 && (
-          <div className="bg-white rounded-lg shadow border overflow-hidden">
-            <div className="max-h-64 overflow-y-auto">
-              <table className="w-full text-sm border">
-                <thead className="bg-gray-50 text-xs uppercase">
-                  <tr>
-                    <th className="px-3 py-2">Mata Kuliah</th>
-                    <th className="px-3 py-2 text-center">Kelas</th>
-                    <th className="px-3 py-2 text-center">Jumlah</th>
-                    <th className="px-3 py-2 text-center">Jenis</th>
-                    <th className="px-3 py-2 text-center">Status</th>
+      {!isEdit && pengajaranList.length > 0 && (
+        <div className="bg-white rounded-xl shadow border overflow-hidden">
 
-                    {!isEdit && <th className="px-3 py-2 text-center">Aksi</th>}
-                  </tr>
-                </thead>
+          <div className="max-h-72 overflow-y-auto">
+            <table className="w-full text-sm">
 
-                <tbody>
-                  {pengajaranList.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-t">
+              {/* ===== HEADER ===== */}
+              <thead className="bg-gray-100 text-xs uppercase text-gray-600 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-left">Mata Kuliah</th>
+                  <th className="px-4 py-3 text-center">Kelas</th>
+                  <th className="px-4 py-3 text-center">Jumlah Pertemuan</th>
+                  <th className="px-4 py-3 text-center">Jenis Ruangan</th>
+                  <th className="px-4 py-3 text-center">Praktikum</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-3 text-center">Aksi</th>
+                </tr>
+              </thead>
 
-                      {/* ================= MATKUL ================= */}
-                      <td className="px-2 py-1">
-                      <div className="flex items-center justify-between gap-2">
+              {/* ===== BODY ===== */}
+              <tbody className="divide-y">
+                {pengajaranList.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50 align-top">
+
+                    {/* ===== MATKUL ===== */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-2">
                         
-                        {/* Nama matkul */}
-                        <div className="font-medium text-gray-800">
+                        <span className="font-semibold text-gray-800 leading-tight">
                           {row.namaMatkul}
-                        </div>
+                        </span>
 
-                        {/* tombol tambah kelas */}
                         {!isEdit && (
                           <button
                             type="button"
                             onClick={() => tambahKelas(row)}
-                            className="text-xs px-2 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 transition"
+                            className="w-fit text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
                           >
                             + Tambah Kelas
                           </button>
                         )}
-
                       </div>
                     </td>
 
-                      {/* ================= KELAS (GABUNG + HAPUS) ================= */}
-                     <td className="px-2 py-1">
-                    {(row.kelasGabungan || []).map((k, i) => (
-                      <div key={i} className="flex items-center gap-1 mb-1">
+                    {/* ===== KELAS ===== */}
+                    <td className="px-4 py-3">
+                      <div className="space-y-2">
+                        {(row.kelasGabungan || []).map((k, i) => (
+                          <div key={i} className="flex items-center gap-2">
 
-                        <select
-                          value={k}
-                          onChange={(e) => updateKelas(rowIndex, i, e.target.value)}
-                          className="border px-2 py-1 text-xs rounded"
-                        >
-                          <option value="">Pilih kelas</option>
+                            <select
+                              value={k}
+                              onChange={(e) =>
+                                updateKelas(rowIndex, i, e.target.value)
+                              }
+                              className="border px-2 py-1 text-xs rounded w-full 
+                              focus:outline-none focus:border-green-400">
+                              <option value="">Pilih kelas</option>
+                              {(row.kelasList || []).map((kelas) => (
+                                <option key={kelas.id} value={kelas.id}>
+                                  {formatKelas(kelas, row.periode)}
+                                </option>
+                              ))}
+                            </select>
 
-                          {(row.kelasList || []).map((kelas) => (
-                            <option key={kelas.id} value={kelas.id}>
-                              {formatKelas(kelas, row.periode)}
-                            </option>
-                          ))}
-                        </select>
+                            <button
+                              type="button"
+                              onClick={() => hapusKelas(rowIndex, i)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        ))}
 
-                        <button
-                          type="button"
-                          onClick={() => hapusKelas(rowIndex, i)}
-                          className="text-red-500 text-xs"
-                        >
-                          <Trash size={12} />
-                        </button>
-
+                      <button
+                        type="button"
+                        onClick={() => gabungKelas(rowIndex)}
+                        className="flex items-center justify-center gap-1 w-30 
+                        text-xs px-2 py-1.5 rounded-md border border-blue-200 
+                        bg-blue-50 text-blue-700 hover:bg-blue-100 
+                        transition"
+                      >
+                        <Plus size={14} />
+                        Gabung Kelas
+                      </button>
                       </div>
-                    ))}
+                    </td>
 
-                    {/* GABUNG KELAS */}
-                    <button
-                    type="button"
-                    onClick={() => gabungKelas(rowIndex)}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 mt-1 transition"
-                  >
-                    <Plus size={12} />
-                    Gabung Kelas
-                  </button>
-                  </td>
+                    {/* ===== JUMLAH ===== */}
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.jumlahSesiPerMinggu}
+                        onChange={(e) =>
+                          updateRow(rowIndex, "jumlahSesiPerMinggu", e.target.value)
+                        }
+                        className="border px-2 py-1 text-xs rounded w-16
+                        focus:outline-none focus:border-green-400"></input>
+                    </td>
 
-                      {/* ================= JUMLAH ================= */}
-                      <td className="text-center">
-                        <input
-                          type="number"
-                          value={row.jumlahSesiPerMinggu}
-                          onChange={(e) =>
-                            updateRow(rowIndex, "jumlahSesiPerMinggu", e.target.value)
+                    {/* ===== JENIS RUANGAN ===== */}
+                    <td className="px-4 py-3 text-center">
+                      <select
+                        value={row.preferensiRuangJenis}
+                        onChange={(e) =>
+                          updateRow(rowIndex, "preferensiRuangJenis", e.target.value)
+                        }
+                        className="border px-2 py-1 text-xs rounded w-full 
+                              focus:outline-none focus:border-green-400">
+                        <option value="TEORI">TEORI</option>
+                        <option value="LAB">LAB</option>
+                      </select>
+                    </td>
+
+                    {/* ===== PRAKTIKUM (FIX UTAMA DI SINI) ===== */}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateRow(rowIndex, "butuhLab", !row.butuhLab)
+                        }
+                        className={`text-xs px-3 py-1 rounded-full border transition
+                          ${
+                            row.butuhLab
+                              ? "bg-green-100 text-green-700 border-green-300"
+                              : "bg-gray-100 text-gray-400"
                           }
-                          className="w-14 text-center border rounded"
-                        />
-                      </td>
+                        `}
+                      >
+                        {row.butuhLab ? "✓ Ya" : "Tidak"}
+                      </button>
+                    </td>
 
-                      {/* ================= JENIS ================= */}
-                      <td className="text-center space-y-1">
-  <select
-    value={row.preferensiRuangJenis}
-    onChange={(e) =>
-      updateRow(rowIndex, "preferensiRuangJenis", e.target.value)
-    }
-    className="border px-2 py-1 rounded"
-  >
-    <option value="TEORI">TEORI</option>
-    <option value="LAB">LAB</option>
-  </select>
-
-  <div className="flex items-center justify-center gap-1">
-    <input
-      type="checkbox"
-      checked={row.butuhLab || false}
-      onChange={(e) =>
-        updateRow(rowIndex, "butuhLab", e.target.checked)
-      }
-    />
-    <span className="text-xs">Praktikum</span>
-  </div>
-</td>
-
-                      {/* ================= STATUS ================= */}
-                      <td className="text-center">
-                        <select
-                          value={row.status}
-                          onChange={(e) =>
-                            updateRow(rowIndex, "status", e.target.value)
+                    {/* ===== STATUS ===== */}
+                    <td className="px-4 py-3 text-center">
+                      <select
+                        value={row.status}
+                        onChange={(e) =>
+                          updateRow(rowIndex, "status", e.target.value)
+                        }
+                        className={`px-2 py-1 rounded text-xs border 
+                        focus:outline-none 
+                          ${
+                            row.status === "SIAP"
+                              ? "bg-green-50 text-green-700 border-green-300"
+                              : "bg-yellow-50 text-yellow-700 border-yellow-300"
                           }
-                          className="border px-2 py-1 rounded"
-                        >
-                          <option value="DRAF">DRAF</option>
-                          <option value="SIAP">SIAP</option>
-                        </select>
-                      </td>
+                        `}
+                      >
+                        <option value="DRAF">DRAF</option>
+                        <option value="SIAP">SIAP</option>
+                      </select>
+                    </td>
 
-                      {/* ================= DELETE ROW ================= */}
-                      {!isEdit && (
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setPengajaranList(prev =>
-                                prev.filter((_, i) => i !== rowIndex)
-                              )
-                            }
-                            className="text-red-500"
-                          >
-                            <Trash size={16} />
-                          </button>
-                        </td>
-                      )}
+                    {/* ===== DELETE ===== */}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPengajaranList((prev) =>
+                            prev.filter((_, i) => i !== rowIndex)
+                          )
+                        }
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </td>
 
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+      )}
 
 
         {/* BUTTON */}

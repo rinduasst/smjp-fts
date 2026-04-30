@@ -283,9 +283,10 @@ function Kurikulum() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                     Tahun
                   </th>
+                  {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase"> 
                     Program Studi
-                  </th>
+                  </th>)}
                   <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
                     Status
                   </th>
@@ -310,9 +311,10 @@ function Kurikulum() {
                       <td className="px-6 py-4">
                       {row.angkatanMulai} - {row.angkatanSelesai ? row.angkatanSelesai : "Sekarang"}
                     </td>
+                    {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
                       <td className="px-6 py-4">
                         {row.prodi?.nama || "-"}
-                      </td>
+                      </td>)}
 
                       <td className="px-2 py-2">
                       <div className="flex flex-col  items-center gap-1">

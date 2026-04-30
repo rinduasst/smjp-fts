@@ -273,13 +273,13 @@ const matrix = React.useMemo(() => {
                 Keterangan Warna Program Studi
               </h2>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              <div className="flex flex-wrap gap-4">
               {Object.entries(warnaProdi).map(([nama, warna]) => (
                   <div key={nama} className="flex items-center gap-2">
                     <span
                       className={`w-4 h-4 rounded border ${warna.split(" ")[0]}`}
                     ></span>
-                    <span className="text-sm text-gray-700">{nama}</span>
+                    <span className="text-sm text-gray-700 capitalize">{nama}</span>
                   </div>
                 ))}
             </div>

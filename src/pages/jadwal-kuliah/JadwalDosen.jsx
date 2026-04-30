@@ -8,6 +8,7 @@ import { exportJadwalDosenExcel } from "../../utils/exportExcel/dosen/exportBkd.
 const JadwalDosen = () => {
   const { user } = useAuth();
   const [data, setData] = useState([]);
+  const [batchInfo, setBatchInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -25,15 +26,22 @@ const JadwalDosen = () => {
       .map(k => k.toLowerCase() === "karyawan" ? `${romawi}_KARYAWAN` : `${romawi}_REG_${k}`)
       .join(", ");
   };
-
   const fetchFinalBatch = async () => {
     try {
-      const res = await api.get("/api/scheduler/batch", { params: { status: "FINAL", page: 1, pageSize: 100 } });
-      const finalBatch = res.data?.data?.items.find(b => b.status === "FINAL");
-      return finalBatch?.periodeId || null;
+      const res = await api.get("/api/scheduler/batch", {
+        params: { status: "FINAL", page: 1, pageSize: 100 },
+      });
+  
+      const finalBatch = res.data?.data?.items.find(
+        b => b.status === "FINAL"
+      );
+  
+      if (finalBatch) {
+        setBatchInfo(finalBatch);
+      }
+  
     } catch (err) {
       console.error("Gagal mengambil batch", err);
-      return null;
     }
   };
 
@@ -41,7 +49,7 @@ const JadwalDosen = () => {
     if (!user?.prodiId) return;
     setLoading(true);
     try {
-      const periodeId = await fetchFinalBatch();
+      const periodeId = batchInfo.periodeId;
       if (!periodeId) return;
 
       const res = await api.get("/api/view-jadwal/all", {
@@ -71,10 +79,17 @@ const JadwalDosen = () => {
     }
   };
   const handleExport = () => {
-    exportJadwalDosenExcel(filteredData, formatKelas);
+    exportJadwalDosenExcel(filteredData, formatKelas, batchInfo);
   };
-  useEffect(() => { fetchJadwalDosen(); }, []);
-
+  useEffect(() => {
+    fetchFinalBatch();
+  }, []);
+  
+  useEffect(() => {
+    if (batchInfo && user?.prodiId) {
+      fetchJadwalDosen();
+    }
+  }, [batchInfo, user?.prodiId]);
   // Filter berdasarkan search
   const filteredData = data.map(dosen => ({
     ...dosen,

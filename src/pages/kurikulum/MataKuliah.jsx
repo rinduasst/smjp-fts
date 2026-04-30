@@ -245,7 +245,8 @@ function MataKuliah() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Kode</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Mata Kuliah</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">SKS</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Program Studi</th>
+                  {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Program Studi</th> )}
                   <th className="py-4 text-left text-xs font-semibold text-gray-500 uppercase">Jenis Mata Kuliah</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Aksi</th>
                 </tr>
@@ -264,7 +265,8 @@ function MataKuliah() {
                       <td className="px-6 py-4">{row.kode}</td>
                       <td className="px-6 py-4">{row.nama}</td>
                       <td className="px-6 py-4">{row.sks}</td>
-                      <td className="px-6 py-4">{row.prodi?.nama}</td>
+                      {(peran === "ADMIN" || peran === "TU_FAKULTAS") && ( 
+                      <td className="px-6 py-4">{row.prodi?.nama}</td>)}
                       <td className="px-6 py-4 ">
                       <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
