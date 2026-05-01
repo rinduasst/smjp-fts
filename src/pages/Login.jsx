@@ -18,6 +18,7 @@ function Login() {
     try {
       const res = await api.post("/api/auth/login", { email, password });
       const token = res.data?.data?.token;
+      const user = res.data?.data?.user; 
 
       if (!token) {
         setError("Token tidak ditemukan.");
@@ -25,6 +26,7 @@ function Login() {
       }
 
       localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user)); 
       navigate("/dashboard");
     } catch {
       setError("Email atau password salah");

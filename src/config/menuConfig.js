@@ -77,7 +77,7 @@ import {
       { name: "Jadwal Dosen", path: "/jadwal-kuliah/jadwal-dosen", roles: ["TU_PRODI"] },
       { name: "Jadwal Ruangan", path: "/jadwal-kuliah/jadwal-ruangan", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
       { name: "Perubahan Jadwal", path: "/perubahan-jadwal", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
-      // { name: "Export Jadwal ", path: "/scheduler/jadwal", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
+       { name: "Monitoring Jadwal ", path: "/analisis-jadwal", roles: ["ADMIN", "TU_FAKULTAS"] },
     ],
   },
   
@@ -87,6 +87,7 @@ import {
       roles: ["ADMIN"],
       children: [
         { name: "Manajemen Pengguna", path: "/pengaturan/pengguna", roles: ["ADMIN"] },
+        { name: "Log Aktivitas", path: "/pengaturan/log-aktivitas", roles: ["ADMIN"] },
       ],
     },
   ];

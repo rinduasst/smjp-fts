@@ -624,12 +624,12 @@ const timeoutRef = useRef(null);
            <table className="w-full">
              <thead className="bg-gray-50"> 
              <tr>
-               <th  className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Dosen</th>
-                <th className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Jenis</th>
-                <th className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Nilai</th>
-                <th className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Tipe</th>
-                <th className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Prioritas</th>
-                <th className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">Aksi</th>
+               <th  className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dosen</th>
+                <th className="py-4 px-6  text-xs font-semibold text-gray-500 uppercase tracking-wider">Jenis</th>
+                <th className="py-4 px-6  text-xs font-semibold text-gray-500 uppercase tracking-wider">Nilai</th>
+                <th className="py-4 px-6  text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipe</th>
+                <th className="py-4 px-6  text-xs font-semibold text-gray-500 uppercase tracking-wider">Prioritas</th>
+                <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
 

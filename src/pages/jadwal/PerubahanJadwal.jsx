@@ -242,6 +242,7 @@
         }
       });
       console.log(filteredData.map(x => x.id));
+      
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -272,6 +273,7 @@
                 Ajukan Perubahan
               </button>
               )}
+             
 
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
 
@@ -353,74 +355,71 @@
                         <tr key={row.id} className="hover:bg-gray-50">         
                                           
                         {/* dosen */}
-                        <td className="py-2 px-4">{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
-                        <td>{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
+                        <td className="py-2 px-4 min-w-[220px] align-top">{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
+                        <td className=" min-w-[150px] align-top">{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
                         {/* jdwl lama  */}
-                         <td className="px-4 py-3">
+                         <td className="px-4 py-3 min-w-[170px] align-top">
                          <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700">
                       <div className="flex flex-col gap-x-4 gap-y-1">
 
                       <div>
-  <span className="text-gray-400">Hari:</span>{" "}
-  <span className="font-semibold">
-    {getHariNama(row.hariLamaId)}
-  </span>
-</div>
+                    <span className="text-gray-400">Hari:</span>{" "}
+                    <span className="font-semibold">
+                      {getHariNama(row.hariLamaId)}
+                    </span>
+                  </div>
 
-<div>
-  <span className="text-gray-400">Waktu:</span>{" "}
-  <span>
-    {getSlotRangeLabel(row.slotWaktuLamaId, row)}
-  </span>
-</div>
+                    <div>
+                      <span className="text-gray-400">Waktu:</span>{" "}
+                      <span>
+                        {getSlotRangeLabel(row.slotWaktuLamaId, row)}
+                      </span>
+                    </div>
 
-<div>
-  <span className="text-gray-400">Ruangan:</span>{" "}
-  <span className="text-blue-600 font-medium">
-    {getRuangNama(row.ruangLamaId)}
-  </span>
-</div>
+                    <div>
+                      <span className="text-gray-400">Ruangan:</span>{" "}
+                      <span className="text-blue-600 font-medium">
+                        {getRuangNama(row.ruangLamaId)}
+                      </span>
+                    </div>
 
                       </div>
                     </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 min-w-[170px] align-top">
                       <div className="bg-green-50 p-3 rounded-md text-xs">
                       <div className="flex flex-col gap-x-4 gap-y-1">
                       <div>
-  <span className="text-gray-400">Hari:</span>{" "}
-  <span className="font-medium text-green-700">
-  {getHariNama(row.hariBaruId)}
-  </span>
-</div>
+                    <span className="text-gray-400">Hari:</span>{" "}
+                    <span className="font-medium text-green-700">
+                    {getHariNama(row.hariBaruId)}
+                    </span>
+                  </div>
 
-<div>
-  <span className="text-gray-400">Waktu:</span>{" "}
-  <span>
-  {getSlotRangeLabel(row.slotWaktuBaruId, row)}
-  </span>
-</div>
+                  <div>
+                    <span className="text-gray-400">Waktu:</span>{" "}
+                    <span>
+                    {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+                    </span>
+                  </div>
 
-<div>
-  <span className="text-gray-400">Ruangan:</span>{" "}
-  <span className="text-green-700 font-medium">
-  {getRuangNama(row.ruangBaruId)}
-  </span>
-</div>
-
-                    
-
+                  <div>
+                    <span className="text-gray-400">Ruangan:</span>{" "}
+                    <span className="text-green-700 font-medium">
+                    {getRuangNama(row.ruangBaruId)}
+                    </span>
+                  </div>
                       </div>
                     </div>
                     </td>
                         {/* alasan */}
-                        <td className="px-6 py-4 font-xs">
+                        <td className="px-6 py-4 font-xs capitalize">
                           {row.alasanPengaju}
                         </td>
                         {/* statusny */}
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            className={`inline-flex items-center px-1 py-1 rounded-full text-xs font-medium
                             ${
                               row.status === "DISETUJUI"
                                 ? "bg-green-100 text-green-800"

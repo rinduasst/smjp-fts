@@ -28,7 +28,13 @@ const TabelPerubahan = () => {
 
   const [availableData, setAvailableData] = useState([]);
   const [selectedSlotGroup, setSelectedSlotGroup] = useState(null);
-  const [availableRooms, setAvailableRooms] = useState([]);
+
+  const [swapMode, setSwapMode] = useState(false);
+  const [jadwalLama, setJadwalLama] = useState(null);
+  const [jadwalBaru, setJadwalBaru] = useState(null);
+  const [alasanSwap, setAlasanSwap] = useState("");
+  const [ShowSwapModal, setShowSwapModal] = useState([]);
+
   const { user } = useAuth();
   const fetchJadwal = async () => {
     if (!activeBatchId) return;
@@ -43,14 +49,14 @@ const TabelPerubahan = () => {
         pageSize: 200,
       };
   
-     //filter role
-      if (user?.peran === "TU_PRODI") {
-        params.prodiId = user.prodiId;
-      }
+    //  //filter role
+    //   if (user?.peran === "TU_PRODI") {
+    //     params.prodiId = user.prodiId;
+    //   }
   
-      if (user?.peran === "TU_FAKULTAS") {
-        params.fakultasId = user.fakultasId;
-      }
+    //   if (user?.peran === "TU_FAKULTAS") {
+    //     params.fakultasId = user.fakultasId;
+    //   }
   
       const res = await api.get("/api/view-jadwal/all", { params });
   
@@ -62,11 +68,11 @@ const TabelPerubahan = () => {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    if (user?.peran === "TU_PRODI") {
-      setSelectedProdi(user.prodiNama);
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user?.peran === "TU_PRODI") {
+  //     setSelectedProdi(user.prodiNama);
+  //   }
+  // }, [user]);
   const fetchFinalBatch = async () => {
     try {
       const res = await api.get("/api/scheduler/batch", {
@@ -169,6 +175,48 @@ const TabelPerubahan = () => {
       }
     }
   };
+  const handleSubmitSwap = async () => {
+    if (!jadwalLama || !jadwalBaru || !alasanSwap.trim()) {
+      alert("Lengkapi data swap dulu");
+      return;
+    }
+  
+    if (alasanSwap.trim().length < 5) {
+      alert("Alasan minimal 5 karakter");
+      return;
+    }
+  
+    const payload = {
+      jadwalKuliahId: jadwalLama.id,
+      jadwalTargetId: jadwalBaru.id,
+      alasanPengaju: alasanSwap,
+    };
+  
+    try {
+      await api.post("/api/pengajuan-perubahan-jadwal/swap", payload);
+  
+      alert("Berhasil tukar jadwal");
+  
+      // reset semua state
+      setSwapMode(false);
+      setJadwalLama(null);
+      setJadwalBaru(null);
+      setShowSwapModal(false);
+      setAlasanSwap("");
+  
+      // refresh data biar update
+      fetchJadwal();
+      navigate("/perubahan-jadwal");
+    } catch (err) {
+      console.error(err);
+  
+      const msg =
+        err.response?.data?.message ||
+        "Gagal melakukan penukaran jadwal";
+  
+      alert(msg);
+    }
+  };
   const fetchProdi = async () => {
     try {
       const res = await api.get("/api/master-data/prodi")
@@ -177,13 +225,6 @@ const TabelPerubahan = () => {
       console.error("Gagal ambil prodi", err)
     }
   }
-  
-
-  const slotFiltered =
-  availableData.find(d => d.hariId === hariBaru)?.slots ?? [];
-  const selectedSlot = slotFiltered.find(s => s.slotId === slotBaru);
-  const ruangTersedia = selectedSlot?.rooms || [];
-  
   const filteredJadwal = jadwalList.filter((j) => {
 
     const matchProdi =
@@ -282,7 +323,6 @@ const getSksSlot = (jadwal) => {
     : jadwal.sks || 1;
 
   };
-  const sks = selectedJadwal?.sksEfektif ?? Math.ceil((selectedJadwal?.sks || 1) / 2);
   const generateAvailableSlotRange = () => {
     if (!selectedJadwal || !availableData.length || !hariBaru) return [];
   
@@ -475,16 +515,51 @@ const getSksSlot = (jadwal) => {
                     <td className="px-3 py-2 border">
                     {jadwal.ruangan}
                     </td>
-
                     <td className="px-3 py-2 border text-center">
-                    <button
-                        onClick={() => handlePilihJadwal(jadwal)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs"
-                    >
-                        Ajukan Perubahan
-                    </button>
-                    </td>
+                    {!swapMode ? (
+                      <div className="flex items-center justify-center gap-2">
 
+                        <button
+                          onClick={() => handlePilihJadwal(jadwal)}
+                          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white
+                                    hover:bg-green-700 active:scale-95 transition"
+                        >
+                          Ajukan
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setSwapMode(true);
+                            setJadwalLama(jadwal);
+                            setJadwalBaru(null);
+                          }}
+                          className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white
+                                    hover:bg-blue-700 active:scale-95 transition"
+                        >
+                          Tukar
+                        </button>
+
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (jadwalLama?.id !== jadwal.id) {
+                            setJadwalBaru(jadwal);
+                          }
+                        }}
+                        disabled={jadwalLama?.id === jadwal.id}
+                        className={`px-3 py-1 text-xs rounded-md transition
+                          ${
+                            jadwalLama?.id === jadwal.id
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                              : "bg-red-600 text-white hover:bg-red-700 active:scale-95"
+                          }
+                        `}
+                      >
+                        {jadwalLama?.id === jadwal.id ? "Jadwal Awal" : "Pilih Jadwal"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
                 ))
             )
@@ -641,6 +716,94 @@ const getSksSlot = (jadwal) => {
             </div>
         </div>
         )}
+      {swapMode && jadwalLama && jadwalBaru && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+        <div className="bg-white w-full max-w-lg rounded-lg shadow-lg overflow-hidden">
+
+          {/* HEADER */}
+          <div className="px-5 py-3 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-gray-800">
+              Tukar Jadwal Kuliah
+            </h2>
+
+            <button
+              onClick={() => {
+                setSwapMode(false);
+                setJadwalLama(null);
+                setJadwalBaru(null);
+                setAlasanSwap("");
+              }}
+              className="text-gray-500 hover:text-red-500"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* BODY */}
+          <div className="p-5 space-y-4">
+
+            {/* Jadwal Lama */}
+            <div className="bg-gray-50 rounded p-3 text-sm">
+              <p className="text-gray-500 mb-1">Jadwal Awal</p>
+              <p className="font-medium">{jadwalLama.mataKuliah}</p>
+              <p className="text-xs text-gray-500">
+                {jadwalLama.hari} | {jadwalLama.jamMulai} - {jadwalLama.jamSelesai}
+              </p>
+            </div>
+
+            {/* Jadwal Baru */}
+            <div className="bg-green-50 border border-green-200 rounded p-3 text-sm">
+              <p className="text-gray-500 mb-1">Ditukar Dengan</p>
+              <p className="font-medium">{jadwalBaru.mataKuliah}</p>
+              <p className="text-xs text-gray-500">
+                {jadwalBaru.hari} | {jadwalBaru.jamMulai} - {jadwalBaru.jamSelesai}
+              </p>
+            </div>
+
+            {/* Alasan */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Alasan Penukaran
+              </label>
+
+              <textarea
+                value={alasanSwap}
+                onChange={(e) => setAlasanSwap(e.target.value)}
+                className="w-full mt-1 bg-gray-100 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Masukkan alasan penukaran..."
+              />
+            </div>
+
+          </div>
+
+          {/* FOOTER */}
+          <div className="px-5 py-3 border-t flex justify-end gap-2">
+
+            <button
+              onClick={() => {
+                setSwapMode(false);
+                setJadwalLama(null);
+                setJadwalBaru(null);
+                setAlasanSwap("");
+              }}
+              className="px-4 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300"
+            >
+              Batal
+            </button>
+
+            <button
+              onClick={handleSubmitSwap}
+              className="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700"
+            >
+              Konfirmasi
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    )}
         </div>
     </MainLayout>
   );

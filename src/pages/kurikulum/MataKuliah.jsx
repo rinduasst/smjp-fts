@@ -242,13 +242,13 @@ function MataKuliah() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Kode</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Mata Kuliah</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">SKS</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Kode</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SKS</th>
                   {(peran === "ADMIN" || peran === "TU_FAKULTAS") && (
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Program Studi</th> )}
-                  <th className="py-4 text-left text-xs font-semibold text-gray-500 uppercase">Jenis Mata Kuliah</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Aksi</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Program Studi</th> )}
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jenis Mata Kuliah</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
 

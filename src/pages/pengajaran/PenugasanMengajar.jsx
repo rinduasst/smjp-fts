@@ -357,7 +357,7 @@ function PenugasanMengajar() {
               <thead className="bg-gray-50">
                 <tr>
                   {["Dosen", "Mata Kuliah", "Kelas", "Jumlah Sesi", "Jenis Ruang","Status Pengajuan", "Aksi"].map(h => (
-                    <th key={h} className="py-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase">
+                    <th key={h} className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {h}
                     </th>
                   ))}
