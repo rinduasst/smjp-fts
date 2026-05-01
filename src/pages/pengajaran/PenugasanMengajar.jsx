@@ -35,27 +35,26 @@ function PenugasanMengajar() {
   const [filterJenisKelas, setFilterJenisKelas] = useState("");
   const [filterAngkatan, setFilterAngkatan] = useState("");
   const [filterKode, setFilterKode] = useState("");
+  const [filterProdi, setFilterProdi] = useState("");
 
-  const fetchData = async (
-    currentPage = page,
-    currentPageSize = pageSize
-  ) => {
+  const fetchData = async (currentPage = page, currentPageSize = pageSize) => {
     try {
       setLoading(true);
   
       const res = await api.get("/api/pengajaran/penugasan-mengajar", {
         params: {
+          status: "SIAP",
           page: currentPage,
           pageSize: currentPageSize,
-          jenisKelas: filterJenisKelas || undefined,
-          angkatan: filterAngkatan || undefined,
-          kode: filterKode || undefined, 
-          q: searchTerm || undefined
+          q: searchTerm || undefined,
+          prodiId: peran === "TU_Prodi" ? user?.prodiId : filterProdi || undefined
         }
       });
+  
       const response = res.data?.data;
       setData(response?.items || []);
       setTotalData(response?.total || 0);
+  
     } catch (err) {
       console.error(err.response?.data || err);
     } finally {
@@ -64,7 +63,7 @@ function PenugasanMengajar() {
   };
   useEffect(() => {
     fetchData(page, pageSize);
-  }, [page, pageSize, searchTerm, filterJenisKelas, filterAngkatan, filterKode]);
+  }, [page, pageSize, searchTerm, filterProdi]);
 
   const totalPage = Math.ceil(totalData / pageSize);
   const resetForm = () => {
@@ -184,7 +183,16 @@ function PenugasanMengajar() {
       item.kelasList?.map(k => k.kelompokKelas.kode)
     ).filter(Boolean))
   ];  
-
+  const prodiList = [
+    ...new Map(
+      data
+        .map(item => [
+          item.programMatkul?.prodi?.id,
+          item.programMatkul?.prodi
+        ])
+        .filter(([id]) => id)
+    ).values()
+  ];
   const [dosenDropdown, setDosenDropdown] = useState([]);
   const [loadingDosen, setLoadingDosen] = useState(false);
   //Buat Function Search Dosen
@@ -254,26 +262,7 @@ function PenugasanMengajar() {
   
     return `${romawi}_${jenis}_${kelas.kode}`;
   };
-  const filteredData = data.filter(item => {
-  // Filter jenis kelas
-  const matchJenis =
-    !filterJenisKelas ||
-    item.kelasList?.some(k => k.kelompokKelas.jenisKelas === filterJenisKelas);
 
-  // Filter angkatan
-  const matchAngkatan =
-  !filterAngkatan ||
-  item.kelasList?.some(
-    k => String(k.kelompokKelas.angkatan) === filterAngkatan
-  );
-
-  // Filter kode kelas
-  const matchKode =
-    !filterKode ||
-    item.kelasList?.some(k => k.kelompokKelas.kode === filterKode);
-
-  return matchJenis && matchAngkatan && matchKode;
-});
   const [pengajaranList, setPengajaranList] = useState([
     {
       programMatkulId: "",
@@ -296,39 +285,56 @@ function PenugasanMengajar() {
         </div>
 
         {/* Action Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row justify-between gap-4">
+        <div className="bg-white rounded-xl shadow-sm border
+         border-gray-200 p-6 mb-6 flex flex-col lg:flex-row justify-between gap-4">
        
         <button
           onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition"
+          className="flex items-center gap-2 bg-gradient-to-r
+           from-green-500 to-green-600 text-white px-5 
+           py-2.5 rounded-lg shadow-sm hover:from-green-600
+            hover:to-green-700 transition"
         >
           <Plus size={18} /> Tambah Penugasan
         </button>
  
-           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
-          <select   className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-            value={filterJenisKelas} onChange={e => setFilterJenisKelas(e.target.value)}>
-            <option value="">Semua Jenis Kelas</option>
+           <div className="flex sm:flex-row gap-3 w-full lg:w-auto ml-auto">
+          {/* <select   
+          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+            value={filterJenisKelas} 
+            onChange={e => setFilterJenisKelas(e.target.value)}>
+            <option value="">Semua Jenis Kelas
+            </option>
             {jenisKelasList.map(jenis => (
-              <option key={jenis} value={jenis}>{jenis}</option>
+              <option key={jenis}
+               value={jenis}>{jenis}
+               </option>
             ))}
           </select>
 
-          <select   className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-                value={filterKode} onChange={e => setFilterKode(e.target.value)}>
+          <select   
+          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+          value={filterKode} 
+          onChange={e => setFilterKode(e.target.value)}>
             <option value="">Semua Kelas</option>
             {kodeKelasList.map(kode => (
               <option key={kode} value={kode}>{kode}</option>
             ))}
-          </select>
-
-          <select  className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-             value={filterAngkatan} onChange={e => setFilterAngkatan(e.target.value)}>
-            <option value="">Semua Angkatan</option>
-            {angkatanList.map(tahun => (
-              <option key={tahun} value={tahun}>{tahun}</option>
+          </select> */}
+          {peran !== "TU_PRODI" && (
+          <select
+          className="w-full pl-3  py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+            value={filterProdi}
+            onChange={e => setFilterProdi(e.target.value)}
+          >
+            <option value="">Semua Prodi</option>
+            {prodiList.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.nama}
+              </option>
             ))}
           </select>
+        )}
     
           <div className="relative w-full sm:max-w-sm">
           <Search
@@ -370,8 +376,8 @@ function PenugasanMengajar() {
                       <Loader2 className="animate-spin mx-auto" />
                     </td>
                   </tr>
-           ):   filteredData.length ? (
-                filteredData.map(row => (
+           ):   data.length ? (
+                data.map(row => (
                     <tr key={row.id}>
                       <td className="py-2 px-6 text-left ">{row.dosen?.nama}</td>
                       <td className="py-2 px-2 text-left">{row.programMatkul?.mataKuliah?.nama}</td>
