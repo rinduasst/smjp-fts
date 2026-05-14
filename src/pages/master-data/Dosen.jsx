@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function Dosen() {
   const [data, setData] = useState([]);
@@ -85,34 +86,71 @@ useEffect(() => {
         nama: formData.nama,
         nidn: formData.nidn,
         ...(peran === "TU_PRODI"
-        ? { prodiId: user?.prodiId }
-        : { prodiId: formData.prodiId}),
+          ? { prodiId: user?.prodiId }
+          : { prodiId: formData.prodiId }),
         bebanMengajarMaks: Number(formData.bebanMengajarMaks),
       };
   
       if (selectedDosen) {
-        await api.patch(`/api/master-data/dosen/${selectedDosen.id}`, payload);
-        alert("Data dosen berhasil diperbarui");
+        await api.patch(
+          `/api/master-data/dosen/${selectedDosen.id}`,
+          payload
+        );
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Data dosen berhasil diperbarui",
+          type: "success",
+        });
       } else {
-        await api.post("/api/master-data/dosen", payload);
-        alert("Data dosen berhasil ditambahkan");
+        await api.post(
+          "/api/master-data/dosen",
+          payload
+        );
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Data dosen berhasil ditambahkan",
+          type: "success",
+        });
       }
   
       fetchDosen();
       setShowModal(false);
       resetForm();
+  
     } catch (err) {
       console.error("Gagal simpan dosen", err);
   
       if (err.response?.status === 400) {
-        alert("Nama atau NIDN dosen sudah terdaftar!");
+        setConfirmModal({
+          open: true,
+          title: "Data Sudah Ada",
+          message: "Nama atau NIDN dosen sudah terdaftar.",
+          type: "error",
+        });
       } else {
-        alert("Gagal menyimpan data dosen. Silakan coba lagi.");
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: "Gagal menyimpan data dosen. Silakan coba lagi.",
+          type: "error",
+        });
       }
+  
     } finally {
       setIsSubmitting(false);
     }
   };
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
   
 
   const handleEdit = (dosen) => {
@@ -126,27 +164,43 @@ useEffect(() => {
     setShowModal(true);
   };
 
-  const handleDelete = async (dosen) => {
-    const confirmDelete = window.confirm(
-      `Yakin ingin menghapus dosen "${dosen.nama}"?`
-    );
+  const handleDelete = (dosen) => {
+    setConfirmModal({
+      open: true,
+      title: "Hapus Dosen",
+      message: `Yakin ingin menghapus "${dosen.nama}"?`,
+      type: "delete",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/master-data/dosen/${dosen.id}`);
+          fetchDosen();
   
-    if (!confirmDelete) return;
-  
-    setIsSubmitting(true);
-    try {
-      await api.delete(`/api/master-data/dosen/${dosen.id}`);
-      fetchDosen();
-      alert("Data dosen berhasil dihapus");
-      setShowModal(false);
-      resetForm();
-      setSelectedDosen(null);
-    } catch (err) {
-      console.error("Gagal hapus dosen", err);
-      alert("Gagal menghapus data dosen. Silakan coba lagi.");
-    } finally {
-      setIsSubmitting(false);
-    }
+          setConfirmModal({
+            open: true,
+            title: "Berhasil",
+            message: "Data dosen berhasil dihapus",
+            type: "success",
+            onConfirm: () =>
+              setConfirmModal((prev) => ({
+                ...prev,
+                open: false,
+              })),
+          });
+        } catch {
+          setConfirmModal({
+            open: true,
+            title: "Gagal",
+            message: "Gagal menghapus data dosen",
+            type: "error",
+            onConfirm: () =>
+              setConfirmModal((prev) => ({
+                ...prev,
+                open: false,
+              })),
+          });
+        }
+      },
+    });
   };
   const { user, peran } = useAuth();
   useEffect(() => {
@@ -400,6 +454,19 @@ useEffect(() => {
 
 
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmModal.onConfirm}
+    />
     </MainLayout>
   );
 }

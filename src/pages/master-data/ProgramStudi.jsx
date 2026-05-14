@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function ProgramStudi() {
   const [data, setData] = useState([]);
@@ -15,6 +16,12 @@ function ProgramStudi() {
     nama: "",
     fakultas_id: "",
     jenjang: "S1"
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -91,8 +98,17 @@ function ProgramStudi() {
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
+    
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
+    
       return;
     }
+   
   
     setIsSubmitting(true);
   
@@ -106,10 +122,20 @@ function ProgramStudi() {
   
       if (selectedProdi) {
         await api.patch(`/api/master-data/prodi/${selectedProdi.id}`, payload);
-        alert("Program studi berhasil diperbarui!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Program studi berhasil diperbarui",
+          type: "success",
+        });
       } else {
         await api.post("/api/master-data/prodi", payload);
-        alert("Program studi berhasil ditambahkan!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Program Studi berhasil ditambahkan",
+          type: "success",
+        });
       }
   
   
@@ -120,12 +146,22 @@ function ProgramStudi() {
       console.error(error);
   
 
-      if (error.response && error.response.status === 400) {
-        // backend biasanya kasih pesan error di response.data.message
-        const msg = error.response.data?.message || "Kode atau Nama program studi sudah ada";
-        alert(msg);
+      if (error.response?.status === 400) {
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message:
+            error.response.data?.message ||
+            "Kode atau nama program studi sudah terdaftar",
+          type: "error",
+        });
       } else {
-        alert("Terjadi kesalahan. Silakan coba lagi.");
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: "Terjadi kesalahan. Silakan coba lagi.",
+          type: "error",
+        });
       }
     } finally {
       setIsSubmitting(false);
@@ -144,21 +180,41 @@ function ProgramStudi() {
     setShowModal(true);
   };
   
-  const handleDelete = async (prodi) => {
-    const ok = window.confirm(
-      `Yakin ingin menghapus Program Studi "${prodi.nama}"?`
-    );
+  const handleDelete = (prodi) => {
+    setSelectedProdi(prodi);
   
-    if (!ok) return;
-  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Program Studi",
+      message: `Yakin ingin menghapus "${prodi.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/prodi/${prodi.id}`);
+  
+      await api.delete(
+        `/api/master-data/prodi/${selectedProdi.id}`
+      );
+  
       await fetchProdi();
-      alert("Program studi berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Program studi berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedProdi(null);
     } catch (error) {
-      console.error("Gagal hapus prodi:", error);
-      alert("Gagal menghapus program studi. Silakan coba lagi.");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus program studi",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -358,6 +414,20 @@ function ProgramStudi() {
     )}
 
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={isSubmitting}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmDelete}
+    />
     </MainLayout>
   );
 }

@@ -4,6 +4,7 @@ import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Search, X} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
 const TabelPerubahan = () => {
 
   const navigate = useNavigate();
@@ -33,8 +34,15 @@ const TabelPerubahan = () => {
   const [jadwalLama, setJadwalLama] = useState(null);
   const [jadwalBaru, setJadwalBaru] = useState(null);
   const [alasanSwap, setAlasanSwap] = useState("");
-  const [ShowSwapModal, setShowSwapModal] = useState([]);
+  const [confirmAction, setConfirmAction] = useState(null); //callback confirm
 
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
+  
   const { user } = useAuth();
   const fetchJadwal = async () => {
     if (!activeBatchId) return;
@@ -120,12 +128,22 @@ const TabelPerubahan = () => {
 
     // validasi kosong
     if (!selectedJadwal || !hariBaru || !slotBaru || !ruangBaru || !alasan) {
-      alert("Lengkapi data dulu");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
       return;
     }
 
     if (alasan.trim().length < 5) {
-      alert("Alasan minimal 5 karakter");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Alasan Minimal 5 karakter",
+        type: "error",
+      });
       return;
     }
   
@@ -148,7 +166,12 @@ const TabelPerubahan = () => {
       console.log("=== RESPONSE SUCCESS ===");
       console.log(res.data);
   
-      alert("Pengajuan berhasil");
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Pengajuan berhasil ",
+        type: "success",
+      });
       navigate("/perubahan-jadwal");
     } catch (err) {
       console.log("=== ERROR DETAIL ===");
@@ -177,12 +200,22 @@ const TabelPerubahan = () => {
   };
   const handleSubmitSwap = async () => {
     if (!jadwalLama || !jadwalBaru || !alasanSwap.trim()) {
-      alert("Lengkapi data swap dulu");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
       return;
     }
   
     if (alasanSwap.trim().length < 5) {
-      alert("Alasan minimal 5 karakter");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Alasan Minimal 5 karakter ",
+        type: "error",
+      });
       return;
     }
   
@@ -195,13 +228,17 @@ const TabelPerubahan = () => {
     try {
       await api.post("/api/pengajuan-perubahan-jadwal/swap", payload);
   
-      alert("Berhasil tukar jadwal");
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Jadwal Berhasil ditukar",
+        type: "success",
+      });
   
       // reset semua state
       setSwapMode(false);
       setJadwalLama(null);
       setJadwalBaru(null);
-      setShowSwapModal(false);
       setAlasanSwap("");
   
       // refresh data biar update
@@ -265,9 +302,7 @@ const TabelPerubahan = () => {
     }
   };
   useEffect(() => {
-    if (hariBaru && selectedJadwal?.slotWaktuId) {
-      fetchAvailableSlots(selectedJadwal.slotWaktuId);
-    }
+   
   }, [hariBaru]);
 
   const toRomawi = (num) => {
@@ -292,7 +327,6 @@ const TabelPerubahan = () => {
   };
   const handlePilihJadwal = (jadwal) => {
     setSelectedJadwal(jadwal);
-    fetchAvailableSlots(jadwal.slotWaktuId);
   };
   const groupedByHariFiltered = filteredJadwal.reduce((acc, item) => {
     const hari = item.hari || "Tanpa Hari"
@@ -383,6 +417,26 @@ const getSksSlot = (jadwal) => {
     return commonRooms;
   };
   const ruangFinal = getRoomsForSelectedGroup();
+  const isDosenBentrok = (jadwalLama, jadwalBaru) => {
+    return jadwalList.some((j) => {
+      // skip jadwal yang sedang ditukar
+      if (j.id === jadwalLama.id || j.id === jadwalBaru.id) return false;
+  
+      return (
+        j.dosen === jadwalBaru.dosen && // dosen target
+        j.hari === jadwalLama.hari &&   // pindah ke hari slot lama
+        j.jamMulai === jadwalLama.jamMulai &&
+        j.jamSelesai === jadwalLama.jamSelesai
+      );
+    });
+  };
+  const isKelasBentrok = (jadwalLama, jadwalBaru) => {
+    return formatKelas(jadwalLama) === formatKelas(jadwalBaru);
+  };
+
+  const isSlotCocok = (jadwalLama, jadwalBaru) => {
+    return getSksSlot(jadwalLama) === getSksSlot(jadwalBaru);
+  };
   return (
     <MainLayout>
 
@@ -478,8 +532,29 @@ const getSksSlot = (jadwal) => {
             </tr>
             ) : (
                 Object.entries(groupedByHariFiltered).map(([hari, items]) =>
-                items.map((jadwal, index) => (
-                    <tr key={`${jadwal.id}-${index}`} className="hover:bg-gray-50">
+                items.map((jadwal, index) => {
+                  const slotTidakCocok =
+                    jadwalLama && !isSlotCocok(jadwalLama, jadwal);
+                
+                  const kelasBentrok =
+                    jadwalLama &&
+                    formatKelas(jadwalLama) === formatKelas(jadwal);
+                
+                  const dosenBentrok =
+                    jadwalLama &&
+                    isDosenBentrok(jadwalLama, jadwal);
+                
+                  const isDisabled =
+                    jadwalLama?.id === jadwal.id ||
+                    slotTidakCocok ||
+                    kelasBentrok ||
+                    dosenBentrok;
+                
+                  return (
+                    <tr
+                      key={`${jadwal.id}-${index}`}
+                      className="hover:bg-gray-50"
+                    >
                     {index === 0 && (
                     <td
                         rowSpan={items.length}
@@ -497,7 +572,7 @@ const getSksSlot = (jadwal) => {
                     </td>
 
                     <td className="px-3 py-2 border text-center">
-                    {jadwal.sks}
+                    {jadwal.sksEfektif}
                     </td>
 
                     <td className="px-3 py-2 border text-center">
@@ -516,52 +591,62 @@ const getSksSlot = (jadwal) => {
                     {jadwal.ruangan}
                     </td>
                     <td className="px-3 py-2 border text-center">
-                    {!swapMode ? (
-                      <div className="flex items-center justify-center gap-2">
+  {!swapMode ? (
+    <div className="flex items-center justify-center gap-2">
+      <button
+        onClick={() => handlePilihJadwal(jadwal)}
+        className="px-3 py-1 text-xs rounded-md bg-green-600 text-white
+        hover:bg-green-700 active:scale-95 transition"
+      >
+        Ajukan
+      </button>
 
-                        <button
-                          onClick={() => handlePilihJadwal(jadwal)}
-                          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white
-                                    hover:bg-green-700 active:scale-95 transition"
-                        >
-                          Ajukan
-                        </button>
+      <button
+        onClick={() => {
+          setSwapMode(true);
+          setJadwalLama(jadwal);
+          setJadwalBaru(null);
+        }}
+        className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white
+        hover:bg-blue-700 active:scale-95 transition"
+      >
+        Tukar
+      </button>
+    </div>
+  ) : (
+    <>
+ <>
+ <button
+  onClick={() => {
+    if (isDisabled) return;
+    setJadwalBaru(jadwal);
+  }}
+  disabled={isDisabled}
+  className={`px-3 py-1 text-xs rounded-md transition ${
+    isDisabled
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-red-600 text-white hover:bg-red-700 active:scale-95"
+  }`}
+>
+  {jadwalLama?.id === jadwal.id
+    ? "Jadwal Awal"
+    : slotTidakCocok
+    ? "SKS Tidak Cocok"
+    : kelasBentrok
+    ? "Bentrok Kelas"
+    : dosenBentrok
+    ? "Bentrok Dosen"
+    : "Pilih Jadwal"}
+</button>
+</>
 
-                        <button
-                          onClick={() => {
-                            setSwapMode(true);
-                            setJadwalLama(jadwal);
-                            setJadwalBaru(null);
-                          }}
-                          className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white
-                                    hover:bg-blue-700 active:scale-95 transition"
-                        >
-                          Tukar
-                        </button>
-
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          if (jadwalLama?.id !== jadwal.id) {
-                            setJadwalBaru(jadwal);
-                          }
-                        }}
-                        disabled={jadwalLama?.id === jadwal.id}
-                        className={`px-3 py-1 text-xs rounded-md transition
-                          ${
-                            jadwalLama?.id === jadwal.id
-                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                              : "bg-red-600 text-white hover:bg-red-700 active:scale-95"
-                          }
-                        `}
-                      >
-                        {jadwalLama?.id === jadwal.id ? "Jadwal Awal" : "Pilih Jadwal"}
-                      </button>
-                    )}
-                  </td>
+    </>
+  )}
+</td>
                 </tr>
-                ))
+                  )
+  })
+                
             )
             )}
         </tbody>
@@ -575,7 +660,7 @@ const getSksSlot = (jadwal) => {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-lg">
             {/* HEADER */}
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-gray-400 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">
                 Pengajuan Perubahan Jadwal
                 </h3>
@@ -722,7 +807,7 @@ const getSksSlot = (jadwal) => {
         <div className="bg-white w-full max-w-lg rounded-lg shadow-lg overflow-hidden">
 
           {/* HEADER */}
-          <div className="px-5 py-3 border-b flex items-center justify-between">
+          <div className="px-5 py-3 border-b border-gray-400 flex items-center justify-between">
             <h2 className="font-semibold text-gray-800">
               Tukar Jadwal Kuliah
             </h2>
@@ -778,7 +863,7 @@ const getSksSlot = (jadwal) => {
           </div>
 
           {/* FOOTER */}
-          <div className="px-5 py-3 border-t flex justify-end gap-2">
+          <div className="px-5 py-3 border-t  border-gray-400 flex justify-end gap-2">
 
             <button
               onClick={() => {
@@ -793,17 +878,60 @@ const getSksSlot = (jadwal) => {
             </button>
 
             <button
-              onClick={handleSubmitSwap}
-              className="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700"
-            >
-              Konfirmasi
-            </button>
+            onClick={() => {
+              setConfirmAction(() => handleSubmitSwap);
+
+              setConfirmModal({
+                open: true,
+                title: "Konfirmasi Tukar Jadwal",
+                message: "Apakah Anda yakin ingin menukar jadwal ini?",
+                type: "confirm",
+              });
+            }}
+            className="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700"
+          >
+            Konfirmasi
+          </button>
 
           </div>
 
         </div>
       </div>
     )}
+   <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() => {
+        setConfirmModal({
+          open: false,
+          title: "",
+          message: "",
+          type: "success",
+        });
+
+        setConfirmAction(null);
+
+        if (confirmModal.type === "success") {
+          navigate("/perubahan-jadwal");
+        }
+      }}
+      onConfirm={() => {
+        if (confirmAction) {
+          confirmAction();
+        }
+
+        setConfirmModal({
+          open: false,
+          title: "",
+          message: "",
+          type: "success",
+        });
+
+        setConfirmAction(null);
+      }}
+    />
         </div>
     </MainLayout>
   );

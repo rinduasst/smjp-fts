@@ -8,6 +8,7 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const DetailKonflik = () => {
   const navigate = useNavigate();

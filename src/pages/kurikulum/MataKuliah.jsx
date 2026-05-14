@@ -3,6 +3,8 @@ import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2} from "lucide-react";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
+
 
 
 function MataKuliah() {
@@ -18,6 +20,12 @@ function MataKuliah() {
     sks: "",
     jenis: "WAJIB",
     prodiId: ""
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
   });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
@@ -98,6 +106,7 @@ function MataKuliah() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     const errors = validateForm();
     if (Object.keys(errors).length) {
       setFormErrors(errors);
@@ -108,25 +117,39 @@ function MataKuliah() {
   
     try {
       const payload = {
-        prodiId: peran === "ADMIN" || peran === "TU_FAKULTAS"
-          ? formData.prodiId
-          : user.prodiId,
+        prodiId:
+          peran === "ADMIN" || peran === "TU_FAKULTAS"
+            ? formData.prodiId
+            : user.prodiId,
+  
         kode: formData.kode.toUpperCase().trim(),
         nama: formData.nama.trim(),
         sks: Number(formData.sks),
-        jenis: formData.jenis
+        jenis: formData.jenis,
       };
   
       if (selected) {
-        await api.patch(`/api/kurikulum/mata-kuliah/${selected.id}`, payload);
+        await api.patch(
+          `/api/kurikulum/mata-kuliah/${selected.id}`,
+          payload
+        );
       } else {
         await api.post("/api/kurikulum/mata-kuliah", payload);
       }
   
       await fetchData();
+  
       setShowModal(false);
       resetForm();
-      alert("Data berhasil disimpan");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: selected
+          ? "Mata kuliah berhasil diperbarui"
+          : "Mata kuliah berhasil ditambahkan",
+        type: "success",
+      });
   
     } catch (err) {
       console.error(err);
@@ -134,50 +157,75 @@ function MataKuliah() {
       const status = err.response?.status;
       const message = err.response?.data?.message;
   
-      if (status === 400 || status === 409) {
-        alert(message || "Kode atau nama mata kuliah sudah digunakan");
+      setShowModal(false);
+      resetForm();
   
-        // reset input kode supaya user isi ulang
-        setFormData(prev => ({
-          ...prev,
-          kode: ""
-        }));
+      if (status === 400 || status === 409) {
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message:
+            message || "Kode atau nama mata kuliah sudah digunakan",
+          type: "error",
+        });
       } else {
-        alert("Gagal menyimpan data. Silakan coba lagi.");
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: "Gagal menyimpan data. Silakan coba lagi.",
+          type: "error",
+        });
       }
+  
     } finally {
       setIsSubmitting(false);
     }
   };
-  const handleDelete = async (row) => {
-    if (!row) return;
+  const handleDelete = (row) => {
+    setSelected(row);
   
-    const ok = window.confirm(
-      `Yakin ingin menghapus mata kuliah "${row.kode} - ${row.nama}"?`
-    );
+    setConfirmModal({
+      open: true,
+      title: "Hapus Mata Kuliah",
+      message: `Yakin ingin menghapus mata kuliah "${row.kode} - ${row.nama}"?`,
+      type: "delete",
+    });
+  };
   
-    if (!ok) return;
+  const confirmDelete = async () => {
+    if (!selected) return;
   
     try {
       setIsSubmitting(true);
   
-      await api.delete(`/api/kurikulum/mata-kuliah/${row.id}`);
+      await api.delete(`/api/kurikulum/mata-kuliah/${selected.id}`);
   
       await fetchData();
-      alert("Data berhasil dihapus");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Mata kuliah berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelected(null);
     } catch (err) {
       console.error(err);
+  
       const status = err.response?.status;
       const message = err.response?.data?.message;
   
-      if (status === 400 || status === 409) {
-        alert(
-          message ||
-          "Mata kuliah tidak dapat dihapus karena sudah digunakan pada kurikulum atau jadwal."
-        );
-      } else {
-        alert("Gagal menghapus data. Silakan coba lagi.");
-      }
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          status === 400 || status === 409
+            ? message ||
+              "Mata kuliah tidak dapat dihapus karena sudah digunakan pada kurikulum atau jadwal."
+            : "Gagal menghapus data. Silakan coba lagi.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -463,7 +511,24 @@ function MataKuliah() {
     </div>
   </div>
 )}
-
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        loading={isSubmitting}
+        onClose={() =>
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={
+          confirmModal.type === "delete"
+            ? confirmDelete
+            : undefined
+        }
+      />
       </div>
     </MainLayout>
   );

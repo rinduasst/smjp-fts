@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function HariKuliah() {
   const [data, setData] = useState([]);
@@ -14,7 +15,12 @@ function HariKuliah() {
     nama: "",
     urutan: ""
   });
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -78,6 +84,14 @@ function HariKuliah() {
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
+    
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
+    
       return;
     }
   
@@ -89,8 +103,14 @@ function HariKuliah() {
     );
   
     if (isDuplicate) {
-      alert("Nomer Hari sudah digunakan!");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Nomor hari sudah digunakan!",
+        type: "error",
+      });
       return;
+    
     }
   
     setIsSubmitting(true);
@@ -103,10 +123,20 @@ function HariKuliah() {
   
       if (selectedHari) {
         await api.patch(`/api/master-data/hari/${selectedHari.id}`, payload);
-        alert("Hari berhasil diperbarui!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: " Hari Perkuliahan berhasil diperbarui",
+          type: "success",
+        });
       } else {
         await api.post("/api/master-data/hari", payload);
-        alert("Hari berhasil ditambahkan!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Daftar Hari Perkuliahan berhasil ditambahkan",
+          type: "success",
+        });
       }
   
       await fetchHari();
@@ -128,23 +158,46 @@ function HariKuliah() {
     });
     setShowModal(true);
   };
-  const handleDelete = async (hari) => {
-    const ok = window.confirm(`Yakin ingin menghapus "${hari.nama}"?`);
-    if (!ok) return;
-
+  const handleDelete = (hari) => {
+    setSelectedHari(hari);
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Hari",
+      message: `Yakin ingin menghapus "${hari.nama}"?`,
+      type: "delete",
+    });
+  };
+  
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/hari/${hari.id}`);
+  
+      await api.delete(`/api/master-data/hari/${selectedHari.id}`);
+  
       await fetchHari();
-      alert("Hari berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Hari berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedHari(null);
     } catch (error) {
       console.error(error);
-      alert("Gagal menghapus.");
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus hari",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <MainLayout>
      <div className="bg-gray-50 min-h-screen">
@@ -294,6 +347,20 @@ function HariKuliah() {
         )}
       </div>
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={isSubmitting}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmDelete}
+    />
     </MainLayout>
   );
 }

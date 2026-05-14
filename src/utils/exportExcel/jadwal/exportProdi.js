@@ -104,7 +104,7 @@ sheet.addImage(logoId, {
   
   // Baris 2
   sheet.mergeCells("B2:E2");
-  sheet.getCell("B2").value = `Program Studi ${prodiNama}`;
+  sheet.getCell("B2").value = `PROGRAM STUDI ${prodiNama.toUpperCase()}`;
   sheet.getCell("B2").font = {
     name: "Times New Roman",
     size: 16,
@@ -116,7 +116,7 @@ sheet.addImage(logoId, {
   
   // Baris 3
   sheet.mergeCells("B3:E3");
-  sheet.getCell("B3").value = `Fakultas ${fakultas}`;
+  sheet.getCell("B3").value = `${fakultas.toUpperCase()}`;
   sheet.getCell("B3").font = {
     name: "Times New Roman",
     size: 16,
@@ -128,7 +128,7 @@ sheet.addImage(logoId, {
   
   // Baris 4
   sheet.mergeCells("B4:E4");
-  sheet.getCell("B4").value = `Periode ${periodeNama}`;
+  sheet.getCell("B4").value = `PERIODE ${periodeNama.toUpperCase()}`;
   sheet.getCell("B4").font = {
     name: "Times New Roman",
     size: 14,

@@ -4,7 +4,7 @@
   import MainLayout from "../../components/MainLayout";
   import api from "../../api/api";
   import { useAuth } from "../../hooks/useAuth";
-  
+  import ConfirmModal from "../../components/ConfirmModal";
   const PerubahanJadwal = () => {
     const navigate = useNavigate();
 
@@ -12,18 +12,21 @@
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
-    const [jadwalList, setJadwalList] = useState([]);
+
     const [hariList, setHariList] = useState([]);
     const [slotList, setSlotList] = useState([]);
     const [ruangList, setRuangList] = useState([]);
-
+    // const [jadwalList, setJadwalList] = useState([]);
     const { user, peran } = useAuth();
     const prodiId = user?.prodiId;
     const [periodeId, setPeriodeId] = useState([]);
-
+  
+    const [activeBatchId, setActiveBatchId] = useState(null);
 
     const [showDetail, setShowDetail] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [selectedRejectId, setSelectedRejectId] = useState(null);
+    const [selectedAction, setSelectedAction] = useState(null);
 
     //alasan penolakan
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -31,7 +34,34 @@
     const [alasanRespon, setAlasanRespon] = useState("");
     const [loadingReject, setLoadingReject] = useState(false);
     const [alasanReject, setAlasanReject] = useState("");
+
+    const [confirmModal, setConfirmModal] = useState({
+      open: false,
+      title: "",
+      message: "",
+      type: "success",
+    });
+    const fetchFinalBatch = async () => {
+      try {
+        const res = await api.get("/api/scheduler/batch", {
+          params: {
+            status: "FINAL",
+            page: 1,
+            pageSize: 10,
+          },
+        });
     
+        const finalBatch = res.data?.data?.items.find(
+          (b) => b.status === "FINAL"
+        );
+    
+        if (finalBatch) {
+          setActiveBatchId(finalBatch.periodeId);
+        }
+      } catch (err) {
+        console.error("Gagal ambil batch:", err);
+      }
+    };
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -55,6 +85,15 @@
         setLoading(false);
       }
     };
+
+    // useEffect(() => {
+    //   if (activeBatchId) {
+    //     fetchJadwal();
+    //   }
+    // }, [activeBatchId]);
+
+  
+    
     const formatJam = (jam) => {
       if (!jam) return "-";
     
@@ -82,19 +121,35 @@
       const res = await api.get("/api/master-data/ruang");
       setRuangList(res.data?.data?.items || []);
     };
+
+    // const fetchJadwal = async () => {
+    //   if (!activeBatchId) return;
+    
+    //   try {
+    //     const res = await api.get("/api/view-jadwal/all", {
+    //       params: {
+    //         periodeAkademikId: activeBatchId,
+    //         statusBatch: "FINAL",
+    //         page: 1,
+    //         pageSize: 200,
+    //       },
+    //     });
+    
+    //     console.log("jadwalList:", res.data?.data?.items);
+    
+    //     setJadwalList(res.data?.data?.items || []);
+    //   } catch (err) {
+    //     console.error("Gagal ambil jadwal:", err);
+    //   }
+    // };
+
     useEffect(() => {
+      // fetchFinalBatch();
       fetchData();
       fetchHari();
       fetchSlot();
       fetchRuang();
-  
-     
-      const getSlotLabel = (id) => {
-        const slot = slotList.find(s => s.id === id);
-        if (!slot) return "-";
-      
-        return `${formatJam(slot.jamMulai)} - ${formatJam(slot.jamSelesai)}`;
-      };
+
     }, [filterStatus, periodeId]);
     const filteredData = data.filter((item) => {
       const matchSearch = searchTerm
@@ -108,8 +163,7 @@
       return matchSearch && matchStatus;
     });
 
-      const jadwalFiltered = jadwalList;
-
+ 
 
       const getHariNama = (id) => {
         return hariList.find(h => h.id === id)?.nama || "-";
@@ -144,18 +198,7 @@
       
         return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
       };
-      const getJadwalDetail = (jadwalKuliahId) => {
-        return jadwalList.find(j => j.id === jadwalKuliahId);
-      };
-      const getNamaDosen = (jadwalKuliahId) => {
-        const jadwal = getJadwalDetail(jadwalKuliahId);
-        return jadwal?.dosen || "-";
-      };
-      
-      const getNamaMatkul = (jadwalKuliahId) => {
-        const jadwal = getJadwalDetail(jadwalKuliahId);
-        return jadwal?.mataKuliah || "-";
-      };
+
       
       const getRuangNama = (id) => {
         return ruangList.find(r => r.id === id)?.nama || "-";
@@ -163,29 +206,26 @@
       
 
 
-      const handleApprove = async (id) => {
-        const confirmApprove = window.confirm(
-          "Setujui pengajuan perubahan jadwal ini?"
-        );
-        if (!confirmApprove) return;
-        try {
-          await api.post(`/api/pengajuan-perubahan-jadwal/${id}/approve`);
-          alert("Pengajuan berhasil disetujui");
-          fetchData();
-        } catch (error) {
-          console.error(error);
-          alert(
-            error.response?.data?.message ||
-            "Gagal menyetujui pengajuan"
-          );
-        }
-      };
-      jadwalList.forEach(j => {
-        console.log("Jadwal ID:", j.id, "Prodi Jadwal:", j.prodi?.id, "User Prodi:", prodiId);
-      });
+      const handleApprove = (id) => {
+        setSelectedId(id);
+        setSelectedAction("approve");
+      
+        setConfirmModal({
+          open: true,
+          title: "Setujui Pengajuan",
+          message: "Yakin ingin menyetujui pengajuan perubahan jadwal ini?",
+          type: "confirm", // ubah
+        });
+    
+      }; 
       const submitReject = async () => {
         if (!alasanReject || alasanReject.length < 5) {
-          alert("Alasan minimal 5 karakter");
+          setConfirmModal({
+            open: true,
+            title: "Peringatan",
+            message: "Alasan Minimal 5 karakter",
+            type: "error",
+          });
           return;
         }
         try {
@@ -196,7 +236,12 @@
               alasanRespon: alasanReject,
             }
           );
-          alert("Pengajuan berhasil ditolak");
+          setConfirmModal({
+            open: true,
+            title: "Berhasil",
+            message: "Pengajuan berhasil ditolak",
+            type: "success",
+          });
           setShowRejectModal(false);
           setSelectedId(null);
           setAlasanReject("");
@@ -212,37 +257,58 @@
         }
       };
          
-      const handleDelete = async (id) => {
-        const confirmDelete = window.confirm(
-          "Apakah Anda yakin ingin menghapus pengajuan ini?"
-        );
-        if (!confirmDelete) return;
+      const handleDelete = (id) => {
+        setSelectedId(id);
+        setSelectedAction("delete");
+      
+        setConfirmModal({
+          open: true,
+          title: "Hapus Pengajuan",
+          message: "Yakin ingin menghapus pengajuan ini?",
+          type: "delete",
+        });
+      };
+      const handleConfirm = async () => {
         try {
-          await api.delete(`/api/pengajuan-perubahan-jadwal/${id}`);
-          alert("Pengajuan berhasil dihapus");
+          if (selectedAction === "approve") {
+            await api.post(
+              `/api/pengajuan-perubahan-jadwal/${selectedId}/approve`
+            );
+      
+            setConfirmModal({
+              open: true,
+              title: "Berhasil",
+              message: "Pengajuan berhasil disetujui",
+              type: "success",
+            });
+          }
+      
+          if (selectedAction === "delete") {
+            await api.delete(
+              `/api/pengajuan-perubahan-jadwal/${selectedId}`
+            );
+      
+            setConfirmModal({
+              open: true,
+              title: "Berhasil",
+              message: "Pengajuan berhasil dihapus",
+              type: "success",
+            });
+          }
+      
           fetchData();
         } catch (error) {
-          console.error(error);
-          alert(
-            error.response?.data?.message ||
-            "Gagal menghapus pengajuan"
-          );
+          setConfirmModal({
+            open: true,
+            title: "Gagal",
+            message:
+              error.response?.data?.message || "Terjadi kesalahan",
+            type: "error",
+          });
         }
       };
-      // Hitung rowSpan tiap hari
-      const hariRowSpan = {};
-      let prevHari = null;
 
-      jadwalFiltered.forEach((jadwal, index) => {
-        if (jadwal.hari !== prevHari) {
-          // hitung berapa jadwal yang sama berturut-turut
-          const count = jadwalFiltered.slice(index).filter(j => j.hari === jadwal.hari).length;
-          hariRowSpan[index] = count; // simpan rowSpan di index
-          prevHari = jadwal.hari;
-        }
-      });
-      console.log(filteredData.map(x => x.id));
-      
+  
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -325,16 +391,16 @@
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                         Mata Kuliah 
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                      <th className="px-3 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                         Jadwal Lama
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                      <th className="w-[280px] px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                         Jadwal Baru
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                      <th className="px-3 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                         Alasan Pengajuan
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                      <th className="px-3 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                         Status
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
@@ -358,8 +424,8 @@
                         <td className="py-2 px-4 min-w-[220px] align-top">{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
                         <td className=" min-w-[150px] align-top">{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
                         {/* jdwl lama  */}
-                         <td className="px-4 py-3 min-w-[170px] align-top">
-                         <div className="bg-gray-50 p-3 rounded-md text-xs text-gray-700">
+                         <td className="px-2 py-3 min-w-[170px] align-top">
+                         <div className="bg-gray-50 p-3 rounded-md text-xs border border-gray-200">
                       <div className="flex flex-col gap-x-4 gap-y-1">
 
                       <div>
@@ -386,38 +452,69 @@
                       </div>
                     </div>
                       </td>
-                      <td className="px-4 py-3 min-w-[170px] align-top">
-                      <div className="bg-green-50 p-3 rounded-md text-xs">
-                      <div className="flex flex-col gap-x-4 gap-y-1">
-                      <div>
-                    <span className="text-gray-400">Hari:</span>{" "}
-                    <span className="font-medium text-green-700">
-                    {getHariNama(row.hariBaruId)}
-                    </span>
-                  </div>
+                      <td className="px-2 py-3 min-w-[170px] align-top">
+                      {row.jadwalTargetId ? (
+                        <div className="bg-blue-50 p-3 rounded-md text-xs border border-blue-200">
+                          <div className="mb-2 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
+                            Tukar Jadwal
+                          </div>
 
-                  <div>
-                    <span className="text-gray-400">Waktu:</span>{" "}
-                    <span>
-                    {getSlotRangeLabel(row.slotWaktuBaruId, row)}
-                    </span>
-                  </div>
+                          <div className="flex flex-col gap-y-1">
+                            <div>
+                              <span className="text-gray-400">Hari:</span>{" "}
+                              <span className="font-medium text-blue-700">
+                                {getHariNama(row.hariBaruId)}
+                              </span>
+                            </div>
 
-                  <div>
-                    <span className="text-gray-400">Ruangan:</span>{" "}
-                    <span className="text-green-700 font-medium">
-                    {getRuangNama(row.ruangBaruId)}
-                    </span>
-                  </div>
-                      </div>
-                    </div>
+                            <div>
+                              <span className="text-gray-400">Waktu:</span>{" "}
+                              <span>
+                                {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400">Ruangan:</span>{" "}
+                              <span className="text-blue-700 font-medium">
+                                {getRuangNama(row.ruangBaruId)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-green-50 p-3 rounded-md text-xs border border-green-200">
+                          <div className="flex flex-col gap-y-1">
+                            <div>
+                              <span className="text-gray-400">Hari:</span>{" "}
+                              <span className="font-medium text-green-700">
+                                {getHariNama(row.hariBaruId)}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400">Waktu:</span>{" "}
+                              <span>
+                                {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400">Ruangan:</span>{" "}
+                              <span className="text-green-700 font-medium">
+                                {getRuangNama(row.ruangBaruId)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </td>
                         {/* alasan */}
                         <td className="px-6 py-4 font-xs capitalize">
                           {row.alasanPengaju}
                         </td>
                         {/* statusny */}
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-4 ">
                           <span
                             className={`inline-flex items-center px-1 py-1 rounded-full text-xs font-medium
                             ${
@@ -452,7 +549,7 @@
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
 
-                          {/* Detail */}
+                          {/* Detail
                           <button
                             onClick={() => {
                               setSelectedItem(row);
@@ -462,7 +559,7 @@
                             title="Lihat Detail"
                           >
                             <Eye size={16} />
-                          </button>
+                          </button> */}
                           <button
                               onClick={() => handleDelete(row.id)}
                               title="Hapus"
@@ -488,8 +585,8 @@
                               {/* Tolak */}
                               <button
                                 onClick={() => {
-                                  setSelectedId(row.id);
-                                  setAlasanRespon("");
+                                  setSelectedId(row.id)
+                                  setAlasanReject("");
                                   setShowRejectModal(true);
                                 }}
                                 className="px-3 py-1.5 text-xs font-medium rounded-lg
@@ -689,6 +786,23 @@
     </div>
   </div>
 )}
+    <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={
+        confirmModal.type === "delete"
+          ? handleConfirm
+          : undefined
+      }
+    />
     </MainLayout>
       );
     };

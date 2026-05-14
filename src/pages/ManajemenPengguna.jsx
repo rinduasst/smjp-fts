@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import MainLayout from "../components/MainLayout";
 import api from "../api/api";
+import ConfirmModal from "../components/ConfirmModal";
 
 function ManajemenPengguna() {
 
@@ -33,7 +34,12 @@ function ManajemenPengguna() {
     fakultasId: "",
     prodiId: "",
   });
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [total, setTotal] = useState(0);
@@ -131,36 +137,98 @@ function ManajemenPengguna() {
     e.preventDefault();
   
     // Validasi password
-    if (!selectedItem && (!formData.password || formData.password.length < 6)) {
-      alert("Password minimal 6 karakter");
+    if (
+      !selectedItem &&
+      (!formData.password || formData.password.length < 6)
+    ) {
+      setConfirmModal({
+        open: true,
+        title: "Validasi Gagal",
+        message: "Password minimal 6 karakter",
+        type: "error",
+      });
       return;
     }
   
     try {
       if (selectedItem) {
-        await api.patch(`/api/pengguna/${selectedItem.id}`, formData);
-        alert("Pengguna berhasil diperbarui");
+        await api.patch(
+          `/api/pengguna/${selectedItem.id}`,
+          formData
+        );
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Pengguna berhasil diperbarui",
+          type: "success",
+        });
       } else {
-        await api.post("/api/pengguna", formData);
-        alert("Pengguna berhasil ditambahkan");
+        await api.post(
+          "/api/pengguna",
+          formData
+        );
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Pengguna berhasil ditambahkan",
+          type: "success",
+        });
       }
-     await fetchPengguna();
+  
+      await fetchPengguna();
       setShowModal(false);
+  
     } catch (err) {
-      alert("Gagal menyimpan pengguna. Pastikan password memenuhi aturan.");
       console.error(err);
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          "Gagal menyimpan pengguna. Pastikan password memenuhi aturan.",
+        type: "error",
+      });
     }
   };
   //delete
-  const handleDelete = async (item) => {
-    const confirmDelete = window.confirm(`Hapus pengguna ${item.nama}?`);
-    if (!confirmDelete) return;
+  const handleDelete = (item) => {
+    setSelectedItem(item);
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Pengguna",
+      message: `Yakin ingin menghapus pengguna "${item.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
+  
     try {
-      await api.delete(`/api/pengguna/${item.id}`);
-      alert("Data berhasil dihapus");
-      fetchPengguna();
-    } catch {
-      alert("Gagal menghapus");
+      await api.delete(`/api/pengguna/${selectedItem.id}`);
+  
+      await fetchPengguna();
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Data pengguna berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedItem(null);
+  
+    } catch (err) {
+      console.error(err);
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus pengguna",
+        type: "error",
+      });
     }
   };
 
@@ -474,6 +542,23 @@ function ManajemenPengguna() {
             </div>
           </div>
         )}
+        <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        onClose={() =>
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={
+          confirmModal.type === "delete"
+            ? confirmDelete
+            : undefined
+        }
+      />
 
       </div>
 

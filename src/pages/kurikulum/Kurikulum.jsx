@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import {useAuth} from "../../hooks/useAuth"
+import ConfirmModal from "../../components/ConfirmModal";
 
 
 function Kurikulum() {
@@ -23,6 +24,12 @@ function Kurikulum() {
     angkatanMulai: "",
     angkatanSelesai: "",
     aktif: true,
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
   });
   
   const [prodiList, setProdiList] = useState([]);
@@ -92,61 +99,94 @@ function Kurikulum() {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // cek duplikat: nama + prodi + angkatanMulai + angkatanSelesai
-    const isDuplicate = data.some(item =>
-      item.nama.toLowerCase() === formData.nama.toLowerCase() &&
-      item.prodi?.id === formData.prodiId &&
-      Number(item.angkatanMulai) === Number(formData.angkatanMulai) &&
-      (item.angkatanSelesai || null) ===
-        (formData.angkatanSelesai ? Number(formData.angkatanSelesai) : null) &&
-      item.id !== selected?.id
+    // cek duplikat
+    const isDuplicate = data.some(
+      (item) =>
+        item.nama.toLowerCase() === formData.nama.toLowerCase() &&
+        item.prodi?.id === formData.prodiId &&
+        Number(item.angkatanMulai) === Number(formData.angkatanMulai) &&
+        (item.angkatanSelesai || null) ===
+          (formData.angkatanSelesai
+            ? Number(formData.angkatanSelesai)
+            : null) &&
+        item.id !== selected?.id
     );
   
     if (isDuplicate) {
-      alert("Kurikulum dengan Nama, Prodi, dan Tahun yang sama sudah ada!");
-      return; // stop submit
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          "Kurikulum dengan nama, program studi, dan tahun yang sama sudah ada",
+        type: "error",
+      });
+      return;
     }
   
     setIsSubmitting(true);
   
-    const tahunMulai = Number(formData.angkatanMulai);
-    const tahunSelesai = Number(formData.angkatanSelesai);
-    
-    const payload = {
-      prodiId: peran === "TU_PRODI" ? user?.prodiId : formData.prodiId,
-      nama: formData.nama.trim(),
-      angkatanMulai: tahunMulai,
-      aktif: formData.aktif,
-      ...(formData.angkatanSelesai && tahunSelesai >= 1900 && {
-        angkatanSelesai: tahunSelesai
-      })
-    };
-  
     try {
+      const tahunMulai = Number(formData.angkatanMulai);
+      const tahunSelesai = Number(formData.angkatanSelesai);
+  
+      const payload = {
+        prodiId:
+          peran === "TU_PRODI"
+            ? user?.prodiId
+            : formData.prodiId,
+  
+        nama: formData.nama.trim(),
+        angkatanMulai: tahunMulai,
+        aktif: formData.aktif,
+  
+        ...(formData.angkatanSelesai &&
+          tahunSelesai >= 1900 && {
+            angkatanSelesai: tahunSelesai,
+          }),
+      };
+  
       if (selected) {
-        await api.patch(`/api/kurikulum/kurikulum/${selected.id}`, payload);
+        await api.patch(
+          `/api/kurikulum/kurikulum/${selected.id}`,
+          payload
+        );
       } else {
         await api.post("/api/kurikulum/kurikulum", payload);
       }
   
       await fetchKurikulum();
+  
       setShowModal(false);
       resetForm();
-    
-      // kasih alert sukses
-      alert("Data kurikulum berhasil disimpan!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: selected
+          ? "Kurikulum berhasil diperbarui"
+          : "Kurikulum berhasil ditambahkan",
+        type: "success",
+      });
+  
     } catch (err) {
       console.error("Gagal simpan kurikulum:", err);
-      if (err.response?.status === 400) {
-        alert(err.response.data?.message || "Gagal simpan kurikulum");
-      } else {
-        alert("Gagal menyimpan data");
-      }
+  
+      setShowModal(false);
+      resetForm();
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          err.response?.data?.message ||
+          "Gagal menyimpan data kurikulum",
+        type: "error",
+      });
+  
     } finally {
       setIsSubmitting(false);
     }
   };
-  
   const handleEdit = (row) => {
     setSelected(row);
     setFormData({
@@ -161,30 +201,52 @@ function Kurikulum() {
     });
     setShowModal(true);
   };
-
+  const handleDelete = (row) => {
+    setSelected(row);
   
-  const handleDelete = async (row) => {
-    if (!row) return;
+    setConfirmModal({
+      open: true,
+      title: "Hapus Kurikulum",
+      message: `Yakin ingin menghapus kurikulum "${row.nama}"?`,
+      type: "delete",
+    });
+  };
   
-    const ok = window.confirm(
-      `Yakin ingin menghapus kurikulum "${row.nama}"?`
-    );
-    if (!ok) return;
+  const confirmDelete = async () => {
+    if (!selected) return;
   
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/kurikulum/kurikulum/${row.id}`);
+  
+      await api.delete(`/api/kurikulum/kurikulum/${selected.id}`);
+  
       await fetchKurikulum();
-      alert("Kurikulum berhasil dihapus");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Kurikulum berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelected(null);
+  
     } catch (err) {
       console.error(err);
-      alert("Gagal menghapus kurikulum");
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          err.response?.data?.message ||
+          "Gagal menghapus kurikulum",
+        type: "error",
+      });
+  
     } finally {
       setIsSubmitting(false);
     }
   };
-
-
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
@@ -535,7 +597,20 @@ function Kurikulum() {
           </div>
         )}
   
-  
+        <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        loading={isSubmitting}
+        onClose={() =>
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={confirmDelete}
+      />
       </div>
     </MainLayout>
   );

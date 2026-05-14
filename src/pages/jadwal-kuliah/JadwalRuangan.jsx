@@ -147,7 +147,7 @@ const JadwalRuangan = () => {
 
           {/* Button export */}
           <button
-            onClick={() => exportRuangan(jadwalList, batch)}
+            onClick={() => exportRuangan(jadwalList, batch, slotList)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={16} /> Export File

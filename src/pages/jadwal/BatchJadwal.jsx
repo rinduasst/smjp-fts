@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Trash2, CheckCircle, Eye, Loader2, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const BatchJadwal = () => {
   const [batchList, setBatchList] = useState([]);
@@ -10,9 +11,18 @@ const BatchJadwal = () => {
   const [fakultasList, setFakultasList] = useState([]);
 
   const [showModalEdit, setShowModalEdit] = useState(false);
-const [selectedBatch, setSelectedBatch] = useState(null);
-const [namaBatchBaru, setNamaBatchBaru] = useState("");
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [namaBatchBaru, setNamaBatchBaru] = useState("");
   const navigate = useNavigate();
+
+  const [selectedBatchId, setSelectedBatchId] = useState(null);
+  const [actionType, setActionType] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const fetchBatch = async () => {
     try {
       setLoading(true);
@@ -40,28 +50,107 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
       });
       fetchBatch();
     } catch (err) {
-      alert("Gagal mengubah status ke SIAP");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal mengubah status ke SIAP",
+        type: "error",
+      });
     }
   };
 
-  const setAktif = async (id) => {
-    if (!confirm("Jadikan batch ini sebagai jadwal aktif?")) return;
-
+  const setAktif = (id) => {
+    setSelectedBatchId(id);
+    setActionType("aktif");
+  
+    setConfirmModal({
+      open: true,
+      title: "Aktifkan Batch",
+      message: "Jadikan batch ini sebagai jadwal aktif?",
+      type: "confirm",
+    });
+  };
+  const hapusBatch = (id, status) => {
+    // kalau batch aktif/final, blok
+    if (status === "FINAL") {
+      setConfirmModal({
+        open: true,
+        title: "Tidak Bisa Dihapus",
+        message: "Batch yang sedang aktif tidak dapat dihapus. Batalkan status final terlebih dahulu.",
+        type: "error",
+      });
+      return;
+    }
+  
+    // kalau bukan final, lanjut modal konfirmasi hapus
+    setSelectedBatchId(id);
+    setActionType("delete");
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Batch",
+      message: "Yakin ingin menghapus batch ini?",
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
     try {
-      await api.patch(`/api/scheduler/batch/${id}/set-final`);
+      await api.delete(`/api/scheduler/batch/${selectedBatchId}`);
+  
       fetchBatch();
+      setActionType("delete");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Batch berhasil dihapus",
+        type: "success",
+      });
     } catch (err) {
-      alert("Gagal mengaktifkan batch");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus batch jadwal",
+        type: "error",
+      });
     }
   };
-  const hapusBatch = async (id) => {
-    if (!confirm("Yakin ingin menghapus batch ini?")) return;
-
+  const handleConfirm = async () => {
     try {
-      await api.delete(`/api/scheduler/batch/${id}`);
+      if (actionType === "delete") {
+        await api.delete(`/api/scheduler/batch/${selectedBatchId}`);
+      }
+  
+      if (actionType === "aktif") {
+        await api.patch(
+          `/api/scheduler/batch/${selectedBatchId}/set-final`
+        );
+      }
+  
+      if (actionType === "siap") {
+        await api.patch(
+          `/api/scheduler/batch/${selectedBatchId}/status`,
+          {
+            status: "SIAP",
+          }
+        );
+      }
+  
       fetchBatch();
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Perubahan berhasil disimpan",
+        type: "success",
+      });
     } catch (err) {
-      alert("Gagal menghapus batch");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Terjadi kesalahan",
+        type: "error",
+      });
     }
   };
   const openModalEdit = (item) => {
@@ -71,7 +160,12 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
   };
   const submitUbahNama = async () => {
     if (!namaBatchBaru.trim()) {
-      alert("Nama batch tidak boleh kosong");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Nama batch tidak boleh kosong",
+        type: "error",
+      });
       return;
     }
   
@@ -82,24 +176,36 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
   
       setShowModalEdit(false);
       fetchBatch();
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Nama batch berhasil diubah",
+        type: "success",
+      });
+  
     } catch (err) {
-      alert("Gagal mengubah nama batch");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal mengubah nama batch",
+        type: "error",
+      });
     }
   };
   useEffect(() => {
     fetchBatch();
   }, []);
-  const ubahKeDraft = async (id) => {
-    if (!confirm("Ubah jadwal ini ke DRAFT?")) return;
+  const ubahKeDraft = (id) => {
+    setSelectedBatchId(id);
+    setActionType("siap");
   
-    try {
-      await api.patch(`/api/scheduler/batch/${id}/status`, {
-        status: "SIAP",
-      });
-      fetchBatch();
-    } catch (err) {
-      alert("Gagal mengubah ke DRAFT");
-    }
+    setConfirmModal({
+      open: true,
+      title: "Batalkan Final",
+      message: "Ubah jadwal ini ke DRAFT?",
+      type: "confirm",
+    });
   };
   const formatNamaBatch = (nama, index) => {
     if (!nama) return `Batch ${index + 1}`;
@@ -298,7 +404,7 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
 
                       {/* Hapus */}
                       <button
-                        onClick={() => hapusBatch(item.id)}
+                        onClick={() => hapusBatch(item.id, item.status)}
                         className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50"
                       >
                         <Trash2 size={18} />
@@ -383,6 +489,23 @@ const [namaBatchBaru, setNamaBatchBaru] = useState("");
     </div>
   </div>
 )}
+    <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={
+        ["delete", "confirm"].includes(confirmModal.type)
+          ? handleConfirm
+          : undefined
+      }
+    />
     </MainLayout>
   );
 };

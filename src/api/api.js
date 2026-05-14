@@ -33,7 +33,7 @@ const getModule = (url) => {
   if (url.includes("pengajaran")) return "Pengajaran";
   if (url.includes("master-data")) return "Master Data";
   if (url.includes("kurikulum")) return "Kurikulum";
-  return "Lainnya";
+  return "Pengguna";
 };
 
 // 🔥 AUTO LOGGING

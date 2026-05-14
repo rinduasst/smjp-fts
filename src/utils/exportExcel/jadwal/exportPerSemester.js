@@ -37,30 +37,33 @@ import { saveAs } from "file-saver";
   data.forEach((hari)=>{
 
     hari.slots?.forEach((slot)=>{
-
-      slot.kelas?.forEach((k)=>{
-
-        const angkatan = k.angkatan;
-
-        const semester =
-          (batchInfo?.periode?.tahunMulai - angkatan) * 2 +
-          (batchInfo?.periode?.paruh === "GENAP" ? 2 : 1);
-
-        const kelas = (k.kode || "A").toUpperCase();
-
-        if(!semesterGroup[semester]) semesterGroup[semester] = {};
-        if(!semesterGroup[semester][kelas]) semesterGroup[semester][kelas] = [];
-
-        semesterGroup[semester][kelas].push({
-          hari: hari.nama,
-          jamMulai: slot.jamMulai,
-          jamSelesai: slot.jamSelesai,
-          matkul: slot.matkul?.nama,
-          dosen: slot.dosen?.nama,
-          ruang: slot.ruang?.nama
-        });
-
+      const kelasList = slot.kelas?.kode
+      ?.split(",")
+      .map((k) => k.trim()) || [];
+    
+    kelasList.forEach((kelasKode) => {
+    
+      const angkatan = slot.kelas?.angkatan;
+    
+      const semester =
+        (batchInfo?.periode?.tahunMulai - angkatan) * 2 +
+        (batchInfo?.periode?.paruh === "GENAP" ? 2 : 1);
+    
+      const kelas = (kelasKode || "A").toUpperCase();
+    
+      if(!semesterGroup[semester]) semesterGroup[semester] = {};
+      if(!semesterGroup[semester][kelas]) semesterGroup[semester][kelas] = [];
+    
+      semesterGroup[semester][kelas].push({
+        hari: hari.nama,
+        jamMulai: slot.jamMulai,
+        jamSelesai: slot.jamSelesai,
+        matkul: slot.matkul?.nama,
+        dosen: slot.dosen?.nama,
+        ruang: slot.ruang?.nama
       });
+    
+    });
 
     });
 

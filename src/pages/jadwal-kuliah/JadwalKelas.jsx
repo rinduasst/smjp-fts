@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
-import { Download, Loader2 } from "lucide-react";
-import { exportPerSemester } from "../../utils/exportExcel/jadwal/exportPerSemester.js";
+import { Download, Loader2,Search } from "lucide-react";
+import { exportPerKelas } from "../../utils/exportExcel/jadwal/exportPerKelas.js";
 const JadwalKelas = () => {
   const { user } = useAuth();
 
@@ -11,6 +11,8 @@ const JadwalKelas = () => {
   const [batchInfo, setBatchInfo] = useState(null);
   const [semesterAktif, setSemesterAktif] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [filterKelas, setFilterKelas] = useState("ALL");
   // ambil batch final
   console.log("USER LOGIN:", user);
   const fetchFinalBatch = async () => {
@@ -62,8 +64,17 @@ const JadwalKelas = () => {
   }, [batchInfo]);
 
   const handleExport = () => {
-    exportPerSemester(data, batchInfo, user?.nama);
+    const dataSemesterAktif = grouped[semesterAktif] || {};
+  
+    exportPerKelas(
+      dataSemesterAktif,
+      batchInfo,
+      user,
+      filterKelas,
+      semesterAktif
+    );
   };
+  
   const toRomawi = (num) => {
     const map = ["","I","II","III","IV","V","VI","VII","VIII"];
     return map[num] || num;
@@ -75,42 +86,33 @@ const JadwalKelas = () => {
   };
 
   const grouped = {};
+
   data.forEach((hari) => {
-    hari.slots.forEach((slot) => {
+    hari.slots?.forEach((slot) => {
+  
+      const kelasList = slot.kelas?.kode
+        ?.split(",")
+        .map((k) => k.trim()) || [];
+  
       const semester = hitungSemester(
-        slot.kelas.angkatan,
+        slot.kelas?.angkatan,
         batchInfo?.periode?.tahunMulai,
         batchInfo?.periode?.paruh
       );
-      const kelasList = slot.kelas.kode
-  .split(",")
-  .map((k) => k.trim());
-
-      //loop perkelas
+  
       kelasList.forEach((kelasKey) => {
-
-        const semester = hitungSemester(
-          slot.kelas.angkatan,
-          batchInfo?.periode?.tahunMulai,
-          batchInfo?.periode?.paruh
-        );
-      
-        if (!grouped[semester]) {
-          grouped[semester] = {};
-        }
-      
-        if (!grouped[semester][kelasKey]) {
-          grouped[semester][kelasKey] = [];
-        }
-      
+  
+        if (!grouped[semester]) grouped[semester] = {};
+        if (!grouped[semester][kelasKey]) grouped[semester][kelasKey] = [];
+  
         grouped[semester][kelasKey].push({
           ...slot,
           hari: hari.nama,
           kelas: kelasKey,
         });
-      
-      }); 
-     
+  
+      });
+  
     });
   });
   const semesterList = Object.keys(grouped)
@@ -149,18 +151,54 @@ const JadwalKelas = () => {
 
         {/* Tombol Export */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
         <p className="text-sm text-gray-600">
           Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
         </p>
-            <button
+
+        {/* FILTER */}
+        <div className="relative w-full max-w-xs">
+          
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+
+          <select
+            value={filterKelas}
+            onChange={(e) => setFilterKelas(e.target.value)}
+            className="
+              w-full
+              pl-10 pr-4 py-2.5
+              border border-gray-300
+              rounded-lg
+              bg-white
+              text-sm text-gray-900
+              focus:border-green-500
+              focus:outline-none
+              transition
+            "
+          >
+            <option value="ALL">Semua Kelas</option>
+            {Object.keys(grouped[semesterAktif] || {}).map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+
+        
+        </div>
+        <button
             onClick={handleExport}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
             >
             <Download size={18} />
             Export Excel
             </button>
-        </div>
-        </div>
+      </div>
+          </div>
+ 
         
         {/* TABEL */}
         <div className="bg-white p-6 rounded-lg shadow min-h-[300px] relative">
@@ -182,6 +220,10 @@ const JadwalKelas = () => {
         ))}
         </div>
          {  Object.entries(grouped[semesterAktif] || {})
+        .filter(([kelas]) => {
+          if (filterKelas === "ALL") return true;
+          return kelas === filterKelas;
+        })
             .sort(([a], [b]) => sortKelas(a, b))
             .map(([kelas, jadwal]) => (
             <div key={kelas} className="mb-8 last:mb-0">

@@ -44,7 +44,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
     // Baris 2
     worksheet.mergeCells("B2:I2");
-   worksheet.getCell("B2").value = `Program Studi ${prodiNama}`;
+   worksheet.getCell("B2").value = `PROGRAM STUDI ${prodiNama.toUpperCase()}`;
     worksheet.getCell("B2").font = {
     name: "Times New Roman",
     size: 16,
@@ -56,7 +56,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
     // Baris 3
     worksheet.mergeCells("B3:I3");
-    worksheet.getCell("B3").value = `Fakultas ${fakultas}`;
+    worksheet.getCell("B3").value = `${fakultas.toUpperCase()}`;
     worksheet.getCell("B3").font = {
     name: "Times New Roman",
     size: 16,
@@ -68,7 +68,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
     // Baris 4
     worksheet.mergeCells("B4:I4");
-    worksheet.getCell("B4").value = `Periode ${periode}`;
+    worksheet.getCell("B4").value = `PERIODE ${periode.toUpperCase()}`;
     worksheet.getCell("B4").font = {
     name: "Times New Roman",
     size: 14,

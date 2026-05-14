@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function SlotWaktu() {
   const [data, setData] = useState([]);
@@ -20,7 +21,12 @@ function SlotWaktu() {
     jamSelesaiMenit: "",
     slotMalam: false,
   });
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
 
   const fetchSlotWaktu = async () => {
     try {
@@ -48,8 +54,6 @@ function SlotWaktu() {
       [name]: value,
     });
   };
-  
-
   const resetForm = () => {
     setFormData({
       nama: "",
@@ -57,57 +61,123 @@ function SlotWaktu() {
       jamMulaiMenit: "",
       jamSelesaiJam: "",
       jamSelesaiMenit: "",
+      slotMalam: false,
     });
+  
     setSelectedItem(null);
   };
-  
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
   
-    if (
-      !formData.nama ||
-      !formData.jamMulaiJam ||
-      !formData.jamMulaiMenit ||
-      !formData.jamSelesaiJam ||
-      !formData.jamSelesaiMenit
-    ) {
-      alert("Semua field wajib diisi");
-      setIsSubmitting(false);
-      return;
-    }
-  
-
-    const payload = {
-      nama: formData.nama,
-      jamMulai: `${formData.jamMulaiJam}.${formData.jamMulaiMenit}`,
-      jamSelesai: `${formData.jamSelesaiJam}.${formData.jamSelesaiMenit}`,
-      slotMalam: formData.slotMalam,
-    };
     try {
+      // VALIDASI WAJIB
+      if (
+        !formData.nama ||
+        !formData.jamMulaiJam ||
+        !formData.jamMulaiMenit ||
+        !formData.jamSelesaiJam ||
+        !formData.jamSelesaiMenit
+      ) {
+        setConfirmModal({
+          open: true,
+          title: "Peringatan",
+          message: "Lengkapi data terlebih dahulu",
+          type: "error",
+        });
+        return;
+      }
+  
+      const newStart = `${formData.jamMulaiJam}.${formData.jamMulaiMenit}`;
+      const newEnd = `${formData.jamSelesaiJam}.${formData.jamSelesaiMenit}`;
+  
+      // DUPLIKAT NAMA
+      const isDuplicateName = data.some(
+        (d) =>
+          d.nama?.toLowerCase() === formData.nama.trim().toLowerCase() &&
+          d.id !== selectedItem?.id
+      );
+  
+      // DUPLIKAT JAM
+      const isDuplicateTime = data.some(
+        (d) =>
+          d.jamMulai === newStart &&
+          d.jamSelesai === newEnd &&
+          d.id !== selectedItem?.id
+      );
+  
+      if (isDuplicateName) {
+        setConfirmModal({
+          open: true,
+          title: "Duplikat",
+          message: "Nama sudah dipakai",
+          type: "error",
+        });
+        return;
+      }
+  
+      if (isDuplicateTime) {
+        setConfirmModal({
+          open: true,
+          title: "Duplikat",
+          message: "Jam sudah ada",
+          type: "error",
+        });
+        return;
+      }
+      const payload = {
+        nama: formData.nama.trim(),
+        jamMulai: `${formData.jamMulaiJam}:${formData.jamMulaiMenit}`,
+        jamSelesai: `${formData.jamSelesaiJam}:${formData.jamSelesaiMenit}`,
+        slotMalam: formData.slotMalam,
+      };
+  
       if (selectedItem) {
-        await api.patch(
-          `/api/master-data/slot-waktu/${selectedItem.id}`,
-          payload
-        );
-        alert("Slot waktu berhasil diperbarui");
+        await api.patch(`/api/master-data/slot-waktu/${selectedItem.id}`, payload);
       } else {
+        console.log("PAYLOAD:", payload);
+        console.log("HEADERS:", api.defaults.headers);
         await api.post("/api/master-data/slot-waktu", payload);
-        alert("Slot waktu berhasil ditambahkan");
       }
   
       await fetchSlotWaktu();
-      closeModal();
   
-    } catch (error) {
-      console.error(error);
-      alert("Gagal simpan");
+      setFormData({
+        nama: "",
+        jamMulaiJam: "",
+        jamMulaiMenit: "",
+        jamSelesaiJam: "",
+        jamSelesaiMenit: "",
+        slotMalam: false,
+      });
+  
+      setSelectedItem(null);
+      setShowModal(false);
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Data berhasil disimpan",
+        type: "success",
+      });
+  
+    } catch (err) {
+    
+        console.log("ERROR:", err);
+        console.log("RESPONSE:", err.response);
+        console.log("DATA:", err.response?.data);
+        console.log("DATA EXISTING:", data);
+      
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menyimpan data",
+        type: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-    
-  
   const handleEdit = (item) => {
     const mulaiJam = item.jamMulai?.split(".")[0] || "";
     const mulaiMenit = item.jamMulai?.split(".")[1] || "";
@@ -130,26 +200,44 @@ function SlotWaktu() {
   const handleDelete = async () => {
     if (!selectedItem) return;
   
-    const ok = window.confirm(
-      `Yakin ingin menghapus sesi waktu "${selectedItem.nama}"?`
-    );
-  
-    if (!ok) return;
-  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Waktu",
+      message: `Yakin ingin menghapus "${selectedItem.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/slot-waktu/${selectedItem.id}`);
+  
+      await api.delete(
+        `/api/master-data/slot-waktu/${selectedItem.id}`
+      );
+  
       await fetchSlotWaktu();
-      alert("Sesi waktu berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Sesi waktu berhasil dihapus",
+        type: "success",
+      });
+  
       setSelectedItem(null);
     } catch (error) {
-      console.error("Gagal menghapus sesi waktu:", error);
-      alert("Gagal menghapus sesi waktu. Silakan coba lagi.");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus sesi waktu",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
+
   const jamList = Array.from({ length: 24 }, (_, i) =>
   String(i).padStart(2, "0")
 );
@@ -401,6 +489,20 @@ function SlotWaktu() {
 
 
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal({ ...confirmModal, open: false })
+      }
+      onConfirm={
+        confirmModal.type === "delete"
+          ? confirmDelete
+          : () => setConfirmModal({ ...confirmModal, open: false })
+      }
+    />
     </MainLayout>
   );
 }

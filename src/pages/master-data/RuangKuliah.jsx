@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
-
+import ConfirmModal from "../../components/ConfirmModal";
 function RuangKuliah() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,12 @@ function RuangKuliah() {
     aktif: true,
     khususKelasGabungan: false
   });
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const [fakultasList, setFakultasList] = useState([]);
 
   const fetchRuang = async () => {
@@ -95,36 +100,67 @@ function RuangKuliah() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
   
+    if (
+      !formData.kode ||
+      !formData.nama ||
+      !formData.kapasitas ||
+      !formData.lokasi ||
+      !formData.fakultasId
+    ) {
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
+      return;
+    }
+  
+    setIsSubmitting(true);
     try {
       if (selectedItem) {
-        await api.patch(`/api/master-data/ruang/${selectedItem.id}`, formData);
-        alert("Ruang berhasil diperbarui");
+        await api.patch(
+          `/api/master-data/ruang/${selectedItem.id}`,
+          formData
+        );
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Ruang berhasil diperbarui",
+          type: "success",
+        });
       } else {
         await api.post("/api/master-data/ruang", formData);
-        alert("Ruang berhasil ditambahkan");
+  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Ruang berhasil ditambahkan",
+          type: "success",
+        });
       }
   
-      fetchRuang();
+      await fetchRuang();
       closeModal();
   
     } catch (err) {
       console.error("Gagal menyimpan ruang:", err);
   
-      if (err.response?.status === 400 || err.response?.status === 409) {
-        alert(
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
           err.response?.data?.message ||
-          "Kode atau nama ruang sudah digunakan!"
-        );
-      } else {
-        alert("Terjadi kesalahan. Silakan coba lagi.");
-      }
-
-      closeModal();
+          "Kode atau nama ruang sudah digunakan!",
+        type: "error",
+      });
+  
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
   const handleEdit = (item) => {
     setSelectedItem(item);
     setFormData({
@@ -140,20 +176,45 @@ function RuangKuliah() {
     setShowModal(true);
   };
 
-  
   const handleDelete = async (item) => {
-    const ok = window.confirm(
-      `Yakin ingin menghapus ruang "${item.nama}"?`
-    );
-    if (!ok) return;
+    setSelectedItem(item);
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Ruang",
+      message: `Yakin ingin menghapus "${item.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
   
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/ruang/${item.id}`);
+  
+      await api.delete(
+        `/api/master-data/ruang/${selectedItem.id}`
+      );
+  
       await fetchRuang();
-      alert("Ruang berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Ruang berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedItem(null);
+  
     } catch (error) {
-      alert("Gagal menghapus ruang.");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus ruang",
+        type: "error",
+      });
+  
     } finally {
       setIsSubmitting(false);
     }
@@ -258,7 +319,7 @@ function RuangKuliah() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr><td colSpan="7" className="p-6 text-center">
+                <tr><td colSpan="8" className="p-6 text-center">
                   <Loader2 className="animate-spin mx-auto"/>
                 </td></tr>
               ) : filteredData.length ? filteredData.map(row => (
@@ -315,19 +376,19 @@ function RuangKuliah() {
 
         {/* Modal Tambah/Edit */}
     {showModal && (
-      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2">
         <div className="bg-white rounded-lg w-full max-w-lg">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">
                   {selectedItem ? "Edit Ruang" : "Tambah Ruang"}
                 </h3>
-                <button onClick={() => { setShowModal(false); resetForm(); }} className="text-gray-500">
+                <button onClick={closeModal} className="text-gray-500">
                   <X size={18}/>
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-2">
               <div>
               <label className="block text-sm font-medium text-gray-700">Kode Ruangan </label>
               <input
@@ -438,22 +499,40 @@ function RuangKuliah() {
           </div>
 
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">
-                    Batal
-                  </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-200 rounded"
+                >
+                  Batal
+                </button>
                   <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">
                     Simpan
                   </button>
                 </div>
               </form>
             </div>
-          </div>
-        )}
-
+            </div>
       
-      </div>
-    </MainLayout>
-  );
+    )}
+
+    <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={isSubmitting}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmDelete}
+    />
+    </div>
+  </MainLayout>
+);
 }
 
 export default RuangKuliah;

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { ArrowLeft, CheckCircle, Loader2, Eye } from "lucide-react";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const BatchJadwalDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,12 @@ const BatchJadwalDetail = () => {
     "teknik informatika": "bg-purple-500 text-white",
     "teknik elektro": "bg-red-500 text-white",
   };
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
 
   const getWarnaProdi = (nama) => {
     if (!nama) return "";
@@ -102,12 +109,39 @@ const BatchJadwalDetail = () => {
     fetchConflictCount();
   }, [id]);
   const handleSetAktif = async () => {
+    // cek konflik dulu
+    if (totalKonflik > 0) {
+      setConfirmModal({
+        open: true,
+        title: "Tidak Bisa Diaktifkan",
+        message:
+          "Masih ada konflik jadwal. Selesaikan konflik terlebih dahulu sebelum mengaktifkan batch.",
+        type: "error",
+      });
+      return;
+    }
+  
     try {
       await api.patch(`/api/scheduler/batch/${id}/set-final`);
-      alert("Batch diaktifkan");
-      navigate("/scheduler/batch");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Batch berhasil diaktifkan",
+        type: "success",
+      });
+  
+      setTimeout(() => {
+        navigate("/scheduler/batch");
+      }, 1500);
+  
     } catch (err) {
-      console.error(err);
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal mengaktifkan batch",
+        type: "error",
+      });
     }
   };
 
@@ -398,6 +432,18 @@ const matrix = React.useMemo(() => {
 
       </div>
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+    />
     </MainLayout>
   );
 };

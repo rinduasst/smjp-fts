@@ -4,6 +4,7 @@ import MainLayout from "../../components/MainLayout";
 import { Plus, Search, Edit, Trash2, Loader2, X, ChevronRight, ChevronDown } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import Select from "react-select";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const ConstraintDosen = () => {
   const [data, setData] = useState([]);
@@ -35,6 +36,12 @@ const ConstraintDosen = () => {
       MAKS_SESI_PERHARI: null,
       MAKS_HARI_PERMINGGU: null
     }
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
   });
   // fetch master
   useEffect(() => {
@@ -136,12 +143,23 @@ const ConstraintDosen = () => {
   const handleSubmit = async () => {
 
     if (!formData.tipe) {
-      alert("Pilih tipe aturan terlebih dahulu");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Pilih aturan terlebih dahulu!",
+        type: "error",
+      });
       return;
     }
   
     if (formData.tipe === "SOFT" && !formData.prioritas) {
-      alert("Pilih prioritas terlebih dahulu");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Pilih prioritas terlebih dahulu!",
+        type: "error",
+      });
+ 
       return;
     }
     // ================= EDIT MODE =================
@@ -155,8 +173,13 @@ const ConstraintDosen = () => {
               : 500
         });
   
-        alert("Berhasil update");
-  
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Aturan dosen berhasil diperbarui",
+          type: "success",
+        });
+        
         setShowModal(false);
         fetchData();
         return;
@@ -185,7 +208,12 @@ const ConstraintDosen = () => {
     });
   
     if (!payloads.length) {
-      alert("Pilih minimal 1 aturan");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Pilih minimal 1 aturan",
+        type: "error",
+      });
       return;
     }
   
@@ -206,19 +234,59 @@ const ConstraintDosen = () => {
       }
     }
   
-    alert("Berhasil simpan");
+    setConfirmModal({
+      open: true,
+      title: "Berhasil",
+      message: "Aturan dosen berhasil disimpan",
+      type: "success",
+    });
     setShowModal(false);
     fetchData();
     resetForm();
   };
-  const handleDelete = async (row) => {
-    if (!window.confirm("Yakin hapus Aturan ini?")) return;
+  const handleDelete = (row) => {
+    setSelectedId(row.id);
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Aturan Dosen",
+      message: `Yakin ingin menghapus aturan "${mapJenisConstraint(
+        row.jenisConstraint
+      )}" milik ${row.dosen?.nama}?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
+    if (!selectedId) return;
+  
     try {
-      await api.delete(`/api/pengajaran/constraint-dosen/${row.id}`);
-      fetchData();
+      setLoading(true);
+  
+      await api.delete(
+        `/api/pengajaran/constraint-dosen/${selectedId}`
+      );
+  
+      await fetchData();
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Aturan dosen berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedId(null);
     } catch (err) {
-      console.error("Gagal hapus Aturan ini", err);
-    
+      console.error(err);
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus aturan dosen",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   };
   const [selectedDosen, setSelectedDosen] = useState(null);
@@ -998,6 +1066,24 @@ const timeoutRef = useRef(null);
           </div>
         </div>
       )}
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={loading}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={
+        confirmModal.type === "delete"
+          ? confirmDelete
+          : undefined
+      }
+    />
     </div>
 
     </MainLayout>

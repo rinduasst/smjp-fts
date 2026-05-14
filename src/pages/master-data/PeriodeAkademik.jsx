@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Filter, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api";
-
+import ConfirmModal from "../../components/ConfirmModal";
 function PeriodeAkademik() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,12 @@ function PeriodeAkademik() {
     fakultas_id: "",
     aktif: true
   });
-  
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });  
 
 
   const fetchPeriode = async () => {
@@ -115,6 +120,14 @@ function PeriodeAkademik() {
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
+    
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
+    
       return;
     }
 
@@ -139,10 +152,20 @@ function PeriodeAkademik() {
           `/api/master-data/periode-akademik/${selectedItem.id}`,
           payload
         );
-        alert("Periode akademik berhasil diperbarui!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Periode Akademik berhasil diperbarui",
+          type: "success",
+        });
       } else {
         await api.post("/api/master-data/periode-akademik", payload);
-        alert("Periode akademik berhasil ditambahkan!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Periode Akademik berhasil ditambahkan",
+          type: "success",
+        });
       }
       
 
@@ -152,7 +175,12 @@ function PeriodeAkademik() {
 
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Terjad Kesalahan, Silahkan Coba lagi!",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -171,21 +199,45 @@ function PeriodeAkademik() {
     });
     setShowModal(true);
   };
-  const handleDelete = async (item) => {
-    const ok = window.confirm(
-      `Yakin ingin menghapus periode akademik "${item.nama}"?`
-    );
+
+  const handleDelete = (item) => {
+    setSelectedItem(item);
   
-    if (!ok) return;
+    setConfirmModal({
+      open: true,
+      title: "Hapus Periode Akademik",
+      message: `Yakin ingin menghapus "${item.nama}"?`,
+      type: "delete",
+    });
+  };
   
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/periode-akademik/${item.id}`);
+  
+      await api.delete(
+        `/api/master-data/periode-akademik/${selectedItem.id}`
+      );
+  
       await fetchPeriode();
-      alert("Periode akademik berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Periode akademik berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedItem(null);
     } catch (err) {
       console.error(err);
-      alert("Gagal menghapus periode akademik");
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus periode akademik",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -473,6 +525,20 @@ function PeriodeAkademik() {
 
 
       </div>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={isSubmitting}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmDelete}
+    />
     </MainLayout>
   );
 }

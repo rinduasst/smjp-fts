@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2 } from "lucide-react";
 import api from "../../api/api"; 
+import ConfirmModal from "../../components/ConfirmModal";
 
 function Fakultas() {
   const [data, setData] = useState([]);
@@ -13,6 +14,12 @@ function Fakultas() {
   const [formData, setFormData] = useState({
     kode: "",
     nama: "",
+  });
+  const [confirmModal, setConfirmModal] =  useState({
+    open : false,
+    title : "",
+    message : "",
+    type: "success",
   });
   
   const [formErrors, setFormErrors] = useState({});
@@ -51,6 +58,7 @@ function Fakultas() {
     }));
     // Clear error for this field
     if (formErrors[name]) {
+
       setFormErrors(prev => ({
         ...prev,
         [name]: ""
@@ -81,10 +89,18 @@ function Fakultas() {
     e.preventDefault();
     
     const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
+  if (Object.keys(errors).length > 0) {
+  setFormErrors(errors);
+
+  setConfirmModal({
+    open: true,
+    title: "Peringatan",
+    message: "Lengkapi data dulu",
+    type: "error",
+  });
+
+  return;
+}
     
     setIsSubmitting(true);
     
@@ -98,11 +114,21 @@ function Fakultas() {
       if (selectedFakultas) {
         // Edit existing fakultas
         await api.patch(`/api/master-data/fakultas/${selectedFakultas.id}`, payload);
-        alert("Fakultas berhasil diperbarui!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Fakultas berhasil diperbarui",
+          type: "success",
+        });
       } else {
         // Add new fakultas
         await api.post("/api/master-data/fakultas", payload);
-        alert("Fakultas berhasil ditambahkan!");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Fakultas berhasil ditambahkan",
+          type: "success",
+        });
       }
       
       // Refresh data
@@ -121,15 +147,26 @@ function Fakultas() {
         error.response?.data?.message || "Terjadi kesalahan";
     
       if (error.response?.status === 400) {
-        alert("Kode atau nama fakultas sudah terdaftar!");
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: "Kode atau nama fakultas sudah terdaftar",
+          type: "error",
+        });
       } else {
-        alert("Gagal menyimpan fakultas. Silakan coba lagi.");
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: "Gagal menyimpan data fakultas, silahkan coba lagi!",
+          type: "error",
+        });
       }
     
       // buat tutup modal dan reset
       setShowAddModal(false);
       setShowEditModal(false);
       resetForm();
+      setIsSubmitting(false);
     }
   };    
 
@@ -146,21 +183,38 @@ function Fakultas() {
   const handleDelete = async () => {
     if (!selectedFakultas) return;
   
-    const ok = window.confirm(
-      `Yakin ingin menghapus fakultas "${selectedFakultas.nama}"?`
-    );
-  
-    if (!ok) return;
-  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Fakultas",
+      message: `Yakin ingin menghapus "${selectedFakultas.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await api.delete(`/api/master-data/fakultas/${selectedFakultas.id}`);
+  
+      await api.delete(
+        `/api/master-data/fakultas/${selectedFakultas.id}`
+      );
+  
       await fetchFakultas();
-      alert("Fakultas berhasil dihapus!");
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Fakultas berhasil dihapus",
+        type: "success",
+      });
+  
       setSelectedFakultas(null);
     } catch (error) {
-      console.error("Gagal menghapus fakultas:", error);
-      alert("Gagal menghapus fakultas. Silakan coba lagi.");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Gagal menghapus fakultas",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -325,89 +379,100 @@ function Fakultas() {
 
         {/* Modal Tambah/Edit Fakultas */}
         {(showAddModal || showEditModal) && (
-  <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg w-full max-w-lg">
-      
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {selectedFakultas ? "Edit Fakultas" : "Tambah Fakultas"}
-        </h3>
-        <button
-          onClick={() => {
-            setShowAddModal(false);
-            setShowEditModal(false);
-            resetForm();
-          }}
-          className="text-gray-500"
-        >
-          <X size={20} />
-        </button>
-      </div>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg">
+            
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedFakultas ? "Edit Fakultas" : "Tambah Fakultas"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                  resetForm();
+                }}
+                className="text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-        
-        {/* Kode Fakultas */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Kode Fakultas
-          </label>
-          <input
-            type="text"
-            name="kode"
-            value={formData.kode}
-            onChange={handleInputChange}
-            placeholder="Masukan Kode Fakultas"
-            className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+              
+              {/* Kode Fakultas */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Kode Fakultas
+                </label>
+                <input
+                  type="text"
+                  name="kode"
+                  value={formData.kode}
+                  onChange={handleInputChange}
+                  placeholder="Masukan Kode Fakultas"
+                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-        {/* Nama Fakultas */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Nama Fakultas
-          </label>
-          <input
-            type="text"
-            name="nama"
-            value={formData.nama}
-            onChange={handleInputChange}
-            placeholder="Masukan Nama Fakultas "
-            className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
+              {/* Nama Fakultas */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nama Fakultas
+                </label>
+                <input
+                  type="text"
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleInputChange}
+                  placeholder="Masukan Nama Fakultas "
+                  className="w-full px-3 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-        {/* Tombol */}
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            type="button"
-            onClick={() => {
-              setShowAddModal(false);
-              setShowEditModal(false);
-              resetForm();
-            }}
-            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
-          >
-            Batal
-          </button>
+              {/* Tombol */}
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setShowEditModal(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
+                >
+                  Batal
+                </button>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-          >
-            {isSubmitting ? "Menyimpan..." : "Simpan"}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                >
+                  {isSubmitting ? "Menyimpan..." : "Simpan"}
+                </button>
+              </div>
+            </form>
+          </div>
+          </div>
+        )}
 
       </div>
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        onClose={() =>
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={confirmDelete}
+      />
     </MainLayout>
   );
 }

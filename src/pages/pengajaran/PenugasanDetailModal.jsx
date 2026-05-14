@@ -67,15 +67,22 @@ function PenugasanDetailModal({
               {selectedItem.programMatkul?.periode?.nama || "-"}
             </p>
           </div>
+           {/* JENIS MATA KULIAH */}
+        <div>
+          <p className="text-gray-500">Jenis Mata Kuliah</p>
+          <p className="font-medium">
+            {selectedItem.butuhLab ? "Praktikum" : "Teori"}
+          </p>
+        </div>
 
-          {/* JENIS RUANG */}
-          <div>
-            <p className="text-gray-500">Preferensi Ruang</p>
-            <p className="font-medium">
-              {selectedItem.preferensiRuangJenis ??
-                (selectedItem.butuhLab ? "LAB" : "TEORI")}
-            </p>
-          </div>
+        {/* PREFERENSI RUANG */}
+        <div>
+          <p className="text-gray-500">Preferensi Ruang</p>
+          <p className="font-medium">
+            {selectedItem.preferensiRuangJenis || "-"}
+          </p>
+        </div>
+
 
           {/* KELAS */}
           <div className="col-span-2">
@@ -89,10 +96,11 @@ function PenugasanDetailModal({
                       selectedItem.programMatkul?.periode
                     )
                   )
-                  .join(" • ")
+                  .join(", ")
               : "-"}
           </p>
           </div>
+          
 
           {/* JUMLAH SESI */}
           <div>

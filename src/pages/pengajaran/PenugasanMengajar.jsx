@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2, Eye } from "lucide-react";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
 import PenugasanFormModal from "../../pages/pengajaran/PenugasanFormModal.jsx";
 import PenugasanDetailModal from "../../pages/pengajaran/PenugasanDetailModal.jsx";
 
@@ -32,10 +33,14 @@ function PenugasanMengajar() {
   const [pageSize, setPageSize] = useState(50);
   const [totalData, setTotalData] = useState(0);
   const [loadingProgramMatkul, setLoadingProgramMatkul] = useState(false);
-  const [filterJenisKelas, setFilterJenisKelas] = useState("");
-  const [filterAngkatan, setFilterAngkatan] = useState("");
-  const [filterKode, setFilterKode] = useState("");
   const [filterProdi, setFilterProdi] = useState("");
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
 
   const fetchData = async (currentPage = page, currentPageSize = pageSize) => {
     try {
@@ -106,12 +111,15 @@ function PenugasanMengajar() {
     setIsSubmitting(true);
   
     try {
+      console.log("PAYLOAD KIRIM:", payload);
+  
       if (selectedItem) {
         // EDIT
         await api.patch(
           `/api/pengajaran/penugasan-mengajar/${selectedItem.id}`,
-          payload[0]
+          payload
         );
+  
       } else {
         // TAMBAH
         await Promise.all(
@@ -121,45 +129,86 @@ function PenugasanMengajar() {
         );
       }
   
-      alert("Berhasil disimpan!");
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: selectedItem
+          ? "Data penugasan berhasil diperbarui"
+          : "Data penugasan berhasil ditambahkan",
+        type: "success",
+      });
+  
       await fetchData();
       setShowModal(false);
   
     } catch (err) {
-      console.error(err);
-      alert("Gagal menyimpan");
+  
+      console.log("ERROR RESPONSE:", err.response?.data);
+      console.log("ERROR STATUS:", err.response?.status);
+      console.log("ERROR FULL:", err);
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          err.response?.data?.message ||
+          "Gagal menyimpan, silahkan coba lagi",
+        type: "error",
+      });
+  
     } finally {
       setIsSubmitting(false);
     }
   };
-  const handleDelete = async (row) => {
-
-    const confirmDelete = window.confirm(
-      `Yakin ingin menghapus penugasan mengajar dosen ${row.dosen?.nama}?`
-    );
+  const handleDelete = (row) => {
+    setSelectedItem(row);
   
-    if (!confirmDelete) return;
+    setConfirmModal({
+      open: true,
+      title: "Hapus Penugasan Mengajar",
+      message: `Yakin ingin menghapus penugasan mengajar dosen "${row.dosen?.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
   
     try {
       setIsSubmitting(true);
   
       await api.delete(
-        `/api/pengajaran/penugasan-mengajar/${row.id}`
+        `/api/pengajaran/penugasan-mengajar/${selectedItem.id}`
       );
-  
-      alert("Data penugasan mengajar berhasil dihapus");
   
       await fetchData();
   
-    } catch (err) {
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Data penugasan berhasil dihapus",
+        type: "success",
+      });
   
-      console.error(err);
-      alert("Gagal menghapus data");
+      setSelectedItem(null);
+  
+    } catch (err) {
+      console.error(err.response?.data || err);
+  
+      const status = err.response?.status;
+      const message = err.response?.data?.message;
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          status === 400 || status === 409
+            ? message || "Penugasan tidak dapat dihapus karena sudah digunakan."
+            : "Gagal menghapus data.",
+        type: "error",
+      });
   
     } finally {
-  
       setIsSubmitting(false);
-  
     }
   };
   //untuk filter dara
@@ -488,15 +537,35 @@ function PenugasanMengajar() {
         setSelectedProgramMatkul={setSelectedProgramMatkul}
         dataPenugasan={data}
         isEdit={!!selectedItem}
+        
     
       />
       </div>
       <PenugasanDetailModal
-  showDetail={showDetail}
-  setShowDetail={setShowDetail}
-  selectedItem={selectedItem}
-  formatKelas={formatKelas}
-/>
+        showDetail={showDetail}
+        setShowDetail={setShowDetail}
+        selectedItem={selectedItem}
+        formatKelas={formatKelas}
+        
+      />
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        loading={isSubmitting}
+        onClose={() =>
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={
+          confirmModal.type === "delete"
+            ? confirmDelete
+            : undefined
+        }
+      />
 
     </MainLayout>
   );

@@ -4,7 +4,7 @@ import api from "../../api/api";
 import {ArrowLeft  } from "lucide-react";
 import MainLayout from "../../components/MainLayout";
 import { useAuth } from "../../hooks/useAuth";
-
+import ConfirmModal from "../../components/ConfirmModal";
 export default function AssignMatkul() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -13,7 +13,12 @@ export default function AssignMatkul() {
   const [allMatkul, setAllMatkul] = useState([]);   // semua matkul
   const [selectedMatkul, setSelectedMatkul] = useState([]);
 
-   
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const {user, peran}= useAuth();
   const getKurikulum = async () => {
     const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
@@ -51,29 +56,51 @@ export default function AssignMatkul() {
   }, [id]);
   const handleAssign = async () => {
     if (selectedMatkul.length === 0) {
-      alert("Pilih minimal 1 mata kuliah!");
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Pilih minimal 1 mata kuliah",
+        type: "error",
+      });
       return;
     }
-
+  
     const payload = {
       items: selectedMatkul.map((s) => ({
         mataKuliahId: s.id,
-        semester: s.semester
+        semester: s.semester,
       })),
     };
-
+  
     try {
       await api.post(
         `/api/kurikulum/kurikulum/${id}/assignMatkul`,
         payload
       );
-      alert("Mata kuliah berhasil ditambahkan ke kurikulum");
-      navigate(`/kurikulum/${id}`);
-     await  getKurikulum();
+  
+      await getKurikulum();
+  
       setSelectedMatkul([]);
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message:
+          "Mata kuliah berhasil ditambahkan ke kurikulum",
+        type: "success",
+      });
+  
     } catch (err) {
       console.error(err);
-      alert("Gagal menyimpan perubahan");
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          err.response?.data?.message ||
+          "Gagal menyimpan perubahan",
+        type: "error",
+      });
     }
   };
   //Filter Matkul yang Sudah Di-Assign
@@ -257,6 +284,26 @@ export default function AssignMatkul() {
         </button>
        
         </div>
+        <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        onClose={() => {
+          const isSuccess =
+            confirmModal.type === "success";
+
+          setConfirmModal((prev) => ({
+            ...prev,
+            open: false,
+          }));
+
+          // redirect setelah modal sukses ditutup
+          if (isSuccess) {
+            navigate(`/kurikulum/${id}`);
+          }
+        }}
+      />
     </MainLayout>
   );
 }

@@ -3,6 +3,7 @@ import { Search, Plus, X, Edit, Trash2 } from "lucide-react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function ProgramMatkul() {
   const [data, setData] = useState([]);
@@ -31,7 +32,13 @@ function ProgramMatkul() {
     periodeId: "",
     jumlahKelompokKelas: 1
   });
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+    onConfirm: null,
+  });
   const [prodiList, setProdiList] = useState([]);
   const [kurikulumList, setKurikulumList] = useState([]);
   const [periodeList, setPeriodeList] = useState([]);
@@ -196,7 +203,12 @@ function ProgramMatkul() {
           jumlahKelompokKelas: Number(form.jumlahKelompokKelas),
         });
   
-        alert("Data berhasil diupdate");
+        setConfirmModal({
+          open: true,
+          title: "Berhasil",
+          message: "Data berhasil diupdate",
+          type: "success",
+        });
   
         setShowEditModal(false);
         resetForm();
@@ -207,7 +219,12 @@ function ProgramMatkul() {
       //  TAMBAH (POST)
     
       if (selectedMatkul.length === 0) {
-        alert("Pilih minimal 1 mata kuliah");
+        setConfirmModal({
+          open: true,
+          title: "Peringatan",
+          message: "Pilih 1 minimal Mata kuliah",
+          type: "error",
+        });
         return;
       }
   
@@ -223,7 +240,12 @@ function ProgramMatkul() {
   
       await Promise.all(requests);
   
-      alert("Program matkul berhasil dibuat");
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Data berhasil ditambahkan",
+        type: "success",
+      });
   
       setShowAddModal(false);
       setSelectedMatkul([]);
@@ -234,7 +256,12 @@ function ProgramMatkul() {
       const res = err.response?.data;
       console.error("BACKEND ERROR:", res);
   
-      alert(res?.message || "Terjadi kesalahan");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: res?.message || "Terjadi kesalahan",
+        type: "error",
+      });
   
       setSelectedMatkul([]);
     }
@@ -255,24 +282,50 @@ function ProgramMatkul() {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (row) => {
-    if (
-      !window.confirm(
-        `Yakin ingin menghapus program mata kuliah ${row.mataKuliah?.nama}?`
-      )
-    )
-      return;
-
+  const handleDelete = (row) => {
+    setSelectedId(row.id);
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Program Mata Kuliah",
+      message: `Yakin ingin menghapus program mata kuliah "${row.mataKuliah?.nama}"?`,
+      type: "delete",
+    });
+  };
+  const confirmDelete = async () => {
+    if (!selectedId) return;
+  
     try {
-      await api.delete(`/api/kurikulum/program-matkul/${row.id}`);
-      alert("Data berhasil dihapus");
-      fetchData();
+      await api.delete(`/api/kurikulum/program-matkul/${selectedId}`);
+  
+      await fetchData();
+  
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Program mata kuliah berhasil dihapus",
+        type: "success",
+      });
+  
+      setSelectedId(null);
+  
     } catch (error) {
       console.error(error.response?.data || error);
-      alert("Gagal menghapus data");
+  
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+  
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          status === 400 || status === 409
+            ? message || "Program mata kuliah tidak dapat dihapus karena sudah digunakan."
+            : "Gagal menghapus data.",
+        type: "error",
+      });
     }
   };
-
   const filteredKurikulum = kurikulumList.filter((k) =>
   peran === "TU_PRODI"
     ? k.prodi?.id === user?.prodiId
@@ -726,6 +779,23 @@ function ProgramMatkul() {
           </div>
         </div>
       )}
+     <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={
+        confirmModal.type === "delete"
+          ? confirmDelete
+          : undefined
+      }
+    />
       </div>
     </MainLayout>
   );

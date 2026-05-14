@@ -71,7 +71,13 @@ const JadwalDosen = () => {
         return acc;
       }, {});
 
-      setData(Object.values(grouped));
+      setData(
+        Object.values(grouped).sort((a, b) =>
+          a.nama.localeCompare(b.nama, "id", {
+            sensitivity: "base",
+          })
+        )
+      );
     } catch (err) {
       console.error("Gagal ambil jadwal dosen", err);
     } finally {

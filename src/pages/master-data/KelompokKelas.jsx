@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import { Search, Plus, Edit, Trash2, X, Loader2} from "lucide-react";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function KelompokKelas() {
   const [data, setData] = useState([]);
@@ -21,6 +22,12 @@ function KelompokKelas() {
     prodiId: "",
     kapasitas: "",
     jenisKelas:""
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
   });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50); 
@@ -121,6 +128,14 @@ function KelompokKelas() {
     const errors = validateForm();
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+    
+      setConfirmModal({
+        open: true,
+        title: "Peringatan",
+        message: "Lengkapi data dulu",
+        type: "error",
+      });
+    
       return;
     }
 
@@ -151,7 +166,14 @@ function KelompokKelas() {
       await fetchKelompokKelas();
       setShowModal(false);
       resetForm();
-      alert("Data berhasil disimpan");
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: selected
+          ? "Kelas berhasil diperbarui"
+          : "Kelas berhasil ditambahkan",
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
       alert("Kelas dengan kode, angkatan, dan program studi tersebut sudah terdaftar");
@@ -159,20 +181,34 @@ function KelompokKelas() {
       setIsSubmitting(false);
     }
   };
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!selected) return;
-    const ok = window.confirm(
-      `Yakin ingin menghapus kelas "${selected.kode} Angkatan ${selected.angkatan}"?`
-    );
-    if (!ok) return;
+  
+    setConfirmModal({
+      open: true,
+      title: "Hapus Kelas",
+      message: `Yakin ingin menghapus kelas "${selected.kode}" tahun ${selected.angkatan}?`,
+      type: "delete",
+    });
+  };
+  
+  const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
   
-      await api.delete(`/api/master-data/kelompok-kelas/${selected.id}`);
+      await api.delete(
+        `/api/master-data/kelompok-kelas/${selected.id}`
+      );
+  
       await fetchKelompokKelas();
   
-      alert("Data berhasil dihapus");
-      setShowDeleteModal(false);
+      setConfirmModal({
+        open: true,
+        title: "Berhasil",
+        message: "Data kelas berhasil dihapus",
+        type: "success",
+      });
+  
       setSelected(null);
     } catch (err) {
       console.error(err);
@@ -180,14 +216,16 @@ function KelompokKelas() {
       const status = err.response?.status;
       const message = err.response?.data?.message;
   
-      if (status === 400 || status === 409) {
-        alert(
-          message ||
-          "Kelas tidak dapat dihapus karena sudah digunakan pada jadwal atau penugasan."
-        );
-      } else {
-        alert("Gagal menghapus data. Silakan coba lagi.");
-      }
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message:
+          status === 400 || status === 409
+            ? message ||
+              "Kelas tidak dapat dihapus karena sudah digunakan pada jadwal atau penugasan."
+            : "Gagal menghapus data. Silakan coba lagi.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -505,6 +543,20 @@ function KelompokKelas() {
             </div>
           </div>
         )}
+     <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      loading={isSubmitting}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmDelete}
+    />
 
         </div>
       </div>
