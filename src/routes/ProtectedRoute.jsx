@@ -2,10 +2,15 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const ProtectedRoute = ({ roles, children }) => {
-  const auth = useAuth();
+  const { user, peran } = useAuth();
 
-  if (!auth) return <Navigate to="/login" replace />;
-  if (!roles.includes(auth.peran)) {
+  // belum login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // role tidak sesuai
+  if (roles && !roles.includes(peran)) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -355,7 +355,7 @@ function ProgramMatkul() {
           <button
             onClick={() => { resetForm();   setIsEdit(false);
               setShowAddModal(true);}}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
+            className="flex items-center gap-1 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Plus size={18} />
             Tambah Program

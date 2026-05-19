@@ -16,17 +16,18 @@ function ConfirmModal({
   onConfirm,
   
 }) {
-  if (!open) return null;
 
   useEffect(() => {
     if (open && !["delete", "confirm"].includes(type)) {
       const timer = setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 2000);
 
       return () => clearTimeout(timer);
     }
   }, [open, type, onClose]);
+  if (!open) return null;
+
 
   const config = {
     delete: {
@@ -71,20 +72,22 @@ function ConfirmModal({
           
           {/* Icon */}
           <div
-            className={`w-14 h-14 mx-auto flex items-center justify-center ${current.iconColor}`}
-          >
+          className={`mx-auto flex items-center justify-center ${current.iconColor}`}
+        >
+          <div className="scale-150">
             {current.icon}
           </div>
+        </div>
 
-          {/* Title */}
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">
-            {title}
-          </h2>
+        {/* Title */}
+        <h2 className="mt-4 text-2xl font-bold text-gray-700">
+          {title}
+        </h2>
 
-          {/* Message */}
-          <p className="mt-2 text-ellipsis text-gray-500 leading-relaxed">
-            {message}
-          </p>
+        {/* Message */}
+        <p className="mt-1 text-gray-500 leading-relaxed">
+          {message}
+        </p>
 
           {/* Tombol cuma buat delete */}
           {["delete", "confirm"].includes(type) && (

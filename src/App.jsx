@@ -56,8 +56,14 @@ function App() {
 
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-
+        <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute roles={["ADMIN", "TU_PRODI", "TU_FAKULTAS"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
         {/* Master Data */}
         <Route path="/master-data/fakultas" element={<Fakultas />} />
         <Route path="/master-data/program-studi" element={<ProgramStudi />} />

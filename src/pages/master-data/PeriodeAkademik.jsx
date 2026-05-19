@@ -178,7 +178,7 @@ function PeriodeAkademik() {
       setConfirmModal({
         open: true,
         title: "Gagal",
-        message: "Terjad Kesalahan, Silahkan Coba lagi!",
+        message: "Terjadi Kesalahan, Silahkan Coba lagi!",
         type: "error",
       });
     } finally {
@@ -230,15 +230,17 @@ function PeriodeAkademik() {
   
       setSelectedItem(null);
     } catch (err) {
-      console.error(err);
-  
+      const backendMessage =
+        err.response?.data?.message ||
+        "Gagal menghapus periode akademik. Silakan coba lagi.";
+    
       setConfirmModal({
         open: true,
-        title: "Gagal",
-        message: "Gagal menghapus periode akademik",
+        title: "Tidak Bisa Dihapus",
+        message: backendMessage,
         type: "error",
       });
-    } finally {
+    }finally {
       setIsSubmitting(false);
     }
   };

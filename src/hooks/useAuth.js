@@ -10,10 +10,19 @@ export const useAuth = () => {
   if (token) {
     try {
       const decoded = JSON.parse(atob(token.split(".")[1]));
-      user = decoded;
-      peran = decoded.peran;
+
+      // cek expired
+      const now = Math.floor(Date.now() / 1000);
+
+      if (decoded.exp && decoded.exp < now) {
+        localStorage.removeItem("token");
+      } else {
+        user = decoded;
+        peran = decoded.peran;
+      }
     } catch (error) {
       console.error("Token tidak valid");
+      localStorage.removeItem("token");
     }
   }
 

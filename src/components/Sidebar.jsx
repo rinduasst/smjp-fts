@@ -3,14 +3,21 @@ import { ChevronRight, ArrowRight, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MENU_CONFIG } from "../config/menuConfig";
 import { useAuth } from "../hooks/useAuth";
-
+import ConfirmModal from "../components/ConfirmModal";
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const { peran: role, logout } = useAuth() || {};
   const [openMenu, setOpenMenu] = useState(null);
+  
   const [active, setActive] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
 
   if (!role) return null;
 
@@ -46,17 +53,19 @@ function Sidebar() {
   }, [location.pathname, menus]);
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm(
-      "Anda akan keluar dari sistem. Apakah Anda yakin ingin melanjutkan?"
-    );
-  
-    if (confirmLogout) {
-      logout();
-    }
+    setConfirmModal({
+      open: true,
+      title: "Konfirmasi Logout",
+      message: "Anda akan keluar dari sistem. Apakah Anda yakin ingin melanjutkan?",
+      type: "delete",
+    });
   };
-  
+  const confirmLogout = () => {
+    logout(); 
+  };
 
   return (
+    <>
     <aside className="w-64 h-screen bg-white border-r border-gray-200 fixed flex flex-col">
       
       {/* ===== LOGO ===== */}
@@ -179,9 +188,23 @@ function Sidebar() {
           <span>Logout</span>
         </button>
       </div>
-
     </aside>
+      <ConfirmModal
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onClose={() =>
+        setConfirmModal((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+      onConfirm={confirmLogout}
+    />
+    </>
   );
 }
+
 
 export default Sidebar;

@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Download,Loader2 } from "lucide-react";
 import { exportAllProdi } from "../../utils/exportExcel/jadwal/exportAllProdi.js";
+import { exportPdfAllProdi } from "../../utils/exportPdf/exportPdfAllProdi.js";
 
 const Jadwal = () => {
   const [data, setData] = useState([]);
@@ -14,6 +15,9 @@ const Jadwal = () => {
   const [pageSize] = useState(200);
   const [total, setTotal] = useState(0);
   const [hasFetched, setHasFetched] = useState(false);
+
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState("");
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -98,15 +102,25 @@ const Jadwal = () => {
   };
 
   const formatKelas = (jadwal) => {
-    const romawi = toRomawi(jadwal.semester);
-    if (!romawi) return jadwal.kelas;
-    const kelasList = jadwal.kelas.split(",").map(k => k.trim());
+    console.log("JADWAL:", jadwal);
+  
+    const semester = Number(jadwal?.semester);
+  
+    const romawi = toRomawi(semester);
+  
+    const kelasList = String(jadwal?.kelas || "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+  
     return kelasList
-      .map(k => {
-        if (k.toLowerCase() === "karyawan") {
-          return `${romawi}_KARYAWAN`; 
-          // atau `${romawi}_KRY`
+      .map((k) => {
+        if (
+          jadwal?.jenisKelas?.toLowerCase() === "karyawan"
+        ) {
+          return `${romawi}_KAR_KARYAWAN`;
         }
+  
         return `${romawi}_REG_${k}`;
       })
       .join(", ");
@@ -115,20 +129,56 @@ const Jadwal = () => {
     if (!batchInfo) return;
   
     try {
+      const params = {
+        periodeAkademikId: batchInfo.periodeId,
+        statusBatch: "FINAL",
+        page: 1,
+        pageSize: 200,
+        sortBy: "hari",
+        sortOrder: "asc",
+      };
+  
+      if (selectedProdi) {
+        params.prodiId = selectedProdi;
+      }
+  
       const res = await api.get("/api/view-jadwal/all", {
-        params: {
-          periodeAkademikId: batchInfo.periodeId,
-          statusBatch: "FINAL",
-          page: 1,
-          pageSize: 200, // ambil semua
-          sortBy: "hari",
-          sortOrder: "asc",
-        },
+        params,
       });
+  
       const items = res.data?.data?.items || [];
+  
       await exportAllProdi(items, batchInfo);
     } catch (err) {
       console.error("Gagal export", err);
+    }
+  };
+  const handleExportPdf = async () => {
+    if (!batchInfo) return;
+  
+    try {
+      const params = {
+        periodeAkademikId: batchInfo.periodeId,
+        statusBatch: "FINAL",
+        page: 1,
+        pageSize: 200,
+        sortBy: "hari",
+        sortOrder: "asc",
+      };
+  
+      if (selectedProdi) {
+        params.prodiId = selectedProdi;
+      }
+  
+      const res = await api.get("/api/view-jadwal/all", {
+        params,
+      });
+  
+      const items = res.data?.data?.items || [];
+  
+      await exportPdfAllProdi(items, batchInfo);
+    } catch (err) {
+      console.error("Gagal export PDF", err);
     }
   };
   return (
@@ -146,15 +196,15 @@ const Jadwal = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
         <div className="flex flex-col lg:flex-row gap-3">
         <button
-         onClick={handleExportExcel}
-         className="flex items-center gap-2 bg-gradient-to-r
-         from-green-500 to-green-600 text-white px-5 py-2.5
-         rounded-lg shadow-sm hover:from-green-600
-         hover:to-green-700 transition-all duration-200 font-medium"
-       >
-         <Download size={18} />
-          Export Excel
-        </button>
+        onClick={() => setShowExportModal(true)}
+        className="flex items-center gap-2 bg-gradient-to-r
+        from-green-500 to-green-600 text-white px-5 py-2.5
+        rounded-lg shadow-sm hover:from-green-600
+        hover:to-green-700 transition-all duration-200 font-medium"
+      >
+        <Download size={18} />
+        Export File
+      </button>
         <div className="flex flex-col lg:flex-row gap-3">
           <select 
           value={selectedProdi}
@@ -274,6 +324,89 @@ const Jadwal = () => {
               </button>
             </div>
           </div>
+          {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in-95 duration-200">
+
+            {/* Tombol X */}
+            <button
+              onClick={() => setShowExportModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              Export Jadwal
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Pilih format file yang ingin diunduh
+            </p>
+
+            <div className="flex flex-col gap-3">
+       {/* EXCEL */}
+        <button
+          disabled={exportLoading !== ""}
+          onClick={async () => {
+            try {
+              setExportLoading("excel");
+
+              await handleExportExcel();
+
+              setShowExportModal(false);
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setExportLoading("");
+            }
+          }}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {exportLoading === "excel" ? (
+            <Loader2 className="animate-spin" size={18} />
+          ) : (
+            "Export Excel"
+          )}
+        </button>
+            {/* PDF */}
+            <button
+              disabled={exportLoading !== ""}
+              onClick={async () => {
+                try {
+                  setExportLoading("pdf");
+
+                  await handleExportPdf();
+
+                  setShowExportModal(false);
+                } catch (err) {
+                  console.error(err);
+                } finally {
+                  setExportLoading("");
+                }
+              }}
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {exportLoading === "pdf" ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                "Export PDF"
+              )}
+            </button>
+
+              {/* CANCEL */}
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+              >
+                Batal
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     
     </MainLayout>
   );

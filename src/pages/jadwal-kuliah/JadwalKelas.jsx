@@ -4,6 +4,7 @@ import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
 import { Download, Loader2,Search } from "lucide-react";
 import { exportPerKelas } from "../../utils/exportExcel/jadwal/exportPerKelas.js";
+import { exportPdfKelas } from "../../utils/exportPdf/exportPdfKelas.js";
 const JadwalKelas = () => {
   const { user } = useAuth();
 
@@ -11,6 +12,9 @@ const JadwalKelas = () => {
   const [batchInfo, setBatchInfo] = useState(null);
   const [semesterAktif, setSemesterAktif] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportType, setExportType] = useState("");
 
   const [filterKelas, setFilterKelas] = useState("ALL");
   // ambil batch final
@@ -63,18 +67,6 @@ const JadwalKelas = () => {
     if (batchInfo) fetchJadwal();
   }, [batchInfo]);
 
-  const handleExport = () => {
-    const dataSemesterAktif = grouped[semesterAktif] || {};
-  
-    exportPerKelas(
-      dataSemesterAktif,
-      batchInfo,
-      user,
-      filterKelas,
-      semesterAktif
-    );
-  };
-  
   const toRomawi = (num) => {
     const map = ["","I","II","III","IV","V","VI","VII","VIII"];
     return map[num] || num;
@@ -148,55 +140,61 @@ const JadwalKelas = () => {
         </span>
       </div>
       </div>
+{/* Toolbar */}
+<div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
 
-        {/* Tombol Export */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    {/* Text */}
+    <p className="text-sm text-gray-600">
+      Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
+    </p>
 
-        <p className="text-sm text-gray-600">
-          Lihat daftar jadwal perkuliahan yang telah disusun untuk periode akademik saat ini.
-        </p>
+    {/* Action */}
+    <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
 
-        {/* FILTER */}
-        <div className="relative w-full max-w-xs">
-          
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-          />
+      {/* Filter */}
+      <div className="relative w-full sm:w-56">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
 
-          <select
-            value={filterKelas}
-            onChange={(e) => setFilterKelas(e.target.value)}
-            className="
-              w-full
-              pl-10 pr-4 py-2.5
-              border border-gray-300
-              rounded-lg
-              bg-white
-              text-sm text-gray-900
-              focus:border-green-500
-              focus:outline-none
-              transition
-            "
-          >
-            <option value="ALL">Semua Kelas</option>
-            {Object.keys(grouped[semesterAktif] || {}).map((k) => (
-              <option key={k} value={k}>
-                {k}
-              </option>
-            ))}
-          </select>
+        <select
+          value={filterKelas}
+          onChange={(e) => setFilterKelas(e.target.value)}
+          className="
+            w-full
+            pl-9 pr-3 py-2
+            border border-gray-300
+            rounded-md
+            text-sm
+            focus:outline-none
+            focus:border-green-500
+          "
+        >
+          <option value="ALL">Semua Kelas</option>
 
-        
-        </div>
-        <button
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
-            >
-            <Download size={18} />
-            Export Excel
-            </button>
+          {Object.keys(grouped[semesterAktif] || {}).map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Export Button */}
+      <button
+        disabled={loading}
+        onClick={() => setShowExportModal(true)}
+        className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
+        >
+      
+        <Download size={16} />
+        Export File
+      </button>
+    </div>
+  </div>
+</div>
           </div>
  
         
@@ -308,7 +306,123 @@ const JadwalKelas = () => {
             </div>
             ))}
         </div>
+       
+        {/* MODAL EXPORT */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in-95 duration-200">
+
+            {/* Tombol X */}
+            <button
+              onClick={() => {
+                if (!exportType) {
+                  setShowExportModal(false);
+                }
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              Export Jadwal Kelas
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Pilih format file yang ingin diunduh
+            </p>
+
+            <div className="flex flex-col gap-3">
+
+              {/* EXCEL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("excel");
+
+                    const dataSemesterAktif =
+                      grouped[semesterAktif] || {};
+
+                    await exportPerKelas(
+                      dataSemesterAktif,
+                      batchInfo,
+                      user,
+                      filterKelas,
+                      semesterAktif
+                    );
+
+                    setShowExportModal(false);
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "excel" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export Excel"
+                )}
+              </button>
+
+              {/* PDF */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("pdf");
+
+                    const dataSemesterAktif =
+                      grouped[semesterAktif] || {};
+
+                    await exportPdfKelas(
+                      dataSemesterAktif,
+                      batchInfo,
+                      user,
+                      filterKelas,
+                      semesterAktif
+                    );
+
+                    setShowExportModal(false);
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "pdf" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export PDF"
+                )}
+              </button>
+
+              {/* BATAL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={() => setShowExportModal(false)}
+                className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+              >
+                Batal
+              </button>
+
+            </div>
+          </div>
         </div>
+      )}
+       </div>
     </MainLayout>
   );
 };

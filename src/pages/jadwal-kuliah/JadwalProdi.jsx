@@ -4,6 +4,7 @@ import api from "../../api/api";
 import { Download, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { exportProdi} from "../../utils/exportExcel/jadwal/exportProdi.js";
+import { exportPdfProdi } from "../../utils/exportPdf/exportPdfProdi.js";
 
 
 const JadwalProdi = () => {
@@ -14,6 +15,8 @@ const JadwalProdi = () => {
   const [batchInfo, setBatchInfo] = useState(null);
   const { user, peran } = useAuth();
   const [search, setSearch] = useState("");
+  const [showExportModal, setShowExportModal] = useState(false);
+const [exportType, setExportType] = useState("");
 //ambil batch final
   const fetchFinalBatch = async () => {
     try {
@@ -151,12 +154,13 @@ const fetchJadwal = async () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
         <div className="flex flex-col lg:flex-row gap-3">
-          <button
-            onClick={() => exportProdi(filteredData, batchInfo)}
+        <button
+            disabled={loading}
+            onClick={() => setShowExportModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
           >
             <Download size={18} />
-            Export Excel
+            Export File
           </button>
           <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-3 text-gray-400" size={18}/>
@@ -254,7 +258,110 @@ const fetchJadwal = async () => {
           </table>
         </div>
       </div>
+{/* MODAL EXPORT */}
+{showExportModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
+    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in-95 duration-200">
+
+      {/* CLOSE */}
+      <button
+        onClick={() => {
+          if (!exportType) {
+            setShowExportModal(false);
+          }
+        }}
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-xl font-bold text-gray-800 mb-2">
+        Export Jadwal Prodi
+      </h2>
+
+      <p className="text-sm text-gray-500 mb-6">
+        Pilih format file yang ingin diunduh
+      </p>
+
+      <div className="flex flex-col gap-3">
+
+        {/* EXCEL */}
+        <button
+          disabled={exportType !== ""}
+          onClick={async () => {
+            try {
+              setExportType("excel");
+
+              await exportProdi(
+                filteredData,
+                batchInfo
+              );
+
+              setShowExportModal(false);
+
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setExportType("");
+            }
+          }}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {exportType === "excel" ? (
+            <>
+              <Loader2 className="animate-spin" size={18} />
+             
+            </>
+          ) : (
+            "Export Excel"
+          )}
+        </button>
+
+        {/* PDF */}
+        <button
+          disabled={exportType !== ""}
+          onClick={async () => {
+            try {
+              setExportType("pdf");
+
+              await exportPdfProdi(
+                filteredData,
+                batchInfo
+              );
+
+              setShowExportModal(false);
+
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setExportType("");
+            }
+          }}
+          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {exportType === "pdf" ? (
+            <>
+              <Loader2 className="animate-spin" size={18} />
+            </>
+          ) : (
+            "Export PDF"
+          )}
+        </button>
+
+        {/* BATAL */}
+        <button
+          disabled={exportType !== ""}
+          onClick={() => setShowExportModal(false)}
+          className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+        >
+          Batal
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
     
     </MainLayout>
   );
