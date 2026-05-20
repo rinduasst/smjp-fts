@@ -46,7 +46,6 @@ function PeriodeAkademik() {
   const fetchFakultas = async () => {
     try {
       const res = await api.get("/api/master-data/fakultas");
-      console.log("Fakultas response:", res.data);
   
       const items =
         res.data?.data ||        // kalau langsung array
@@ -192,8 +191,13 @@ function PeriodeAkademik() {
       paruh: item.paruh || "",
       tahunMulai: item.tahunMulai || "",
       tahunSelesai: item.tahunSelesai || "",
-      tanggalMulai: item.tanggalMulai || "",
-      tanggalSelesai: item.tanggalSelesai || "",
+      tanggalMulai: item.tanggalMulai
+      ? item.tanggalMulai.split("T")[0]
+      : "",
+    
+    tanggalSelesai: item.tanggalSelesai
+      ? item.tanggalSelesai.split("T")[0]
+      : "",
       fakultas_id: item.fakultas?.id || "",
       aktif: item.aktif ?? true
     });

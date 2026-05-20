@@ -13,7 +13,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔹 helper translate action
+// helper translate action
 const actionLabel = (action) => {
   switch (action) {
     case "CREATE":
@@ -26,14 +26,52 @@ const actionLabel = (action) => {
       return action;
   }
 };
+const moduleMap = {
+  // MASTER DATA
+  "fakultas": "Fakultas",
+  "program-studi": "Program Studi",
+  "periode-akademik": "Periode Akademik",
+  "hari": "Hari Kuliah",
+  "slot-waktu": "Sesi Waktu",
+  "ruang": "Ruang Kuliah",
+  "dosen": "Dosen",
+  "kelompok-kelas": "Kelompok Kelas",
 
-// 🔹 helper mapping module
+  // KURIKULUM
+  "mata-kuliah": "Mata Kuliah",
+  "kurikulum": "Kurikulum",
+  "program-matkul": "Program Mata Kuliah",
+
+  // PENGAJARAN
+  "penugasan-mengajar": "Penugasan Mengajar",
+  "preferensi-dosen": "Preferensi Dosen",
+  "aturan-mengajar-dosen": "Aturan Mengajar Dosen",
+
+  // JADWAL
+  "generate": "Generate Jadwal",
+  "batch": "Batch Jadwal",
+  "jadwal": "Jadwal Kuliah",
+  "jadwal-prodi": "Jadwal Prodi",
+  "jadwal-dosen": "Jadwal Dosen",
+  "jadwal-ruangan": "Jadwal Ruangan",
+  "jadwal-kelas": "Jadwal Kelas",
+  "perubahan-jadwal": "Perubahan Jadwal",
+  "analisis-jadwal": "Analisis Jadwal",
+
+  // PENGATURAN
+  "pengguna": "Manajemen Pengguna",
+  "log-aktivitas": "Log Aktivitas",
+};
+
+//  mapping module
 const getModule = (url) => {
-  if (url.includes("jadwal")) return "Jadwal Kuliah";
-  if (url.includes("pengajaran")) return "Pengajaran";
-  if (url.includes("master-data")) return "Master Data";
-  if (url.includes("kurikulum")) return "Kurikulum";
-  return "Pengguna";
+  for (const key in moduleMap) {
+    if (url.includes(key)) {
+      return moduleMap[key];
+    }
+  }
+
+  return "Modul Tidak Diketahui";
 };
 
 // 🔥 AUTO LOGGING

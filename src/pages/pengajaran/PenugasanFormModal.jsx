@@ -1,6 +1,6 @@
 import { X, Plus, Trash } from "lucide-react";
 import api from "../../api/api";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
 
@@ -280,7 +280,12 @@ useEffect(() => {
       };
       
       console.log("PAYLOAD EDIT:", payload);
-      handleSubmit(payload);
+     handleSubmit(payload);
+
+      resetForm();
+      setShowModal(false);
+  
+      
   
     } else {
       const payload = pengajaranList.map((p) => ({
@@ -303,7 +308,11 @@ useEffect(() => {
             }
           : null,
       }));
-      handleSubmit(payload);
+       handleSubmit(payload);
+
+      resetForm();
+      setShowModal(false);
+  
       
     }
   };
@@ -420,12 +429,12 @@ useEffect(() => {
         </div>
         <form
         onSubmit={submitForm}
-        className="p-6 space-y-6 overflow-y-auto"
+        className="p-6 space-y-2 overflow-y-auto"
       >
 
         {!isEdit ? (
           // ======================
-          // 🟢 TAMBAH
+          // TAMBAH
           // ======================
           <>
             {/* PRODI */}
@@ -778,10 +787,9 @@ useEffect(() => {
 
             {/* ===== BODY ===== */}
             <tbody className="divide-y">
-            {pengajaranList.map((row, rowIndex) => (
-              <>
-                <tr key={rowIndex} className="hover:bg-gray-50 align-top">
-
+              {pengajaranList.map((row, rowIndex) => (
+                <React.Fragment key={rowIndex}>
+                  <tr className="hover:bg-gray-50 align-top">
                   {/* ===== MATKUL ===== */}
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-2">
@@ -959,7 +967,7 @@ useEffect(() => {
               </div>
             </td>
             </tr>
-            </>
+            </React.Fragment>
               ))}
             {showJadwalModal && selectedRow && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

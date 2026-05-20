@@ -102,8 +102,7 @@ const Jadwal = () => {
   };
 
   const formatKelas = (jadwal) => {
-    console.log("JADWAL:", jadwal);
-  
+
     const semester = Number(jadwal?.semester);
   
     const romawi = toRomawi(semester);

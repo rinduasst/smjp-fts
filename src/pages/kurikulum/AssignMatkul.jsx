@@ -38,10 +38,17 @@ export default function AssignMatkul() {
   
     do {
       const res = await api.get(
-        `/api/kurikulum/mata-kuliah?page=${page}&pageSize=100&prodiId=${prodiId}`
+        `/api/kurikulum/mata-kuliah?page=${page}&pageSize=100`
       );
   
-      allData = [...allData, ...res.data.data.items];
+      const filtered = res.data.data.items.filter(
+        (mk) =>
+          mk.prodiId === prodiId ||
+          mk.prodiId === null
+      );
+  
+      allData = [...allData, ...filtered];
+  
       totalPages = res.data.data.totalPages;
       page++;
     } while (page <= totalPages);

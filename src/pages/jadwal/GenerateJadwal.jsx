@@ -4,7 +4,7 @@ import api from "../../api/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../hooks/useAuth";
-
+import ConfirmModal from "../../components/ConfirmModal";
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
   const [periodeId, setPeriodeId] = useState("");
@@ -17,7 +17,12 @@ const GenerateJadwal = () => {
   const [jobId, setJobId] = useState(null);
   const [namaBatch, setNamaBatch] = useState("");
   const {user, peran} = useAuth();
-
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
   useEffect(() => {
     fetchFakultas();
     fetchPeriode();
@@ -50,40 +55,52 @@ const GenerateJadwal = () => {
       };
       const res = await api.post("/api/scheduler/generate", payload);
       const data = res.data.data;
-  
-      // MODE ASYNC
-      if (data.mode === "ASYNC") {
-        toast.info("Sistem sedang menyusun jadwal...");
-        const jid = data.jobId;
-        const interval = setInterval(async () => {
-          const jobRes = await api.get(`/api/scheduler/job/${jid}`);
-          const jobData = jobRes.data.data;
-          if (jobData.status === "DONE") {
-            clearInterval(interval);
-            const batchId = jobData.result?.batchId;
-            toast.success(
-              <div className="flex items-center gap-3">
-                <span>Jadwal berhasil disusun!</span>
-                <button
-                  onClick={() => {
-                    window.location.href = `/scheduler/batch/${batchId}`;
-                  }}
-                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs"
-                >
-                  Lihat
-                </button>
-              </div>,
-              {
-                autoClose: false
-              }
-            );
+
+   // MODE ASYNC
+        if (data.mode === "ASYNC") {
+          toast.info("Sistem sedang menyusun jadwal...");
+          const jid = data.jobId;
+
+          // reset form langsung
+          if (peran !== "TU_FAKULTAS") {
+            setFakultasId("");
           }
-          if (jobData.status === "FAILED") {
-            clearInterval(interval);
-            toast.error("Generate jadwal gagal");
-          }
-        }, 5000);
-      } else {
+          setPeriodeId("");
+          setPreset("CEPAT");
+          setNamaBatch("");
+
+          const interval = setInterval(async () => {
+            const jobRes = await api.get(`/api/scheduler/job/${jid}`);
+            const jobData = jobRes.data.data;
+
+            if (jobData.status === "DONE") {
+              clearInterval(interval);
+              const batchId = jobData.result?.batchId;
+
+              toast.success(
+                <div className="flex items-center gap-3">
+                  <span>Jadwal berhasil disusun!</span>
+                  <button
+                    onClick={() => {
+                      window.location.href = `/scheduler/batch/${batchId}`;
+                    }}
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs"
+                  >
+                    Lihat
+                  </button>
+                </div>,
+                {
+                  autoClose: false,
+                }
+              );
+            }
+
+            if (jobData.status === "FAILED") {
+              clearInterval(interval);
+              toast.error("Generate jadwal gagal");
+            }
+          }, 5000);
+        } else {
         // MODE SYNC
         toast.success("Jadwal berhasil disimpan!");
   
@@ -131,14 +148,22 @@ const GenerateJadwal = () => {
             Sistem menggunakan beberapa preset optimasi untuk mengatur strategi pencarian solusi terbaik.
           </p>
           </div>
-
           <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2.5 rounded-lg shadow-sm disabled:opacity-50"
-          >
-            {loading ? "Memproses..." : "Generate Jadwal"}
-          </button> 
+          onClick={() =>
+            setConfirmModal({
+              open: true,
+              title: "Generate Jadwal?",
+              message:
+                "Apakah Anda yakin ingin generate jadwal? Proses ini memerlukan waktu beberapa menit.",
+              type: "confirm",
+              onConfirm: handleGenerate,
+            })
+          }
+          disabled={loading}
+          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2.5 rounded-lg shadow-sm disabled:opacity-50"
+        >
+          {loading ? "Memproses..." : "Generate Jadwal"}
+        </button>
         </div>
 
       
@@ -234,7 +259,30 @@ const GenerateJadwal = () => {
                   Proses generate dapat memakan waktu beberapa saat tergantung parameter yang digunakan.
                   </p></div>
               </div>
+      <ConfirmModal
+          open={confirmModal.open}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          type={confirmModal.type}
+          loading={loading}
+          onClose={() =>
+            setConfirmModal({
+              open: false,
+              title: "",
+              message: "",
+              type: "confirm",
+              onConfirm: null,
+            })
+          }
+          onConfirm={() => {
+            confirmModal.onConfirm?.();
 
+            setConfirmModal((prev) => ({
+              ...prev,
+              open: false,
+            }));
+          }}
+        />
     </MainLayout>
   );
 };
