@@ -215,7 +215,7 @@ const [exportLoading, setExportLoading] = useState("");
 
           return (
             <div key={hari} className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold mb-2">{hari}</h2>
+              <h2 className="text-lg font-semibold mb-2 text-center  uppercase">{hari}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border border-gray-300">
                   <thead className="bg-gray-100">

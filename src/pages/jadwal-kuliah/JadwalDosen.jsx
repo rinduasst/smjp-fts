@@ -205,7 +205,9 @@ const [exportType, setExportType] = useState("");
                       )}
 
                       <td className="border px-3 py-2">{j.mataKuliah}</td>
-                      <td className="border px-3 py-2">{formatKelas(j)}</td>
+                      <td className="px-3 py-2 border text-center whitespace-normal break-words max-w-[160px]">
+                        {formatKelas(j)}
+                      </td>
                       <td className="border px-3 py-2 text-center">{j.sksEfektif}</td>
                       <td className="border px-3 py-2">{j.hari}</td>
                       <td className="border px-3 py-2 whitespace-nowrap">
@@ -227,112 +229,112 @@ const [exportType, setExportType] = useState("");
         </div>
       </div>
       {/* MODAL EXPORT */}
-{showExportModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
 
-      {/* CLOSE */}
-      <button
-        onClick={() => {
-          if (!exportType) {
-            setShowExportModal(false);
-          }
-        }}
-        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-      >
-        ✕
-      </button>
+            {/* CLOSE */}
+            <button
+              onClick={() => {
+                if (!exportType) {
+                  setShowExportModal(false);
+                }
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
 
-      <h2 className="text-xl font-bold text-gray-800 mb-2">
-        Export Jadwal Dosen
-      </h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              Export Jadwal Dosen
+            </h2>
 
-      <p className="text-sm text-gray-500 mb-6">
-        Pilih format file yang ingin diunduh
-      </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Pilih format file yang ingin diunduh
+            </p>
 
-      <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
 
-        {/* EXCEL */}
-        <button
-          disabled={exportType !== ""}
-          onClick={async () => {
-            try {
-              setExportType("excel");
+              {/* EXCEL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("excel");
 
-              await exportJadwalDosenExcel(
-                filteredData,
-                formatKelas,
-                batchInfo
-              );
+                    await exportJadwalDosenExcel(
+                      filteredData,
+                      formatKelas,
+                      batchInfo
+                    );
 
-              setShowExportModal(false);
+                    setShowExportModal(false);
 
-            } catch (err) {
-              console.error(err);
-            } finally {
-              setExportType("");
-            }
-          }}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
-        >
-          {exportType === "excel" ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              Processing...
-            </>
-          ) : (
-            "Export Excel"
-          )}
-        </button>
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "excel" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export Excel"
+                )}
+              </button>
 
-        {/* PDF */}
-        <button
-          disabled={exportType !== ""}
-          onClick={async () => {
-            try {
-              setExportType("pdf");
+              {/* PDF */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("pdf");
 
-              await exportPdfDosen(
-                filteredData,
-                formatKelas,
-                batchInfo
-              );
+                    await exportPdfDosen(
+                      filteredData,
+                      formatKelas,
+                      batchInfo
+                    );
 
-              setShowExportModal(false);
+                    setShowExportModal(false);
 
-            } catch (err) {
-              console.error(err);
-            } finally {
-              setExportType("");
-            }
-          }}
-          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
-        >
-          {exportType === "pdf" ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              Processing...
-            </>
-          ) : (
-            "Export PDF"
-          )}
-        </button>
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "pdf" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export PDF"
+                )}
+              </button>
 
-        {/* BATAL */}
-        <button
-          disabled={exportType !== ""}
-          onClick={() => setShowExportModal(false)}
-          className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
-        >
-          Batal
-        </button>
+              {/* BATAL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={() => setShowExportModal(false)}
+                className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+              >
+                Batal
+              </button>
 
-      </div>
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

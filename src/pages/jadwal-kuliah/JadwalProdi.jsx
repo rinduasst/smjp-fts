@@ -243,9 +243,9 @@ const fetchJadwal = async () => {
                       {slot.dosen?.nama}
                     </td>
 
-                    <td className="border px-4 py-2">
-                      {formatKelas(slot)}
-                    </td>
+                    <td className="px-3 py-2 border text-center whitespace-normal break-words max-w-[160px]">
+                    {formatKelas(slot)}
+                  </td>
 
                     <td className="border px-4 py-2">
                       {slot.ruang?.nama}

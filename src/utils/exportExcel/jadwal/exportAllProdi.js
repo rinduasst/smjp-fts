@@ -36,12 +36,7 @@ export const exportAllProdi = async (data, batchInfo) => {
     VII: 7,
     VIII: 8,
   };
-  const posisiSemester = [
-    { col: 1, row: 6 },
-    { col: 11, row: 6 },
-    { col: 1, row: 40 },
-    { col: 11, row: 40 },
-  ];
+
   /* ================= HELPER ================= */
 
   const borderAll = (cell) => {
@@ -75,13 +70,18 @@ export const exportAllProdi = async (data, batchInfo) => {
     return roman[num] || num;
   };
 
-  const normalizeKelas = (kelas) =>
-    !kelas
-      ? ["A"]
-      : kelas
-          .split(",")
-          .map((k) => k.trim())
-          .filter(Boolean);
+  // FIX PENTING:
+  // jangan ambil huruf terakhir
+  // jangan ubah kelas
+  // biarkan asli dari backend
+  const normalizeKelas = (kelas) => {
+    if (!kelas) return ["A"];
+
+    return kelas
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+  };
 
   /* ================= GROUP PRODI ================= */
 
@@ -106,7 +106,7 @@ export const exportAllProdi = async (data, batchInfo) => {
         namaProdi.substring(0, 31).toUpperCase()
       );
 
-      /* ================= ADD LOGO ================= */
+      /* ================= LOGO ================= */
 
       sheet.addImage(logoId, {
         tl: { col: 0, row: 0 },
@@ -118,7 +118,7 @@ export const exportAllProdi = async (data, batchInfo) => {
       const headersInfo = [
         {
           row: 1,
-          text: `JADWAL KULIAH `,
+          text: `JADWAL KULIAH`,
           size: 16,
         },
         {
@@ -157,6 +157,8 @@ export const exportAllProdi = async (data, batchInfo) => {
         };
       });
 
+      let currentRow = 6;
+
       /* ================= GROUP SEMESTER ================= */
 
       const groupedSemester = {};
@@ -166,10 +168,12 @@ export const exportAllProdi = async (data, batchInfo) => {
 
         groupedSemester[semester] ??= {};
 
-        normalizeKelas(j.kelas).forEach((kelas) => {
-          groupedSemester[semester][kelas] ??= [];
-          groupedSemester[semester][kelas].push(j);
-        });
+        const kelasUtama = (j.kelas || "")
+        .split(",")[0]
+        .trim();
+      
+      groupedSemester[semester][kelasUtama] ??= [];
+      groupedSemester[semester][kelasUtama].push(j);
       });
 
       /* ================= LOOP SEMESTER ================= */
@@ -179,169 +183,147 @@ export const exportAllProdi = async (data, batchInfo) => {
           ([a], [b]) =>
             romawiToNumber[a] - romawiToNumber[b]
         )
-        .forEach(([semester, kelasList], index) => {
-          const { col: startCol, row: startRow } =
-            posisiSemester[index % posisiSemester.length];
-
-          let baseRow = startRow;
-
+        .forEach(([semester, kelasList]) => {
           Object.entries(kelasList)
             .sort(([a], [b]) => a.localeCompare(b))
-            .forEach(([kelasRaw, jadwalList]) => {
-              normalizeKelas(kelasRaw).forEach((kelas) => {
-                const dataKelas = jadwalList.filter((j) =>
-                  (j.kelas || "").includes(kelas)
-                );
+            .forEach(([kelas, jadwalList]) => {
 
-                if (!dataKelas.length) return;
+              let row = currentRow;
 
-                let row = baseRow + 1;
+              /* ================= TITLE ================= */
 
-                /* ================= TITLE ================= */
+              mergeSafe(sheet, row, 1, row, 9);
 
-                mergeSafe(
-                  sheet,
-                  row,
-                  startCol,
-                  row,
-                  startCol + 8
-                );
+              const titleCell = sheet.getCell(row, 1);
 
-                const titleCell = sheet.getCell(
-                  row,
-                  startCol
-                );
+              titleCell.value = `SEMESTER ${semester} - KELAS ${kelas}`;
 
-                titleCell.value = `SEMESTER ${semester} - KELAS ${kelas}`;
+              titleCell.font = {
+                bold: true,
+                size: 12,
+              };
 
-                titleCell.font = {
+              titleCell.alignment = {
+                horizontal: "center",
+                vertical: "middle",
+              };
+
+              titleCell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFD9D9D9" },
+              };
+
+              sheet.getRow(row).height = 25;
+
+              row++;
+
+              /* ================= HEADER TABLE ================= */
+
+              const headers = [
+                "HARI",
+                "PUKUL",
+                "KODE MK",
+                "MATA KULIAH",
+                "SKS",
+                "DOSEN / TENAGA PENGAJAR",
+                "DOSEN PENGAMPU",
+                "JML MHS",
+                "RUANG",
+              ];
+
+              headers.forEach((header, i) => {
+                const cell = sheet.getCell(row, i + 1);
+
+                cell.value = header;
+
+                cell.font = {
                   bold: true,
-                  size: 12,
                 };
 
-                titleCell.alignment = {
+                cell.alignment = {
                   horizontal: "center",
                   vertical: "middle",
                 };
 
-                titleCell.fill = {
+                cell.fill = {
                   type: "pattern",
                   pattern: "solid",
                   fgColor: { argb: "FFD9D9D9" },
                 };
 
-                sheet.getRow(row).height = 25;
+                borderAll(cell);
+              });
 
-                row++;
+              sheet.getRow(row).height = 22;
 
-                /* ================= HEADER TABLE ================= */
+              row++;
 
-                const headers = [
-                  "HARI",
-                  "PUKUL",
-                  "KODE MK",
-                  "MATA KULIAH",
-                  "SKS",
-                  "DOSEN / TENAGA PENGAJAR",
-                  "DOSEN PENGAMPU",
-                  "JML MHS",
-                  "R",
-                ];
+              /* ================= GROUP HARI ================= */
 
-                headers.forEach((header, i) => {
-                  const cell = sheet.getCell(
-                    row,
-                    startCol + i
-                  );
+              const groupedByHari = {};
 
-                  cell.value = header;
+              jadwalList.forEach((j) => {
+                const hari = j.hari || "-";
 
-                  cell.font = { bold: true };
+                groupedByHari[hari] ??= [];
+                groupedByHari[hari].push(j);
+              });
 
-                  cell.alignment = {
-                    horizontal: "center",
-                    vertical: "middle",
-                  };
+              /* ================= DATA ================= */
 
-                  cell.fill = {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFD9D9D9" },
-                  };
+              hariUrut.forEach((hari) => {
+                const items = groupedByHari[hari] || [];
 
-                  borderAll(cell);
-                });
+                if (!items.length) return;
 
-                sheet.getRow(row).height = 22;
+                const mergeStart = row;
 
-                row++;
+                items.forEach((j, index) => {
+                  const values = [
+                    index === 0 ? hari : "",
+                    `${j.jamMulai || ""} - ${j.jamSelesai || ""}`,
+                    j.kodeMk || "",
+                    j.mataKuliah || "",
+                    j.sks || "",
+                    j.dosen || "",
+                    j.dosen || "",
+                    j.jumlahMahasiswa || "",
+                    j.ruangan || "",
+                  ];
 
-                /* ================= GROUP HARI ================= */
+                  values.forEach((val, i) => {
+                    const cell = sheet.getCell(
+                      row,
+                      i + 1
+                    );
 
-                const groupedByHari = {};
+                    cell.value = val;
 
-                dataKelas.forEach((j) => {
-                  const hari = j.hari || "-";
+                    cell.alignment = {
+                      horizontal: "left",
+                      vertical: "middle",
+                      wrapText: true,
+                    };
 
-                  groupedByHari[hari] ??= [];
-                  groupedByHari[hari].push(j);
-                });
-
-                /* ================= DATA ================= */
-
-                hariUrut.forEach((hari) => {
-                  const items =
-                    groupedByHari[hari] || [];
-
-                  if (!items.length) return;
-
-                  const mergeStart = row;
-
-                  items.forEach((j, index) => {
-                    const values = [
-                      index === 0 ? hari : "",
-                      `${j.jamMulai} - ${j.jamSelesai}`,
-                      j.kodeMk || "",
-                      j.mataKuliah || "",
-                      j.sks || "",
-                      j.dosen || "",
-                      j.dosen || "",
-                      j.jumlahMahasiswa || "",
-                      j.ruangan || "",
-                    ];
-
-                    values.forEach((val, i) => {
-                      const cell = sheet.getCell(
-                        row,
-                        startCol + i
-                      );
-
-                      cell.value = val;
-
-                      cell.alignment = {
-                        horizontal: "left",
-                        vertical: "middle",
-                      };
-
-                      borderAll(cell);
-                    });
-
-                    row++;
+                    borderAll(cell);
                   });
 
-                  if (items.length > 1) {
-                    mergeSafe(
-                      sheet,
-                      mergeStart,
-                      startCol,
-                      row - 1,
-                      startCol
-                    );
-                  }
+                  row++;
                 });
 
-                baseRow = row + 2;
+                if (items.length > 1) {
+                  mergeSafe(
+                    sheet,
+                    mergeStart,
+                    1,
+                    row - 1,
+                    1
+                  );
+                }
               });
+
+              currentRow = row + 3;
             });
         });
 
@@ -349,26 +331,14 @@ export const exportAllProdi = async (data, batchInfo) => {
 
       sheet.columns = [
         { width: 12 },
-        { width: 15 },
+        { width: 18 },
+        { width: 14 },
+        { width: 40 },
+        { width: 8 },
+        { width: 35 },
+        { width: 35 },
         { width: 12 },
-        { width: 35 },
-        { width: 6 },
-        { width: 35 },
-        { width: 35 },
-        { width: 10 },
-        { width: 10 },
-
-        { width: 5 },
-
-        { width: 12 },
-        { width: 15 },
-        { width: 12 },
-        { width: 35 },
-        { width: 6 },
-        { width: 35 },
-        { width: 35 },
-        { width: 10 },
-        { width: 10 },
+        { width: 14 },
       ];
     }
   );

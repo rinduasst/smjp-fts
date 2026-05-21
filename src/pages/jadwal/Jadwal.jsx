@@ -275,7 +275,7 @@ const Jadwal = () => {
                       <td className="px-3 py-2 border text-center">
                         {jadwal.sksEfektif}
                       </td>
-                      <td className="px-3 py-2 border text-center">
+                      <td className="px-3 py-2 border text-center whitespace-normal break-words max-w-[160px]">
                       {formatKelas(jadwal)}
                     </td>
                       <td className="px-3 py-2 border">

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Search, X} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
+
 const TabelPerubahan = () => {
 
   const navigate = useNavigate();
@@ -182,13 +183,24 @@ const TabelPerubahan = () => {
         err.response?.data?.message ||
         "Gagal mengajukan perubahan jadwal";
     
-      if (err.response?.data?.code === "JADWAL_BENTROK") {
-        alert("" + msg);
-        return;
-      }
-    
-      alert(msg);
-      resetForm();
+        if (err.response?.data?.code === "JADWAL_BENTROK") {
+          setConfirmModal({
+            open: true,
+            title: "Jadwal Bentrok",
+            message: msg,
+            type: "error",
+          });
+          return;
+        }
+        
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: msg,
+          type: "error",
+        });
+        
+        resetForm();
     
       if (err.response) {
         console.log("STATUS:", err.response.status);
@@ -251,7 +263,12 @@ const TabelPerubahan = () => {
         err.response?.data?.message ||
         "Gagal melakukan penukaran jadwal";
   
-      alert(msg);
+        setConfirmModal({
+          open: true,
+          title: "Gagal",
+          message: msg,
+          type: "error",
+        });
     }
   };
   const fetchProdi = async () => {
@@ -430,6 +447,7 @@ const getSksSlot = (jadwal) => {
       );
     });
   };
+  
   const isKelasBentrok = (jadwalLama, jadwalBaru) => {
     return formatKelas(jadwalLama) === formatKelas(jadwalBaru);
   };
@@ -575,7 +593,7 @@ const getSksSlot = (jadwal) => {
                     {jadwal.sksEfektif}
                     </td>
 
-                    <td className="px-3 py-2 border text-center">
+                    <td className="px-3 py-2 border text-center whitespace-normal break-words max-w-[160px]">
                     {formatKelas(jadwal)}
                     </td>
 
@@ -660,7 +678,7 @@ const getSksSlot = (jadwal) => {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-lg">
             {/* HEADER */}
-            <div className="px-6 py-4 border-b border-gray-400 flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-gray-300 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">
                 Pengajuan Perubahan Jadwal
                 </h3>
@@ -693,9 +711,16 @@ const getSksSlot = (jadwal) => {
                 <select
                     value={hariBaru}
                     onChange={(e) => {
-                      setHariBaru(e.target.value);
+                      const selectedHari = e.target.value;
+                    
+                      setHariBaru(selectedHari);
                       setSlotBaru("");
                       setRuangBaru("");
+                      setSelectedSlotGroup(null);
+                    
+                      if (selectedJadwal) {
+                        fetchAvailableSlots(selectedJadwal.slotWaktuId);
+                      }
                     }}
                     className="w-full px-3 py-2 bg-gray-100 rounded
                             focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -784,7 +809,7 @@ const getSksSlot = (jadwal) => {
                 </div>
             </div>
             {/* FOOTER */}
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-gray-300 flex justify-end gap-2">
                 <button
                onClick={resetForm}
                 className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
@@ -921,14 +946,7 @@ const getSksSlot = (jadwal) => {
         if (confirmAction) {
           confirmAction();
         }
-
-        setConfirmModal({
-          open: false,
-          title: "",
-          message: "",
-          type: "success",
-        });
-
+      
         setConfirmAction(null);
       }}
     />

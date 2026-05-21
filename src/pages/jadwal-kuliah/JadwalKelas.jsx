@@ -18,7 +18,6 @@ const JadwalKelas = () => {
 
   const [filterKelas, setFilterKelas] = useState("ALL");
   // ambil batch final
-  console.log("USER LOGIN:", user);
   const fetchFinalBatch = async () => {
 
     try {
@@ -83,8 +82,11 @@ const JadwalKelas = () => {
     hari.slots?.forEach((slot) => {
   
       const kelasList = slot.kelas?.kode
-        ?.split(",")
-        .map((k) => k.trim()) || [];
+      ?.split(",")
+      .map((k) => {
+        const parts = k.trim().split(" ");
+        return parts[parts.length - 1]; // ambil A/B/C
+      }) || [];
   
       const semester = hitungSemester(
         slot.kelas?.angkatan,
@@ -226,25 +228,24 @@ const JadwalKelas = () => {
             .map(([kelas, jadwal]) => (
             <div key={kelas} className="mb-8 last:mb-0">
 
-                <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-left border ">
-                    
-                    <thead className=" uppercase text-xs bg-gray-200">
+            <div className="bg-white p-6 rounded-lg shadow overflow-x-auto">
+            <table className="min-w-full text-sm border border-black-300">
+              <thead className="bg-gray-200 text-gray-700 uppercase text-xs">
                     <tr>
                         <th
                         colSpan="5"
                         className="text-center font-semibold text-base py-3 "
                         >
-                        Semester {toRomawi(semesterAktif)} - {kelas}
+                        Semester {toRomawi(semesterAktif)} - Kelas {kelas}
                         </th>
                     </tr>
 
                     <tr className="bg-gray-200">
-                        <th className="border px-4 py-2">Hari</th>
-                        <th className="border px-4 py-2">Jam</th>
-                        <th className="border px-4 py-2">Mata Kuliah</th>
-                        <th className="border px-4 py-2">Dosen</th>
-                        <th className="border px-4 py-2">Ruangan</th>
+                        <th className="border px-4 py-2 text-center">Hari</th>
+                        <th className="border px-4 py-2 text-center">Jam</th>
+                        <th className="border px-4 py-2 text-center">Mata Kuliah</th>
+                        <th className="border px-4 py-2 text-center">Dosen</th>
+                        <th className="border px-4 py-2 text-center">Ruangan</th>
                     </tr>
                     </thead>
                     <tbody>
