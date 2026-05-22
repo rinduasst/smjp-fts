@@ -115,18 +115,20 @@ const Jadwal = () => {
     if (!batchInfo) return;
   
     try {
-      const res = await api.get("/api/view-jadwal/all", {
-        params: {
-          periodeAkademikId: batchInfo.periodeId,
-          statusBatch: "FINAL",
-          page: 1,
-          pageSize: 200, // ambil semua
-          sortBy: "hari",
-          sortOrder: "asc",
-        },
-      });
-      const items = res.data?.data?.items || [];
-      await exportAllProdi(items, batchInfo);
+      const allProdiData = {};
+      for (const prodi of prodiList) {
+        if (!prodi.id) continue;
+        const res = await api.get("/api/view-jadwal/prodi", {
+          params: {
+            periodeAkademikId: batchInfo.periodeId,
+            prodiId: prodi.id,
+            statusBatch: "FINAL",
+          },
+        });
+        allProdiData[prodi.nama] = res.data?.data?.hari || [];
+      }
+      
+      await exportAllProdi(allProdiData, batchInfo);
     } catch (err) {
       console.error("Gagal export", err);
     }

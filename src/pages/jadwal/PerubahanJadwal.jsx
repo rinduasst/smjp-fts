@@ -16,7 +16,7 @@
     const [hariList, setHariList] = useState([]);
     const [slotList, setSlotList] = useState([]);
     const [ruangList, setRuangList] = useState([]);
-    // const [jadwalList, setJadwalList] = useState([]);
+    const [jadwalList, setJadwalList] = useState([]);
     const { user, peran } = useAuth();
     const prodiId = user?.prodiId;
     const [periodeId, setPeriodeId] = useState([]);
@@ -86,11 +86,11 @@
       }
     };
 
-    // useEffect(() => {
-    //   if (activeBatchId) {
-    //     fetchJadwal();
-    //   }
-    // }, [activeBatchId]);
+    useEffect(() => {
+      if (activeBatchId) {
+        fetchJadwal();
+      }
+    }, [activeBatchId]);
 
   
     
@@ -122,29 +122,27 @@
       setRuangList(res.data?.data?.items || []);
     };
 
-    // const fetchJadwal = async () => {
-    //   if (!activeBatchId) return;
+    const fetchJadwal = async () => {
+      if (!activeBatchId) return;
     
-    //   try {
-    //     const res = await api.get("/api/view-jadwal/all", {
-    //       params: {
-    //         periodeAkademikId: activeBatchId,
-    //         statusBatch: "FINAL",
-    //         page: 1,
-    //         pageSize: 200,
-    //       },
-    //     });
+      try {
+        const res = await api.get("/api/view-jadwal/all", {
+          params: {
+            periodeAkademikId: activeBatchId,
+            statusBatch: "FINAL",
+            page: 1,
+            pageSize: 500, // asumsikan cukup besar
+          },
+        });
     
-    //     console.log("jadwalList:", res.data?.data?.items);
-    
-    //     setJadwalList(res.data?.data?.items || []);
-    //   } catch (err) {
-    //     console.error("Gagal ambil jadwal:", err);
-    //   }
-    // };
+        setJadwalList(res.data?.data?.items || []);
+      } catch (err) {
+        console.error("Gagal ambil jadwal:", err);
+      }
+    };
 
     useEffect(() => {
-      // fetchFinalBatch();
+      fetchFinalBatch();
       fetchData();
       fetchHari();
       fetchSlot();
@@ -460,6 +458,18 @@
                           </div>
 
                           <div className="flex flex-col gap-y-1">
+                            {(() => {
+                              const target = jadwalList.find(j => j.id === row.jadwalTargetId);
+                              return target ? (
+                                <>
+                                  <div className="mb-1">
+                                    <div className="font-semibold text-blue-900">{target.mataKuliah}</div>
+                                    <div className="text-[10px] text-blue-800">{target.dosen}</div>
+                                  </div>
+                                  <div className="border-t border-blue-200 my-1"></div>
+                                </>
+                              ) : null;
+                            })()}
                             <div>
                               <span className="text-gray-400">Hari:</span>{" "}
                               <span className="font-medium text-blue-700">
@@ -798,7 +808,7 @@
         }))
       }
       onConfirm={
-        confirmModal.type === "delete"
+        (confirmModal.type === "delete" || confirmModal.type === "confirm")
           ? handleConfirm
           : undefined
       }
