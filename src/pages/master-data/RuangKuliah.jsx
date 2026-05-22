@@ -208,14 +208,22 @@ function RuangKuliah() {
       setSelectedItem(null);
   
     } catch (error) {
-      setConfirmModal({
-        open: true,
-        title: "Gagal",
-        message: "Gagal menghapus ruang",
-        type: "error",
-      });
-  
-    } finally {
+      console.error( "Delete", error.response?.data );
+        const errorCode = error.response?.data?.code;
+        const backendMessage = error.response?.data?.message;
+      
+        setConfirmModal({
+          open: true,
+          title:
+            errorCode === "RUANG_HAS_RELATIONS"
+              ? "Ruangan Sedang Digunakan"
+              : "Gagal",
+          message:
+            // backendMessage ||
+            "Gagal menghapus data ruangan. Silakan coba lagi.",
+          type: "error",
+        });
+      }finally {
       setIsSubmitting(false);
     }
   };

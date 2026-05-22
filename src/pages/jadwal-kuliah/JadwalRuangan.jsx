@@ -4,6 +4,7 @@ import api from "../../api/api";
 import { Loader2, ArrowLeft, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { exportRuangan } from "../../utils/exportExcel/jadwal/exportRuangan.js";
+import { exportPdfRuangan } from "../../utils/exportPdf/exportPdfRuangan";
 
 const JadwalRuangan = () => {
   const [batch, setBatch] = useState(null);
@@ -12,6 +13,8 @@ const JadwalRuangan = () => {
   const [slotList, setSlotList] = useState([]);
   const navigate = useNavigate();
   const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const [showExportModal, setShowExportModal] = useState(false);
+const [exportLoading, setExportLoading] = useState("");
 
   const warnaProdi = {
     "teknik mesin": "bg-yellow-300 text-black",
@@ -123,7 +126,21 @@ const JadwalRuangan = () => {
     const end = sesiList.findIndex(s => s.selesai === selesai);
     return end - start + 1;
   };
-
+  const handleExportExcel = async () => {
+    try {
+      await exportRuangan(jadwalList, batch, slotList);
+    } catch (err) {
+      console.error("Gagal export excel", err);
+    }
+  };
+  
+  const handleExportPdf = async () => {
+    try {
+      await exportPdfRuangan(jadwalList, batch, slotList);
+    } catch (err) {
+      console.error("Gagal export pdf", err);
+    }
+  };
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen">
@@ -147,11 +164,12 @@ const JadwalRuangan = () => {
 
           {/* Button export */}
           <button
-            onClick={() => exportRuangan(jadwalList, batch, slotList)}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
-          >
-            <Download size={16} /> Export File
-          </button>
+          onClick={() => setShowExportModal(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
+        >
+          <Download size={16} />
+          Export File
+        </button>
 
         </div>
 
@@ -197,7 +215,7 @@ const JadwalRuangan = () => {
 
           return (
             <div key={hari} className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold mb-2">{hari}</h2>
+              <h2 className="text-lg font-semibold mb-2 text-center  uppercase">{hari}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border border-gray-300">
                   <thead className="bg-gray-100">
@@ -258,6 +276,91 @@ const JadwalRuangan = () => {
           </button>
         </div>
       </div>
+      {showExportModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+
+      {/* CLOSE */}
+      <button
+        onClick={() => setShowExportModal(false)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-xl font-bold text-gray-800 mb-2">
+        Export Jadwal Ruangan
+      </h2>
+
+      <p className="text-sm text-gray-500 mb-5">
+        Pilih format file yang ingin diunduh
+      </p>
+
+      <div className="flex flex-col gap-3">
+
+        {/* EXCEL */}
+        <button
+          disabled={exportLoading !== ""}
+          onClick={async () => {
+            try {
+              setExportLoading("excel");
+
+              await handleExportExcel();
+
+              setShowExportModal(false);
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setExportLoading("");
+            }
+          }}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {exportLoading === "excel" ? (
+            <Loader2 className="animate-spin" size={18} />
+          ) : (
+            "Export Excel"
+          )}
+        </button>
+
+        {/* PDF */}
+        <button
+          disabled={exportLoading !== ""}
+          onClick={async () => {
+            try {
+              setExportLoading("pdf");
+
+              await handleExportPdf();
+
+              setShowExportModal(false);
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setExportLoading("");
+            }
+          }}
+          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {exportLoading === "pdf" ? (
+            <Loader2 className="animate-spin" size={18} />
+          ) : (
+            "Export PDF"
+          )}
+        </button>
+
+        {/* CANCEL */}
+        <button
+          onClick={() => setShowExportModal(false)}
+          className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+        >
+          Batal
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
     </MainLayout>
   );
 };

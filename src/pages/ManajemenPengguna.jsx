@@ -152,10 +152,19 @@ function ManajemenPengguna() {
   
     try {
       if (selectedItem) {
+
+        const payload = { ...formData };
+      
+        // kalau password kosong, jangan kirim
+        if (!payload.password) {
+          delete payload.password;
+        }
+      
         await api.patch(
           `/api/pengguna/${selectedItem.id}`,
-          formData
+          payload
         );
+      
   
         setConfirmModal({
           open: true,

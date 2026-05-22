@@ -497,7 +497,7 @@ const timeoutRef = useRef(null);
             <option value="">Pilih Sesi</option>
             {jamList.map(j => (
               <option key={j.id} value={j.id}>
-                {j.nama} ({j.jamMulai}-{j.jamSelesai})
+                {j.nama} ({j.jamMulai})
               </option>
             ))}
           </select>
@@ -567,7 +567,7 @@ const timeoutRef = useRef(null);
               <option value="">Pilih Slot</option>
               {jamList.map(j => (
                 <option key={j.id} value={j.id}>
-                   {j.jamMulai}
+                   {j.nama} ({j.jamMulai})
                 </option>
               ))}
             </select>

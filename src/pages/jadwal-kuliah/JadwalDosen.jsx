@@ -4,6 +4,7 @@ import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
 import { Download, Search, Loader2 } from "lucide-react";
 import { exportJadwalDosenExcel } from "../../utils/exportExcel/dosen/exportBkd.js";
+import { exportPdfDosen } from "../../utils/exportPdf/exportPdfDosen.js";
 
 const JadwalDosen = () => {
   const { user } = useAuth();
@@ -12,6 +13,9 @@ const JadwalDosen = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [showExportModal, setShowExportModal] = useState(false);
+const [exportType, setExportType] = useState("");
+
   const toRomawi = (num) => {
     if (!num || num <= 0) return "";
     const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
@@ -19,11 +23,28 @@ const JadwalDosen = () => {
   };
 
   const formatKelas = (jadwal) => {
-    const romawi = toRomawi(jadwal.semester);
-    if (!romawi) return jadwal.kelas;
-    const kelasList = jadwal.kelas.split(",").map(k => k.trim());
+    let semester = jadwal?.semester;
+  
+    // fallback manual
+    if (!semester) {
+      semester = 7;
+    }
+  
+    const romawi = toRomawi(Number(semester));
+  
+    const kelasList = (jadwal?.kelas || "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+  
     return kelasList
-      .map(k => k.toLowerCase() === "karyawan" ? `${romawi}_KARYAWAN` : `${romawi}_REG_${k}`)
+      .map((k) => {
+        if (jadwal?.jenisKelas === "KARYAWAN") {
+          return `${romawi}_KAR_KARYAWAN`;
+        }
+  
+        return `${romawi}_REG_${k}`;
+      })
       .join(", ");
   };
   const fetchFinalBatch = async () => {
@@ -84,9 +105,7 @@ const JadwalDosen = () => {
       setLoading(false);
     }
   };
-  const handleExport = () => {
-    exportJadwalDosenExcel(filteredData, formatKelas, batchInfo);
-  };
+
   useEffect(() => {
     fetchFinalBatch();
   }, []);
@@ -113,11 +132,14 @@ const JadwalDosen = () => {
                 {/* Kontrol Export + Search */}
        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex flex-col sm:flex-row gap-3">
-          <button 
-          onClick={handleExport}
-          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium">
-            <Download size={18} /> Export Excel
-          </button>
+        <button 
+          disabled={loading}
+          onClick={() => setShowExportModal(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium"
+        >
+          <Download size={18} />
+          Export File
+        </button>
           <div className="relative w-full sm:w-64">
             <Search
               size={18}
@@ -183,7 +205,9 @@ const JadwalDosen = () => {
                       )}
 
                       <td className="border px-3 py-2">{j.mataKuliah}</td>
-                      <td className="border px-3 py-2">{formatKelas(j)}</td>
+                      <td className="px-3 py-2 border text-center whitespace-normal break-words max-w-[160px]">
+                        {formatKelas(j)}
+                      </td>
                       <td className="border px-3 py-2 text-center">{j.sksEfektif}</td>
                       <td className="border px-3 py-2">{j.hari}</td>
                       <td className="border px-3 py-2 whitespace-nowrap">
@@ -204,6 +228,113 @@ const JadwalDosen = () => {
             </table>
         </div>
       </div>
+      {/* MODAL EXPORT */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+
+            {/* CLOSE */}
+            <button
+              onClick={() => {
+                if (!exportType) {
+                  setShowExportModal(false);
+                }
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              Export Jadwal Dosen
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Pilih format file yang ingin diunduh
+            </p>
+
+            <div className="flex flex-col gap-3">
+
+              {/* EXCEL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("excel");
+
+                    await exportJadwalDosenExcel(
+                      filteredData,
+                      formatKelas,
+                      batchInfo
+                    );
+
+                    setShowExportModal(false);
+
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "excel" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export Excel"
+                )}
+              </button>
+
+              {/* PDF */}
+              <button
+                disabled={exportType !== ""}
+                onClick={async () => {
+                  try {
+                    setExportType("pdf");
+
+                    await exportPdfDosen(
+                      filteredData,
+                      formatKelas,
+                      batchInfo
+                    );
+
+                    setShowExportModal(false);
+
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setExportType("");
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {exportType === "pdf" ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Processing...
+                  </>
+                ) : (
+                  "Export PDF"
+                )}
+              </button>
+
+              {/* BATAL */}
+              <button
+                disabled={exportType !== ""}
+                onClick={() => setShowExportModal(false)}
+                className="w-full border border-gray-300 hover:bg-gray-100 py-3 rounded-lg font-medium transition"
+              >
+                Batal
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

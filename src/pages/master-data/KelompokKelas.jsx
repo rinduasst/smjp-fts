@@ -44,8 +44,7 @@ function KelompokKelas() {
           pageSize,
           q: searchTerm,
           prodiId: filterProdi || undefined,
-          jenisKelas: filterJenis || undefined,
-          angkatan: filterAngkatan || undefined, 
+          angkatan: filterAngkatan || undefined,
         }
       });
       setData(res.data.data.items);
@@ -78,7 +77,13 @@ function KelompokKelas() {
   useEffect(() => {
     fetchProdi();
   }, []);
-
+  const filteredData = data.filter((item) => {
+    const matchJenis = filterJenis
+      ? item.jenisKelas === filterJenis
+      : true;
+  
+    return matchJenis;
+  });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -176,7 +181,12 @@ function KelompokKelas() {
       });
     } catch (err) {
       console.error(err);
-      alert("Kelas dengan kode, angkatan, dan program studi tersebut sudah terdaftar");
+      setConfirmModal({
+        open: true,
+        title: "Gagal",
+        message: "Kelas dengan kode, angkatan, dan program studi tersebut sudah terdaftar",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -221,7 +231,7 @@ function KelompokKelas() {
         title: "Gagal",
         message:
           status === 400 || status === 409
-            ? message ||
+            ? 
               "Kelas tidak dapat dihapus karena sudah digunakan pada jadwal atau penugasan."
             : "Gagal menghapus data. Silakan coba lagi.",
         type: "error",
@@ -372,8 +382,8 @@ function KelompokKelas() {
                     <Loader2 className="animate-spin mx-auto" />
                   </td>
                 </tr>
-              ) : data.length ? (
-                data.map(row => (
+              ) : filteredData.length ? (
+                filteredData.map(row => (
                   <tr key={row.id} className="hover:bg-gray-50">
                      <td className="py-4 px-6">{row.jenisKelas}</td>
                      <td className="py-4 px-6">{row.kode}</td>

@@ -8,6 +8,8 @@ import ConfirmModal from "../../components/ConfirmModal";
 
 
 function Kurikulum() {
+  const [state, setState] = useState();
+  const { user,peran } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,8 +17,7 @@ function Kurikulum() {
   const [selected, setSelected] = useState(null);
   const [filterProdi, setFilterProdi] = useState("");
   const navigate = useNavigate();
-  
-  const { user,peran } = useAuth();
+
 
   const [formData, setFormData] = useState({
     prodiId: "",
@@ -233,17 +234,21 @@ function Kurikulum() {
   
     } catch (err) {
       console.error(err);
-  
-      setConfirmModal({
-        open: true,
-        title: "Gagal",
-        message:
-          err.response?.data?.message ||
-          "Gagal menghapus kurikulum",
-        type: "error",
-      });
-  
-    } finally {
+        const errorCode = err.response?.data?.code;
+        const backendMessage = err.response?.data?.message;
+      
+        setConfirmModal({
+          open: true,
+          title:
+            errorCode === "KURIKULUM_HAS_MATKUL"
+              ? "Kurikulum Sedang Digunakan"
+              : "Gagal",
+          message:
+            // backendMessage ||
+            "Gagal menghapus kurikulum. Silakan coba lagi.",
+          type: "error",
+        });
+      } finally {
       setIsSubmitting(false);
     }
   };

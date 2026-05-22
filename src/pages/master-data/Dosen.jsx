@@ -186,12 +186,23 @@ useEffect(() => {
                 open: false,
               })),
           });
-        } catch {
+        }catch (error) {
+          console.error("DELETE ERROR:", error.response?.data);
+        
+          const errorCode = error.response?.data?.code;
+          const backendMessage = error.response?.data?.message;
+        
           setConfirmModal({
             open: true,
-            title: "Gagal",
-            message: "Gagal menghapus data dosen",
+            title:
+              errorCode === "DOSEN_HAS_RELATIONS"
+                ? "Data Dosen Sedang Digunakan"
+                : "Gagal",
+            message:
+              // backendMessage ||
+              "Gagal menghapus data dosen. Silakan coba lagi.",
             type: "error",
+          
             onConfirm: () =>
               setConfirmModal((prev) => ({
                 ...prev,

@@ -46,7 +46,6 @@ function PeriodeAkademik() {
   const fetchFakultas = async () => {
     try {
       const res = await api.get("/api/master-data/fakultas");
-      console.log("Fakultas response:", res.data);
   
       const items =
         res.data?.data ||        // kalau langsung array
@@ -178,7 +177,7 @@ function PeriodeAkademik() {
       setConfirmModal({
         open: true,
         title: "Gagal",
-        message: "Terjad Kesalahan, Silahkan Coba lagi!",
+        message: "Terjadi Kesalahan, Silahkan Coba lagi!",
         type: "error",
       });
     } finally {
@@ -192,8 +191,13 @@ function PeriodeAkademik() {
       paruh: item.paruh || "",
       tahunMulai: item.tahunMulai || "",
       tahunSelesai: item.tahunSelesai || "",
-      tanggalMulai: item.tanggalMulai || "",
-      tanggalSelesai: item.tanggalSelesai || "",
+      tanggalMulai: item.tanggalMulai
+      ? item.tanggalMulai.split("T")[0]
+      : "",
+    
+    tanggalSelesai: item.tanggalSelesai
+      ? item.tanggalSelesai.split("T")[0]
+      : "",
       fakultas_id: item.fakultas?.id || "",
       aktif: item.aktif ?? true
     });
@@ -230,15 +234,17 @@ function PeriodeAkademik() {
   
       setSelectedItem(null);
     } catch (err) {
-      console.error(err);
-  
+      const backendMessage =
+        err.response?.data?.message ||
+        "Gagal menghapus periode akademik. Silakan coba lagi.";
+    
       setConfirmModal({
         open: true,
-        title: "Gagal",
-        message: "Gagal menghapus periode akademik",
+        title: "Tidak Bisa Dihapus",
+        message: backendMessage,
         type: "error",
       });
-    } finally {
+    }finally {
       setIsSubmitting(false);
     }
   };

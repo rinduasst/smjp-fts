@@ -208,14 +208,21 @@ function ProgramStudi() {
       });
   
       setSelectedProdi(null);
-    } catch (error) {
+    }catch (error) {
+      const errorCode = error.response?.data?.code;
+      const backendMessage = error.response?.data?.message;
+    
       setConfirmModal({
         open: true,
-        title: "Gagal",
-        message: "Gagal menghapus program studi",
+        title:
+          errorCode === "PRODI_HAS_RELATIONS"
+            ? "Data Program Studi Sedang Digunakan"
+            : "Gagal",
+        message:
+        "Gagal menghapus program studi. Silakan coba lagi.",
         type: "error",
       });
-    } finally {
+    }finally {
       setIsSubmitting(false);
     }
   };

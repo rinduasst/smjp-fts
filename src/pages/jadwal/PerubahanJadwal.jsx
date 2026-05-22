@@ -246,10 +246,12 @@
           fetchData();
         } catch (error) {
           console.error(error);
-          alert(
-            error.response?.data?.message ||
-            "Gagal menolak pengajuan"
-          );
+          setConfirmModal({
+            open: true,
+            title: error.response?.data?.message ||"Gagal",
+            message: "Gagal menolak pengajuan",
+            type: "error",
+          });
         } finally {
           setLoadingReject(false);
         }
