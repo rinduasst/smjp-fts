@@ -3,6 +3,7 @@ import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Download,Loader2 } from "lucide-react";
 import { exportAllProdi } from "../../utils/exportExcel/jadwal/exportAllProdi.js";
+import { exportPdfAllProdi } from "../../utils/exportPdf/exportPdfAllProdi.js";
 
 const Jadwal = () => {
   const [data, setData] = useState([]);
@@ -130,7 +131,30 @@ const Jadwal = () => {
       
       await exportAllProdi(allProdiData, batchInfo);
     } catch (err) {
-      console.error("Gagal export", err);
+      console.error("Gagal export excel", err);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!batchInfo) return;
+  
+    try {
+      const allProdiData = {};
+      for (const prodi of prodiList) {
+        if (!prodi.id) continue;
+        const res = await api.get("/api/view-jadwal/prodi", {
+          params: {
+            periodeAkademikId: batchInfo.periodeId,
+            prodiId: prodi.id,
+            statusBatch: "FINAL",
+          },
+        });
+        allProdiData[prodi.nama] = res.data?.data?.hari || [];
+      }
+      
+      await exportPdfAllProdi(allProdiData, batchInfo);
+    } catch (err) {
+      console.error("Gagal export PDF", err);
     }
   };
   return (
@@ -156,6 +180,13 @@ const Jadwal = () => {
        >
          <Download size={18} />
           Export Excel
+        </button>
+        <button
+         onClick={handleExportPdf}
+         className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium"
+       >
+         <Download size={18} />
+          Export PDF
         </button>
         <div className="flex flex-col lg:flex-row gap-3">
           <select 
