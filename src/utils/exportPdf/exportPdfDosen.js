@@ -101,42 +101,47 @@ export const exportPdfDosen = async (
   // ================= TABLE DATA =================
   const body = [];
 
-  data.forEach(
-    (dosen, idx) => {
-      const totalSKS =
-        dosen.jadwal.reduce(
-          (acc, j) =>
-            acc +
-            (j.sksEfektif || 0),
-          0
-        );
+  data.forEach((dosen, idx) => {
+    const totalSKS = dosen.jadwal.reduce(
+      (acc, j) => acc + (j.sksEfektif || 0),
+      0
+    );
 
-      dosen.jadwal.forEach(
-        (j, i) => {
-          body.push([
-            i === 0
-              ? idx + 1
-              : "",
-            i === 0
-              ? dosen.nama
-              : "",
-            j.mataKuliah ||
-              "-",
-            formatKelas(j),
-            j.sksEfektif ||
-              "-",
-            j.hari || "-",
-            `${j.jamMulai} - ${j.jamSelesai}`,
-            j.ruangan ||
-              "-",
-            i === 0
-              ? totalSKS
-              : "",
-          ]);
-        }
+    dosen.jadwal.forEach((j, i) => {
+      const rowData = [];
+      
+      if (i === 0) {
+        rowData.push({
+          content: idx + 1,
+          rowSpan: dosen.jadwal.length,
+          styles: { halign: "center" }
+        });
+        rowData.push({
+          content: dosen.nama,
+          rowSpan: dosen.jadwal.length
+        });
+      }
+      
+      rowData.push(
+        j.mataKuliah || "-",
+        formatKelas(j),
+        { content: j.sksEfektif || "-", styles: { halign: "center" } },
+        j.hari || "-",
+        `${j.jamMulai} - ${j.jamSelesai}`,
+        j.ruangan || "-"
       );
-    }
-  );
+      
+      if (i === 0) {
+        rowData.push({
+          content: totalSKS,
+          rowSpan: dosen.jadwal.length,
+          styles: { halign: "center", fontStyle: "bold" }
+        });
+      }
+      
+      body.push(rowData);
+    });
+  });
 
   // ================= TABLE =================
   autoTable(doc, {
@@ -156,7 +161,7 @@ export const exportPdfDosen = async (
 
     body,
 
-    theme: "striped",
+    theme: "grid",
 
     styles: {
       fontSize: 8,
@@ -165,10 +170,9 @@ export const exportPdfDosen = async (
     },
 
     headStyles: {
-      fillColor: [
-        22, 163, 74,
-      ],
-      textColor: 255,
+      fillColor: [217, 217, 217],
+      textColor: 0,
+      halign: "center",
       fontStyle: "bold",
     },
 
@@ -202,56 +206,8 @@ export const exportPdfDosen = async (
       },
     },
 
-    didParseCell: function (
-      dataCell
-    ) {
-      // visual merge NO
-      if (
-        dataCell.column
-          .index === 0 &&
-        dataCell.cell.raw ===
-          ""
-      ) {
-        dataCell.cell.styles
-          .lineWidth = {
-          top: 0,
-          bottom: 0,
-          left: 0.1,
-          right: 0.1,
-        };
-      }
-
-      // visual merge DOSEN
-      if (
-        dataCell.column
-          .index === 1 &&
-        dataCell.cell.raw ===
-          ""
-      ) {
-        dataCell.cell.styles
-          .lineWidth = {
-          top: 0,
-          bottom: 0,
-          left: 0.1,
-          right: 0.1,
-        };
-      }
-
-      // visual merge TOTAL SKS
-      if (
-        dataCell.column
-          .index === 8 &&
-        dataCell.cell.raw ===
-          ""
-      ) {
-        dataCell.cell.styles
-          .lineWidth = {
-          top: 0,
-          bottom: 0,
-          left: 0.1,
-          right: 0.1,
-        };
-      }
+    didParseCell: function (dataCell) {
+      // No custom visual merge needed as we use rowSpan
     },
   });
 

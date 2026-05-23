@@ -92,7 +92,7 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "FFBDD7EE" },
+        fgColor: { argb: "FFF3F4F6" },
       };
       cell.border = {
         top: { style: "thin" },

@@ -122,15 +122,22 @@ export const exportPdfKelas = async (
       const items = hariGroup[hari] || [];
       if (!items.length) return;
     
-      items.forEach((item) => {
-        body.push([
-          {
+      items.forEach((item, i) => {
+        const rowData = [];
+        
+        if (i === 0) {
+          rowData.push({
             content: hari,
+            rowSpan: items.length,
             styles: {
               halign: "center",
+              valign: "middle",
               fontStyle: "bold",
             },
-          },
+          });
+        }
+        
+        rowData.push(
           {
             content: `${item.jamMulai} - ${item.jamSelesai}`,
           },
@@ -142,8 +149,9 @@ export const exportPdfKelas = async (
           },
           {
             content: item.ruang?.nama || "-",
-          },
-        ]);
+          }
+        );
+        body.push(rowData);
       });
     });
     autoTable(doc, {

@@ -31,58 +31,10 @@ import { saveAs } from "file-saver";
   data?.[0]?.slots?.[0]?.prodi?.nama ||
   batchInfo?.prodi?.nama ||
   "-";
-  /* ================= GROUP SEMESTER ================= */
+  const sheet = workbook.addWorksheet(`Jadwal Prodi`);
 
-  const semesterGroup = {};
-
-  data.forEach((hari)=>{
-
-    hari.slots?.forEach((slot)=>{
-
-        const kelasObj = slot.kelas;
-
-        if (!kelasObj) return;
-        
-        // ambil kode dan split
-        const kodeList = (kelasObj.kode || "A")
-          .split(",")
-          .map(k => k.trim().toUpperCase());
-        
-        const angkatan = kelasObj.angkatan;
-        
-        const semester =
-          (batchInfo?.periode?.tahunMulai - angkatan) * 2 +
-          (batchInfo?.periode?.paruh === "GENAP" ? 2 : 1);
-        
-        //  LOOP PER KELAS (INI KUNCI)
-        kodeList.forEach((kelas) => {
-        
-          if (!semesterGroup[semester]) semesterGroup[semester] = {};
-          if (!semesterGroup[semester][kelas]) semesterGroup[semester][kelas] = [];
-        
-          semesterGroup[semester][kelas].push({
-            hari: hari.nama,
-            jamMulai: slot.jamMulai,
-            jamSelesai: slot.jamSelesai,
-            matkul: slot.matkul?.nama,
-            dosen: slot.dosen?.nama,
-            ruang: slot.ruang?.nama
-          });
-        
-        });
-
-    });
-
-  });
-
-  /* ================= LOOP SEMESTER ================= */
-
-  Object.entries(semesterGroup).forEach(([semester, kelasList])=>{
-
-    const sheet = workbook.addWorksheet(` SMT ${semester}`);
-// LOGO
-
-sheet.addImage(logoId, {
+  // LOGO
+  sheet.addImage(logoId, {
     tl: { col: 0, row: 0 },
     ext: { width: 120, height: 120 }
   });
@@ -90,8 +42,8 @@ sheet.addImage(logoId, {
   const periodeNama = batchInfo?.periode?.nama || "";
   
   // Baris 1
-  sheet.mergeCells("B1:E1");
-  sheet.getCell("B1").value = "JADWAL KULIAH";
+  sheet.mergeCells("B1:G1");
+  sheet.getCell("B1").value = "JADWAL PERKULIAHAN";
   sheet.getCell("B1").font = {
     name: "Times New Roman",
     size: 20,
@@ -103,7 +55,7 @@ sheet.addImage(logoId, {
   };
   
   // Baris 2
-  sheet.mergeCells("B2:E2");
+  sheet.mergeCells("B2:G2");
   sheet.getCell("B2").value = `PROGRAM STUDI ${prodiNama.toUpperCase()}`;
   sheet.getCell("B2").font = {
     name: "Times New Roman",
@@ -115,7 +67,7 @@ sheet.addImage(logoId, {
   };
   
   // Baris 3
-  sheet.mergeCells("B3:E3");
+  sheet.mergeCells("B3:G3");
   sheet.getCell("B3").value = `${fakultas.toUpperCase()}`;
   sheet.getCell("B3").font = {
     name: "Times New Roman",
@@ -127,7 +79,7 @@ sheet.addImage(logoId, {
   };
   
   // Baris 4
-  sheet.mergeCells("B4:E4");
+  sheet.mergeCells("B4:G4");
   sheet.getCell("B4").value = `PERIODE ${periodeNama.toUpperCase()}`;
   sheet.getCell("B4").font = {
     name: "Times New Roman",
@@ -137,126 +89,98 @@ sheet.addImage(logoId, {
   sheet.getCell("B4").alignment = {
     horizontal: "center"
   };
-  
-  // spacing
+
   let row = 6;
 
-    /* ================= SORT KELAS ================= */
+  /* HEADER TABLE */
+  const headerRow = sheet.addRow([
+    "Hari",
+    "Jam",
+    "Mata Kuliah",
+    "SKS",
+    "Dosen",
+    "Kelas",
+    "Ruangan"
+  ]);
 
-    const sortedKelas = Object.keys(kelasList).sort((a,b)=>{
-      const ia = urutanKelas.indexOf(a);
-      const ib = urutanKelas.indexOf(b);
-      return ia - ib;
-    });
+  headerRow.eachCell((cell)=>{
+    cell.font = { bold: true };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9D9D9" }
+    };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    borderAll(cell);
+  });
 
-    /* ================= LOOP KELAS ================= */
+  /* GROUP HARI */
+  const formatKelasString = (slot) => {
+    const kelas = slot?.kelas;
+    if (!kelas) return "-";
 
-    sortedKelas.forEach((kelas)=>{
+    const toRomawi = (num) => ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][num] || num;
+    const hitungSemester = (angkatan, tahunMulai, paruh) => {
+      if (!angkatan || !tahunMulai) return 0;
+      return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
+    };
 
-      const jadwalList = kelasList[kelas];
-      jadwalList.sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+    if (Array.isArray(kelas)) {
+      return kelas.map((k) => {
+        const romawi = toRomawi(hitungSemester(k.angkatan, batchInfo?.periode?.tahunMulai, batchInfo?.periode?.paruh));
+        if (k.kode?.toLowerCase() === "karyawan") return `${romawi}_KARYAWAN`;
+        return `${romawi}_REG_${k.kode}`;
+      }).join(", ");
+    }
+    if (typeof kelas === "object") {
+      const romawi = toRomawi(hitungSemester(kelas.angkatan, batchInfo?.periode?.tahunMulai, batchInfo?.periode?.paruh));
+      if (kelas.kode?.toLowerCase() === "karyawan") return `${romawi}_KARYAWAN`;
+      return `${romawi}_REG_${kelas.kode}`;
+    }
+    return String(kelas);
+  };
 
-      sheet.mergeCells(`A${row}:E${row}`);
+  data.forEach((hari) => {
+    if (!hari.slots || hari.slots.length === 0) return;
 
-      const titleCell = sheet.getCell(`A${row}`);
-      titleCell.value = `SEMESTER ${semester} - KELAS ${kelas}`;
-      titleCell.font  = {bold: true }
-      titleCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "D3D3D3" }
-      };
-      titleCell.alignment = { horizontal: "center" };
-      titleCell.border = {
-        top: { style: "thin" },
-        bottom: { style: "thin" },
-        left: { style: "thin" },
-        right: { style: "thin" }
-      };
-    
-      row++;
-  
+    const startRow = sheet.lastRow.number + 1;
 
-      /* HEADER TABLE */
-
-      const headerRow = sheet.addRow([
-        "Hari",
-        "Jam",
-        "Mata Kuliah",
-        "Dosen",
-        "Ruangan"
+    hari.slots.forEach((slot, i) => {
+      const r = sheet.addRow([
+        i === 0 ? hari.nama : "",
+        `${slot.jamMulai} - ${slot.jamSelesai}`,
+        slot.matkul?.nama || "-",
+        slot.sksEfektif || "-",
+        slot.dosen?.nama || "-",
+        formatKelasString(slot),
+        slot.ruang?.nama || "-"
       ]);
 
-      headerRow.eachCell((cell)=>{
-        cell.font = { bold: true };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "D3D3D3" }
-        };
-        cell.alignment = { horizontal: "center" };
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" }
-        };
-      });
-
-      /* GROUP HARI */
-
-      const hariGroup = {};
-
-      jadwalList.forEach((j)=>{
-        if(!hariGroup[j.hari]) hariGroup[j.hari] = [];
-        hariGroup[j.hari].push(j);
-      });
-
-      hariUrut.forEach((hari)=>{
-
-        const items = hariGroup[hari] || [];
-        if(items.length === 0) return;
-
-        const startRow = sheet.lastRow.number + 1;
-
-        items.forEach((item,i)=>{
-
-          const r = sheet.addRow([
-            i === 0 ? hari : "",
-            `${item.jamMulai} - ${item.jamSelesai}`,
-            item.matkul,
-            item.dosen,
-            item.ruang
-          ]);
-
-          r.eachCell((cell)=>{
-            cell.font = {  };
-            borderAll(cell);
-          });
-
-        });
-
-        const endRow = sheet.lastRow.number;
-
-        if(endRow > startRow){
-          sheet.mergeCells(`A${startRow}:A${endRow}`);
+      r.eachCell((cell, colNumber) => {
+        borderAll(cell);
+        if (colNumber === 1 || colNumber === 2 || colNumber === 4 || colNumber === 6) {
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+        } else {
+            cell.alignment = { vertical: "middle", wrapText: true };
         }
-
       });
-
-      row = sheet.lastRow.number + 2;
-
     });
 
-    sheet.columns = [
-        { width:15 },
-        { width:20 },
-        { width:40 },
-        { width:30 },
-        { width:20 }
-      ];
-
+    const endRow = sheet.lastRow.number;
+    if (endRow > startRow) {
+      sheet.mergeCells(`A${startRow}:A${endRow}`);
+    }
   });
+
+  sheet.columns = [
+    { width: 15 }, // Hari
+    { width: 20 }, // Jam
+    { width: 40 }, // Mata Kuliah
+    { width: 8 },  // SKS
+    { width: 35 }, // Dosen
+    { width: 25 }, // Kelas
+    { width: 20 }  // Ruangan
+  ];
 
   const buffer = await workbook.xlsx.writeBuffer();
 

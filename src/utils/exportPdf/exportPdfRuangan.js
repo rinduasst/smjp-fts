@@ -286,8 +286,8 @@ doc.text(
         lineColor: [180, 180, 180], // abu-abu
       },
       headStyles: {
-        fillColor: [22, 163, 74],
-        textColor: 255,
+        fillColor: [217, 217, 217],
+        textColor: 0,
         fontStyle: "bold",
       },
 

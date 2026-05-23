@@ -166,9 +166,13 @@ row += 2;
           item.ruang?.nama || "-",
         ]);
 
-        r.eachCell((cell) => {
+        r.eachCell((cell, colNumber) => {
           borderAll(cell);
-          cell.alignment = { vertical: "middle" };
+          if (colNumber === 1 || colNumber === 2 || colNumber === 5) {
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+          } else {
+            cell.alignment = { vertical: "middle", wrapText: true };
+          }
         });
       });
 

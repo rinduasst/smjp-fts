@@ -98,9 +98,9 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FF4CAF50" }
+      fgColor: { argb: "FFD9D9D9" }
     };
-    cell.alignment = { horizontal: "center" };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
     cell.border = {
       top: { style: "thin" },
       bottom: { style: "thin" },
@@ -131,7 +131,7 @@ data.forEach((dosen, idx) => {
       totalSKS
     ]);
 
-    row.eachCell(cell => {
+    row.eachCell((cell, colNumber) => {
       cell.border = {
         top: { style: "thin" },
         bottom: { style: "thin" },
@@ -141,7 +141,8 @@ data.forEach((dosen, idx) => {
 
       cell.alignment = {
         vertical: "middle",
-        horizontal: "center"
+        horizontal: colNumber === 2 || colNumber === 3 ? "left" : "center",
+        wrapText: true
       };
     });
 

@@ -153,32 +153,29 @@ export const exportPdfProdi = async (
   const tableData = [];
 
   data.forEach((hari) => {
-    if (
-      !hari.slots ||
-      hari.slots.length === 0
-    )
-      return;
+    if (!hari.slots || hari.slots.length === 0) return;
 
-    hari.slots.forEach(
-      (slot, index) => {
-        tableData.push([
-          hari.nama,
-          `${slot.jamMulai} - ${slot.jamSelesai}`,
-          slot.matkul?.nama ||
-            "-",
-          slot.sksEfektif ||
-            "-",
-          slot.dosen?.nama ||
-            "-",
-            formatKelas(
-              slot,
-              batchInfo
-            ),
-          slot.ruang?.nama ||
-            "-",
-        ]);
+    hari.slots.forEach((slot, index) => {
+      const rowData = [];
+      if (index === 0) {
+        rowData.push({
+          content: hari.nama,
+          rowSpan: hari.slots.length,
+          styles: { halign: "center", valign: "middle", fontStyle: "bold" }
+        });
       }
-    );
+
+      rowData.push(
+        `${slot.jamMulai} - ${slot.jamSelesai}`,
+        slot.matkul?.nama || "-",
+        { content: slot.sksEfektif || "-", styles: { halign: "center" } },
+        slot.dosen?.nama || "-",
+        formatKelas(slot, batchInfo),
+        slot.ruang?.nama || "-"
+      );
+
+      tableData.push(rowData);
+    });
   });
 
   // ================= TABLE =================
@@ -196,6 +193,7 @@ export const exportPdfProdi = async (
     ]],
   
     body: tableData,
+    theme: "grid",
   
     styles: {
       fontSize: 8,
@@ -204,7 +202,10 @@ export const exportPdfProdi = async (
     },
   
     headStyles: {
-      fillColor: [22, 163, 74],
+      fillColor: [217, 217, 217],
+      textColor: 0,
+      halign: "center",
+      fontStyle: "bold",
     },
   
     tableWidth: "auto",
