@@ -128,26 +128,26 @@ const Jadwal = () => {
     if (!batchInfo) return;
   
     try {
-      const params = {
-        periodeAkademikId: batchInfo.periodeId,
-        statusBatch: "FINAL",
-        page: 1,
-        pageSize: 200,
-        sortBy: "hari",
-        sortOrder: "asc",
-      };
-  
-      if (selectedProdi) {
-        params.prodiId = selectedProdi;
+      const prodiDataMap = {};
+      const prodisToFetch = selectedProdi 
+        ? prodiList.filter(p => p.id === selectedProdi)
+        : prodiList;
+
+      for (const prodi of prodisToFetch) {
+        const res = await api.get("/api/view-jadwal/prodi", {
+          params: {
+            periodeAkademikId: batchInfo.periodeId,
+            prodiId: prodi.id,
+            statusBatch: "FINAL",
+          },
+        });
+        const hariData = res.data?.data?.hari || [];
+        if (hariData.length > 0) {
+          prodiDataMap[prodi.nama] = hariData;
+        }
       }
-  
-      const res = await api.get("/api/view-jadwal/all", {
-        params,
-      });
-  
-      const items = res.data?.data?.items || [];
-  
-      await exportAllProdi(items, batchInfo);
+
+      await exportAllProdi(prodiDataMap, batchInfo);
     } catch (err) {
       console.error("Gagal export", err);
     }
@@ -156,26 +156,26 @@ const Jadwal = () => {
     if (!batchInfo) return;
   
     try {
-      const params = {
-        periodeAkademikId: batchInfo.periodeId,
-        statusBatch: "FINAL",
-        page: 1,
-        pageSize: 200,
-        sortBy: "hari",
-        sortOrder: "asc",
-      };
-  
-      if (selectedProdi) {
-        params.prodiId = selectedProdi;
+      const prodiDataMap = {};
+      const prodisToFetch = selectedProdi 
+        ? prodiList.filter(p => p.id === selectedProdi)
+        : prodiList;
+
+      for (const prodi of prodisToFetch) {
+        const res = await api.get("/api/view-jadwal/prodi", {
+          params: {
+            periodeAkademikId: batchInfo.periodeId,
+            prodiId: prodi.id,
+            statusBatch: "FINAL",
+          },
+        });
+        const hariData = res.data?.data?.hari || [];
+        if (hariData.length > 0) {
+          prodiDataMap[prodi.nama] = hariData;
+        }
       }
-  
-      const res = await api.get("/api/view-jadwal/all", {
-        params,
-      });
-  
-      const items = res.data?.data?.items || [];
-  
-      await exportPdfAllProdi(items, batchInfo);
+
+      await exportPdfAllProdi(prodiDataMap, batchInfo);
     } catch (err) {
       console.error("Gagal export PDF", err);
     }

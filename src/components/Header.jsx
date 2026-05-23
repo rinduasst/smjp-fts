@@ -26,7 +26,7 @@ const getUserInfo = (user) => {
       return "TU Fakultas";
 
     case "ADMIN":
-      return "Admin"; // 🔥 ini kunci
+      return "Admin"; 
 
     default:
       return "-";
@@ -51,13 +51,8 @@ export default function Header({ toggleSidebar }) {
       {/* KANAN */}
       <div className="flex items-center gap-4">
 
-        {/* NOTIF */}
-        <button className="p-2 rounded hover:bg-gray-100 relative">
-          <Bell size={18} />
-        </button>
-
-        {/* USER INFO + LOGOUT */}
-        <div className="flex items-center gap-3 border-l pl-4">
+        {/* user info sama logotT */}
+        <div className="flex items-center gap-3  pl-4">
 
         {/* Avatar */}
         <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm font-semibold">

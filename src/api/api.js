@@ -4,7 +4,6 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// 🔹 attach token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -12,8 +11,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// helper translate action
 const actionLabel = (action) => {
   switch (action) {
     case "CREATE":
@@ -27,7 +24,6 @@ const actionLabel = (action) => {
   }
 };
 const moduleMap = {
-  // MASTER DATA
   "fakultas": "Fakultas",
   "program-studi": "Program Studi",
   "periode-akademik": "Periode Akademik",
@@ -74,14 +70,12 @@ const getModule = (url) => {
   return "Modul Tidak Diketahui";
 };
 
-// 🔥 AUTO LOGGING
+// auto logging
 api.interceptors.response.use(
   (response) => {
     try {
       const method = response.config.method?.toUpperCase();
       const url = response.config.url || "";
-
-      // ❗ hanya log perubahan data
       if (!["POST", "PATCH", "DELETE"].includes(method)) {
         return response;
       }
@@ -97,8 +91,6 @@ api.interceptors.response.use(
       const module = getModule(url);
 
       const logs = JSON.parse(localStorage.getItem("activity_logs")) || [];
-
-      // 🔥 hindari duplicate log (kadang axios ke-trigger 2x)
       const lastLog = logs[0];
       const now = Date.now();
 

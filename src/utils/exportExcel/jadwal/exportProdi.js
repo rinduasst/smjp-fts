@@ -77,7 +77,11 @@ import { saveAs } from "file-saver";
 
   /* ================= LOOP SEMESTER ================= */
 
-  Object.entries(semesterGroup).forEach(([semester, kelasList])=>{
+  Object.keys(semesterGroup)
+  .map(Number)
+  .sort((a, b) => a - b)
+  .forEach((semester) => {
+    const kelasList = semesterGroup[semester];
 
     const sheet = workbook.addWorksheet(` SMT ${semester}`);
 // LOGO
@@ -142,11 +146,18 @@ sheet.addImage(logoId, {
   let row = 6;
 
     /* ================= SORT KELAS ================= */
-
-    const sortedKelas = Object.keys(kelasList).sort((a,b)=>{
-      const ia = urutanKelas.indexOf(a);
-      const ib = urutanKelas.indexOf(b);
-      return ia - ib;
+    const sortedKelas = Object.keys(kelasList).sort((a, b) => {
+      const ambilKelas = (val) => {
+        return val.trim().toUpperCase().split(/[\s_]+/).pop();
+      };
+    
+      const kelasA = ambilKelas(a);
+      const kelasB = ambilKelas(b);
+    
+      const ia = urutanKelas.indexOf(kelasA);
+      const ib = urutanKelas.indexOf(kelasB);
+    
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
 
     /* ================= LOOP KELAS ================= */

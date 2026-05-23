@@ -16,7 +16,7 @@
     const [hariList, setHariList] = useState([]);
     const [slotList, setSlotList] = useState([]);
     const [ruangList, setRuangList] = useState([]);
-    // const [jadwalList, setJadwalList] = useState([]);
+    const [jadwalList, setJadwalList] = useState([]);
     const { user, peran } = useAuth();
     const prodiId = user?.prodiId;
     const [periodeId, setPeriodeId] = useState([]);
@@ -86,11 +86,11 @@
       }
     };
 
-    // useEffect(() => {
-    //   if (activeBatchId) {
-    //     fetchJadwal();
-    //   }
-    // }, [activeBatchId]);
+    useEffect(() => {
+      if (activeBatchId) {
+        fetchJadwal();
+      }
+    }, [activeBatchId]);
 
   
     
@@ -122,29 +122,29 @@
       setRuangList(res.data?.data?.items || []);
     };
 
-    // const fetchJadwal = async () => {
-    //   if (!activeBatchId) return;
+    const fetchJadwal = async () => {
+      if (!activeBatchId) return;
     
-    //   try {
-    //     const res = await api.get("/api/view-jadwal/all", {
-    //       params: {
-    //         periodeAkademikId: activeBatchId,
-    //         statusBatch: "FINAL",
-    //         page: 1,
-    //         pageSize: 200,
-    //       },
-    //     });
+      try {
+        const res = await api.get("/api/view-jadwal/all", {
+          params: {
+            periodeAkademikId: activeBatchId,
+            statusBatch: "FINAL",
+            page: 1,
+            pageSize: 200,
+          },
+        });
     
-    //     console.log("jadwalList:", res.data?.data?.items);
+        console.log("jadwalList:", res.data?.data?.items);
     
-    //     setJadwalList(res.data?.data?.items || []);
-    //   } catch (err) {
-    //     console.error("Gagal ambil jadwal:", err);
-    //   }
-    // };
+        setJadwalList(res.data?.data?.items || []);
+      } catch (err) {
+        console.error("Gagal ambil jadwal:", err);
+      }
+    };
 
     useEffect(() => {
-      // fetchFinalBatch();
+      fetchFinalBatch();
       fetchData();
       fetchHari();
       fetchSlot();
@@ -188,17 +188,21 @@
         return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
       };
       const getSlotRange = (slotId, sks) => {
-        const index = slotList.findIndex(s => s.id === slotId);
+        const sortedSlotList = [...slotList].sort((a, b) =>
+          a.jamMulai.localeCompare(b.jamMulai)
+        );
+      
+        const index = sortedSlotList.findIndex((s) => s.id === slotId);
+      
         if (index === -1) return "-";
       
-        const start = slotList[index];
-        const end = slotList[index + sks - 1];
+        const start = sortedSlotList[index];
+        const end = sortedSlotList[index + sks - 1];
       
         if (!start || !end) return "-";
       
         return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
       };
-
       
       const getRuangNama = (id) => {
         return ruangList.find(r => r.id === id)?.nama || "-";
@@ -309,8 +313,6 @@
           });
         }
       };
-
-  
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">
@@ -460,6 +462,27 @@
                           <div className="mb-2 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
                             Tukar Jadwal
                           </div>
+                          {(() => {
+                        const target = jadwalList.find(
+                          j => j.id === row.jadwalTargetId
+                        );
+
+                        return target ? (
+                          <>
+                            <div className="mb-1">
+                              <div className="font-semibold text-blue-900">
+                                {target.mataKuliah}
+                              </div>
+
+                              <div className="text-[10px] text-blue-800">
+                                {target.dosen}
+                              </div>
+                            </div>
+
+                            <div className="border-t border-blue-200 my-1"></div>
+                          </>
+                        ) : null;
+                      })()}
 
                           <div className="flex flex-col gap-y-1">
                             <div>
@@ -550,8 +573,6 @@
                        {/* AKSI */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-
-                          {/* Detail
                           <button
                             onClick={() => {
                               setSelectedItem(row);
@@ -561,7 +582,7 @@
                             title="Lihat Detail"
                           >
                             <Eye size={16} />
-                          </button> */}
+                          </button>
                           <button
                               onClick={() => handleDelete(row.id)}
                               title="Hapus"
@@ -666,31 +687,43 @@
                 </div>
               </div>
 
-              {/* Jadwal Lama */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-gray-500">Jadwal Lama</div>
-                <div className="col-span-2 font-medium">
-                {selectedItem.jadwalKuliah?.hari?.nama || "-"}, 
-              {getSlotRange(
-                selectedItem.jadwalKuliah?.slotWaktuId,
-                selectedItem.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1
-              )}, 
-              {selectedItem.jadwalKuliah?.ruang?.nama || "-"}
-                              </div>
-              </div>
+           {/* Jadwal Lama */}
+           <div className="grid grid-cols-3 gap-2">
+  <div className="text-gray-500">Jadwal Lama</div>
+
+  <div className="col-span-2 font-medium">
+    {getHariNama(selectedItem?.hariLamaId)}{" "}
+
+    (
+    {selectedItem?.slotWaktuLamaId
+      ? getSlotRange(
+          selectedItem.slotWaktuLamaId,
+          selectedItem?.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1
+        )
+      : "-"}
+    ){" "}
+
+    - {getRuangNama(selectedItem?.ruangLamaId)}
+  </div>
+</div>
 
               {/* Jadwal Baru */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-gray-500">Jadwal Baru</div>
-                <div className="col-span-2 font-medium">
-                {selectedItem.slotWaktuBaruId
+            <div className="text-gray-500">Jadwal Baru</div>
+
+            <div className="col-span-2 font-medium">
+              {getHariNama(selectedItem.hariBaruId)}{" "}
+              (
+              {selectedItem.slotWaktuBaruId
                 ? getSlotRange(
                     selectedItem.slotWaktuBaruId,
                     selectedItem.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.sks || 1
                   )
                 : "-"}
-                </div>
-              </div>
+              ){" "}
+              {getRuangNama(selectedItem.ruangBaruId)}
+            </div>
+          </div>
 
                 {/* Alasan */}
                 <div className="grid grid-cols-3 gap-2">
@@ -788,23 +821,19 @@
     </div>
   </div>
 )}
-    <ConfirmModal
-      open={confirmModal.open}
-      title={confirmModal.title}
-      message={confirmModal.message}
-      type={confirmModal.type}
-      onClose={() =>
-        setConfirmModal((prev) => ({
-          ...prev,
-          open: false,
-        }))
-      }
-      onConfirm={
-        confirmModal.type === "delete"
-          ? handleConfirm
-          : undefined
-      }
-    />
+   <ConfirmModal
+  open={confirmModal.open}
+  title={confirmModal.title}
+  message={confirmModal.message}
+  type={confirmModal.type}
+  onClose={() =>
+    setConfirmModal((prev) => ({
+      ...prev,
+      open: false,
+    }))
+  }
+  onConfirm={handleConfirm}
+/>
     </MainLayout>
       );
     };

@@ -133,10 +133,22 @@ import { saveAs } from "file-saver";
 
     /* ================= SORT KELAS ================= */
 
-    const sortedKelas = Object.keys(kelasList).sort((a,b)=>{
-      const ia = urutanKelas.indexOf(a);
-      const ib = urutanKelas.indexOf(b);
-      return ia - ib;
+    const sortedKelas = Object.keys(kelasList).sort((a, b) => {
+      const ambilKodeKelas = (val) => {
+        return val
+          .trim()
+          .toUpperCase()
+          .split(/[\s_]+/)
+          .pop(); 
+      };
+    
+      const kelasA = ambilKodeKelas(a);
+      const kelasB = ambilKodeKelas(b);
+    
+      const ia = urutanKelas.indexOf(kelasA);
+      const ib = urutanKelas.indexOf(kelasB);
+    
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
 
     /* ================= LOOP KELAS ================= */

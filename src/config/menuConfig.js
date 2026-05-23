@@ -30,7 +30,7 @@ import {
         { name: "Sesi Waktu", path: "/master-data/slot-waktu", roles: ["ADMIN", "TU_FAKULTAS"] },
         { name: "Ruang", path: "/master-data/ruang", roles: ["ADMIN", "TU_FAKULTAS"] },
         { name: "Dosen", path: "/master-data/dosen", roles: ["ADMIN", "TU_FAKULTAS", "TU_PRODI"] },
-        { name: "Kelompok Kelas", path: "/master-data/kelompok-kelas", roles: ["ADMIN","TU_FAKULTAS", "TU_PRODI"] },
+        { name: "Kelompok Kelas", path: "/master-data/kelompok-kelas", roles: [ "TU_PRODI"] },
       ],
     },
   

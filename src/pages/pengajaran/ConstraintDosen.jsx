@@ -27,7 +27,6 @@ const ConstraintDosen = () => {
     prioritas: "",
     constraints: {
       WAJIB_HARI: null,
-      WAJIB_RUANG: null,
       WAJIB_LANTAI: null,
       WAJIB_SLOT: null,
       HINDARI_SLOT: null,
@@ -91,7 +90,6 @@ const ConstraintDosen = () => {
       prioritas: "500",
       constraints: {
         WAJIB_HARI: null,
-        WAJIB_RUANG: null,
         WAJIB_LANTAI: null,
         WAJIB_SLOT: null,
         HINDARI_SLOT: null,
@@ -114,7 +112,6 @@ const ConstraintDosen = () => {
   const handleEdit = (row) => {
     const emptyConstraints = {
       WAJIB_HARI: null,
-      WAJIB_RUANG: null,
       WAJIB_LANTAI: null,
       WAJIB_SLOT: null,
       HINDARI_SLOT: null,
@@ -315,8 +312,6 @@ const timeoutRef = useRef(null);
     switch (jenis) {
       case "WAJIB_HARI":
         return "Wajib Hari";
-      case "WAJIB_RUANG":
-        return "Wajib Ruang";
       case "WAJIB_LANTAI":
         return "Wajib Lantai";
       case "HINDARI_SLOT":
@@ -374,7 +369,6 @@ const timeoutRef = useRef(null);
       "HINDARI_SESI"
     ],
     "Ruangan": [
-      "WAJIB_RUANG",
       "WAJIB_LANTAI"
     ],
     "Batas Mengajar": [
@@ -392,10 +386,6 @@ const timeoutRef = useRef(null);
     switch (row.jenisConstraint) {
       case "WAJIB_HARI":
         return hariList.find(h => h.id === row.nilaiConstraint)?.nama || "-";
-  
-      case "WAJIB_RUANG":
-        const ruang = ruangList.find(r => r.id === row.nilaiConstraint);
-        return ruang ? `${ruang.nama} (${ruang.lokasi})` : "-";
   
       case "HINDARI_SLOT":
         const jam = jamList.find(j => j.id === row.nilaiConstraint);
@@ -453,28 +443,6 @@ const timeoutRef = useRef(null);
             <option value="">Pilih Hari</option>
             {hariList.map(h => (
               <option key={h.id} value={h.id}>{h.nama}</option>
-            ))}
-          </select>
-        );
-  
-      case "WAJIB_RUANG":
-        return (
-          <select
-          className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            value={formData.constraints.WAJIB_RUANG}
-            onChange={(e) =>
-              setFormData(prev => ({
-                ...prev,
-                constraints: {
-                  ...prev.constraints,
-                  WAJIB_RUANG: e.target.value
-                }
-              }))
-            }
-          >
-            <option value="">Pilih Ruang</option>
-            {ruangList.map(r => (
-              <option key={r.id} value={r.id}>{r.nama}</option>
             ))}
           </select>
         );
@@ -670,7 +638,6 @@ const timeoutRef = useRef(null);
         <option value="">Semua Jenis</option>
         <option value="WAJIB_HARI">Wajib Hari</option>
         <option value="HINDARI_SLOT">Hindari Waktu</option>
-        <option value="WAJIB_RUANG">Wajib Ruang</option>
         <option value="WAJIB_LANTAI">Wajib Lantai</option>
         <option value="MAKS_SESI_PERHARI">Maks. Sesi / Hari</option>
       </select>

@@ -16,6 +16,13 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
     "teknik elektro": "FFEF4444", // red-500
     "default": "FFF3F4F6"
   };
+  const logoResponse = await fetch("/logofts.png");
+const logoBuffer = await logoResponse.arrayBuffer();
+
+const logoId = workbook.addImage({
+  buffer: logoBuffer,
+  extension: "png",
+});
   const formatJam = (value) => {
     if (!value) return "-";
     return value.slice(0,5);
@@ -34,6 +41,13 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
     if (!jadwalHari?.length) continue;
     const safeHari = hari.replace(/[\\/?*[\]:]/g, "");
     const sheet = workbook.addWorksheet(safeHari);
+    sheet.addImage(logoId, {
+      tl: { col: 0.1, row: 0.1 },
+      ext: {
+        width: 80,
+        height: 80,
+      },
+    });
 
     const ruangList = Array.from(
       new Set(jadwalHari.map((j) => j.ruangan))
@@ -71,18 +85,49 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
     const tahunAjaran =
       tahunMulai && tahunSelesai ? `${tahunMulai}/${tahunSelesai}` : "-";
     
-    sheet.mergeCells(1, 1, 1, ruangList.length + 1);
-    sheet.getCell(1, 1).value = `JADWAL RUANGAN SEMESTER ${paruh} TA ${tahunAjaran}`;
-    sheet.getCell(1, 1).font = { bold: true, size: 16 };
-    sheet.getCell(1, 1).alignment = { horizontal: "center" };
+      sheet.getRow(1).height = 24;
+      sheet.getRow(2).height = 24;
+      sheet.getRow(3).height = 22;
+      
+      sheet.mergeCells(1, 2, 1, ruangList.length + 1);
+      sheet.getCell(1, 2).value = "JADWAL RUANGAN";
+      sheet.getCell(1, 2).font = {
+        bold: true,
+        size: 16,
+        name: "Times New Roman",
+      };
+      sheet.getCell(1, 2).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      
+      sheet.mergeCells(2, 2, 2, ruangList.length + 1);
+      sheet.getCell(2, 2).value =
+        `SEMESTER ${paruh} TA ${tahunAjaran}`;
+      sheet.getCell(2, 2).font = {
+        bold: true,
+        size: 14,
+        name: "Times New Roman",
+      };
+      sheet.getCell(2, 2).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      
+      sheet.mergeCells(3, 2, 3, ruangList.length + 1);
+      sheet.getCell(3, 2).value = fakultas.toUpperCase();
+      sheet.getCell(3, 2).font = {
+        bold: true,
+        size: 13,
+        name: "Times New Roman",
+      };
+      sheet.getCell(3, 2).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
 
-    sheet.mergeCells(2, 1, 2, ruangList.length + 1);
-    sheet.getCell(2, 1).value = fakultas.toUpperCase();
-    sheet.getCell(2, 1).font = { bold: true, size: 16 };
-    sheet.getCell(2, 1).alignment = { horizontal: "center" };
-    
-
-    sheet.addRow([]);
+      sheet.addRow([]);
+      sheet.addRow([]);
 
     /* header  */
     const headerRow = sheet.addRow(["Pukul", ...ruangList]);
@@ -140,7 +185,7 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
     
     /* Data*/
     slotList.forEach((slot, rowIndex) => {
-      const excelRow = rowIndex + 5;
+      const excelRow = rowIndex + 7;
     
       const row = sheet.getRow(excelRow);
       row.height = 55;
@@ -221,12 +266,18 @@ if (startIndex + rowspan > slotList.length) {
           fgColor: { argb: color },
         };
     
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        };
+        headerRow.eachCell((cell) => {
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+          };
+        
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFBDD7EE" },
+          };
+        });
       });
     });
 
