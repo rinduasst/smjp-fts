@@ -34,30 +34,6 @@ const BatchJadwal = () => {
       setLoading(false);
     }
   };
-  const fetchFakultas = async () => {
-    try {
-      const res = await api.get("/api/master-data/fakultas");
-      setFakultasList(res.data?.data || []);
-    } catch (err) {
-      console.error("Gagal fetch fakultas:", err);
-    }
-  };
-
-  const ubahKeSiap = async (id) => {
-    try {
-      await api.patch(`/api/scheduler/batch/${id}/status`, {
-        status: "SIAP",
-      });
-      fetchBatch();
-    } catch (err) {
-      setConfirmModal({
-        open: true,
-        title: "Gagal",
-        message: "Gagal mengubah status ke SIAP",
-        type: "error",
-      });
-    }
-  };
 
   const setAktif = (id) => {
     setSelectedBatchId(id);
@@ -93,28 +69,7 @@ const BatchJadwal = () => {
       type: "delete",
     });
   };
-  const confirmDelete = async () => {
-    try {
-      await api.delete(`/api/scheduler/batch/${selectedBatchId}`);
-  
-      fetchBatch();
-      setActionType("delete");
-  
-      setConfirmModal({
-        open: true,
-        title: "Berhasil",
-        message: "Batch berhasil dihapus",
-        type: "success",
-      });
-    } catch (err) {
-      setConfirmModal({
-        open: true,
-        title: "Gagal",
-        message: "Gagal menghapus batch jadwal",
-        type: "error",
-      });
-    }
-  };
+
   const handleConfirm = async () => {
     try {
       if (actionType === "delete") {

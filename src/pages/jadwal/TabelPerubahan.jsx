@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Search, X} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
-
+import { useLocation } from "react-router-dom";
 const TabelPerubahan = () => {
 
   const navigate = useNavigate();
@@ -36,6 +36,7 @@ const TabelPerubahan = () => {
   const [jadwalBaru, setJadwalBaru] = useState(null);
   const [alasanSwap, setAlasanSwap] = useState("");
   const [confirmAction, setConfirmAction] = useState(null); //callback confirm
+  const location = useLocation();
 
   const [confirmModal, setConfirmModal] = useState({
     open: false,
@@ -309,7 +310,8 @@ const TabelPerubahan = () => {
       const res = await api.get("/api/view-jadwal/available-slots", {
         params: {
           periodeAkademikId: activeBatchId,
-          slotWaktuId
+          slotWaktuId,
+          jadwalKuliahId: selectedJadwal.id,
         }
       });
   
@@ -381,6 +383,10 @@ const getSksSlot = (jadwal) => {
   
     const hariData = availableData.find(d => d.hariId === hariBaru);
     if (!hariData) return [];
+    const toMinutes = (time) => {
+      const [h, m] = time.replace(".", ":").split(":").map(Number);
+      return h * 60 + m;
+    };
   
     // ambil slot yang available di hari itu
     const slots = hariData.slots
@@ -400,16 +406,69 @@ const getSksSlot = (jadwal) => {
     for (let i = 0; i <= slots.length - sks; i++) {
       const group = slots.slice(i, i + sks);
     
-      if (group.length === sks) {
-        result.push({
-          startId: group[0].id,
-          slotIds: group.map(s => s.id),
-          label: `${formatJam(group[0].jamMulai)} - ${formatJam(group[group.length - 1].jamSelesai)}`
-        });
+      if (group.length !== sks) continue;
+    
+      // =========================
+      // VALIDASI SLOT NYAMBUNG
+      // =========================
+      let valid = true;
+    
+      for (let j = 0; j < group.length - 1; j++) {
+        const currentEnd = group[j].jamSelesai.replace(".", ":");
+        const nextStart = group[j + 1].jamMulai.replace(".", ":");
+    
+        if (currentEnd !== nextStart) {
+          valid = false;
+          break;
+        }
       }
+    
+      if (!valid) continue;
+    
+      const startGroup = toMinutes(group[0].jamMulai);
+      const endGroup = toMinutes(group[group.length - 1].jamSelesai);
+      
+      const bentrokDosen = jadwalList.some((j) => {
+        if (j.id === selectedJadwal.id) return false;
+      
+        if (j.dosen !== selectedJadwal.dosen) return false;
+      
+        if (j.hariId !== hariBaru) return false;
+      
+        const jadwalStart = toMinutes(j.jamMulai);
+        const jadwalEnd = toMinutes(j.jamSelesai);
+      
+        return startGroup < jadwalEnd && endGroup > jadwalStart;
+      });
+      
+      const bentrokKelas = jadwalList.some((j) => {
+        if (j.id === selectedJadwal.id) return false;
+      
+        if (formatKelas(j) !== formatKelas(selectedJadwal)) return false;
+      
+        if (j.hariId !== hariBaru) return false;
+      
+        const jadwalStart = toMinutes(j.jamMulai);
+        const jadwalEnd = toMinutes(j.jamSelesai);
+      
+        return startGroup < jadwalEnd && endGroup > jadwalStart;
+      });
+      
+      // INI YANG KURANG
+      if (bentrokDosen) continue;
+      if (bentrokKelas) continue;
+    
+      result.push({
+        startId: group[0].id,
+        slotIds: group.map((s) => s.id),
+        label: `${formatJam(group[0].jamMulai)} - ${formatJam(
+          group[group.length - 1].jamSelesai
+        )}`,
+      });
     }
   
     return result;
+    
   };
   const getRoomsForSelectedGroup = () => {
     if (!selectedSlotGroup || !availableData.length) return [];
@@ -455,6 +514,32 @@ const getSksSlot = (jadwal) => {
   const isSlotCocok = (jadwalLama, jadwalBaru) => {
     return getSksSlot(jadwalLama) === getSksSlot(jadwalBaru);
   };
+  useEffect(() => {
+    if (
+      location.state?.selectedFromViolation &&
+      jadwalList.length > 0
+    ) {
+      const data = location.state.selectedFromViolation;
+  
+      const jadwal = jadwalList.find(
+        (j) => j.id === data.jadwalId
+      );
+  
+      if (!jadwal) return;
+  
+      // MODE UBAH JADWAL
+      if (data.mode === "ubah") {
+        setSelectedJadwal(jadwal);
+      }
+  
+      // MODE SWAP JADWAL
+      if (data.mode === "swap") {
+        setSwapMode(true);
+        setJadwalLama(jadwal);
+        setJadwalBaru(null);
+      }
+    }
+  }, [location.state, jadwalList]);
   return (
     <MainLayout>
 

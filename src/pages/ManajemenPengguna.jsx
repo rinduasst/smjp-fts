@@ -279,7 +279,6 @@ function ManajemenPengguna() {
             <option value="ADMIN">Admin</option>
             <option value="TU_FAKULTAS">TU Fakultas</option>
             <option value="TU_PRODI">TU Prodi</option>
-            <option value="DOSEN">Dosen</option>
           </select>
           <div className="relative w-full sm:max-w-sm">
             <Search
@@ -348,7 +347,6 @@ function ManajemenPengguna() {
                             ADMIN: "bg-red-100 text-red-800",
                             TU_FAKULTAS: "bg-blue-100 text-blue-800",
                             TU_PRODI: "bg-yellow-100 text-yellow-800",
-                            DOSEN: "bg-gray-100 text-gray-800",
                           }[row.peran] || "bg-gray-100 text-gray-800"
                         }`}
                       >
@@ -492,11 +490,10 @@ function ManajemenPengguna() {
                     <option value="ADMIN">Admin</option>
                     <option value="TU_FAKULTAS">TU Fakultas</option>
                     <option value="TU_PRODI">TU Prodi</option>
-                    <option value="DOSEN">Dosen</option>
                   </select>
                 </div>
                 {/* Fakultas */}
-                {(formData.peran === "TU_FAKULTAS" || formData.peran === "TU_PRODI" || formData.peran === "DOSEN") && (
+                {(formData.peran === "TU_FAKULTAS" || formData.peran === "TU_PRODI" ) && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Fakultas</label>
                     <select
@@ -514,7 +511,7 @@ function ManajemenPengguna() {
                 )}
 
                 {/* Prodi */}
-                {(formData.peran === "TU_PRODI" || formData.peran ==="DOSEN") && (
+                {(formData.peran === "TU_PRODI" ) && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Prodi</label>
                     <select

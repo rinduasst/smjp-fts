@@ -169,7 +169,7 @@ data.forEach((dosen, idx) => {
     { width: 6 },
     { width: 40},
     { width: 50 },
-    { width: 25 },
+    { width: 40 },
     { width: 6 },
     { width: 12 },
     { width: 18 },

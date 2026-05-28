@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import MainLayout from "../../components/MainLayout";
 import api from "../../api/api";
 import { Loader2, AlertTriangle } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 function AnalisisJadwal() {
   const [batch, setBatch] = useState(null);
   const [dataPelanggaran, setDataPelanggaran] = useState([]);
   const [totalPelanggaran, setTotalPelanggaran] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const fetchPelanggaran = async () => {
     try {
       setLoading(true);
@@ -148,20 +149,23 @@ return (
     {/* THEAD */}
     <thead className="bg-gray-50">
       <tr>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Dosen
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Mata Kuliah
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Sebelum
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Sesudah
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Pelanggaran
+        </th>
+        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
+          AKSI
         </th>
         {/* <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
           Total
@@ -277,20 +281,43 @@ return (
               ))}
 
             </div>
-
-            {item.keterangan && (
-              <p className="text-[11px] text-gray-400 mt-1">
-                {item.keterangan}
-              </p>
-            )}
           </td>
-
-            {/* TOTAL */}
-            {/* <td className="px-6 py-4 text-center">
-              <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">
-                {item.daftarConstraint.length}
-              </span>
-            </td> */}
+      {/* AKSI */}
+      <td className="px-6 py-4 text-center">
+        <button
+          onClick={() => {
+            navigate("/perubahan-jadwal/ajukan", {
+              state: {
+                selectedFromViolation: {
+                  jadwalId: item.jadwalId,
+                  mode:"ubah",
+                },
+              
+              },
+            });
+          }}
+          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+        >
+          Ubah jadwal
+        </button>
+        <button
+          onClick={() => {
+            navigate("/perubahan-jadwal/ajukan", {
+              state: {
+                selectedFromViolation: {
+                  jadwalId: item.jadwalId,
+                  mode:"swap",
+                },
+              
+              },
+            });
+          }}
+          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+        >
+          Tukar jadwal
+        </button>
+      </td>
+           
 
           </tr>
         ))

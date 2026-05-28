@@ -7,8 +7,8 @@ export const exportRuangan = async (jadwalList, batch, slotMaster) => {
   const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
   const prodiColors = {
-    "teknik mesin": "FFFFF9C4", // yellow-300
-    "rekayasa pertanian dan biosistem": "FFFFD54F", // yellow-500
+    "teknik mesin": "ffec26", // yellow-300
+    "rekayasa pertanian dan biosistem": "ffc407", // yellow-500
     "ilmu lingkungan": "FF65A30D", // lime-600
     "teknik sipil": "FF4ADE80", // green-400
     "sistem informasi": "FF60A5FA", // blue-400

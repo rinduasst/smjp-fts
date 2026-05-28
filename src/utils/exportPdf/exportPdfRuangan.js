@@ -77,7 +77,7 @@ const logofts = await new Promise((resolve) => {
     if (i !== 0) doc.addPage();
 
 // ================= LOGO =================
-doc.addImage(logofts, "PNG", 16, 8,28, 28);
+doc.addImage(logofts, "PNG", 16, 8,22, 22);
 
 // ================= HEADER =================
 doc.setFont("times", "bold");

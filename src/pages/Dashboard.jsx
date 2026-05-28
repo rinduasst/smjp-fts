@@ -18,6 +18,7 @@ const DashboardSMJP = () => {
   const [batch, setBatch] = useState(null);
   const navigate = useNavigate();
   const {user, peran} = useAuth()
+  
 
   const fetchFinalBatch = async () => {
     try {
@@ -92,8 +93,12 @@ const DashboardSMJP = () => {
     }
   };
   useEffect(() => {
-    fetchPengajuanPending();
-  }, []);
+    if (batch) {
+      fetchPengajuanPending();
+    } else {
+      setPengajuanList([]);
+    }
+  }, [batch]);
   // Stat Card
   const StatCard = ({ title, value, icon: Icon, gradient, onClick }) => {
     return (
@@ -201,7 +206,7 @@ const DashboardSMJP = () => {
     if (!jadwalHari.length) {
       return (
         <div className="bg-white rounded-xl p-6 mt-8 text-gray-400">
-          Tidak ada jadwal hari ini
+          Tidak ada jadwal 
         </div>
       );
     }
@@ -373,30 +378,31 @@ const DashboardSMJP = () => {
         
         </div>
         </div>
-    
-
-        {/* Pengajuan */}
+          {/* Pengajuan */}
+      {batch && (
         <div className="bg-white rounded-2xl p-5 mt-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
-          <span>Pengajuan Perubahan Jadwal</span>
-          {pengajuanList.length > 0 && (
-            <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">
-              {pengajuanList.length}
-            </span>
-          )}
-        </h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
+            <span>Pengajuan Perubahan Jadwal</span>
+
+            {pengajuanList.length > 0 && (
+              <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">
+                {pengajuanList.length}
+              </span>
+            )}
+          </h3>
 
           <PengajuanPending data={pengajuanList} />
 
-          <div className="mt-3 pt-3 border-t  border-gray-200">
-          <button
-            onClick={() => navigate("/perubahan-jadwal")}
-            className="w-full text-center text-sm text-gray-600 hover:text-red-600 transition"
-          >
-            Lihat Selengkapnya →
-          </button>
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <button
+              onClick={() => navigate("/perubahan-jadwal")}
+              className="w-full text-center text-sm text-gray-600 hover:text-red-600 transition"
+            >
+              Lihat Selengkapnya →
+            </button>
+          </div>
         </div>
-        </div>
+      )}
 
     </MainLayout>
   );
