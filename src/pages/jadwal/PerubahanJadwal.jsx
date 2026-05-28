@@ -413,135 +413,141 @@
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-gray-200">
-                    {loading ? (
-                      <tr>
-                        <td colSpan="7" className="py-8 text-center">
-                          <Loader2 className="animate-spin mx-auto" />
-                        </td>
-                      </tr>
-                    ) : filteredData.length ? (
-                      filteredData.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-50">         
-                                          
-                        {/* dosen */}
-                        <td className="py-2 px-4 min-w-[220px] align-top">{row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}</td>
-                        <td className=" min-w-[150px] align-top">{row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}</td>
-                        {/* jdwl lama  */}
-                         <td className="px-2 py-3 min-w-[170px] align-top">
-                         <div className="bg-gray-50 p-3 rounded-md text-xs border border-gray-200">
-                      <div className="flex flex-col gap-x-4 gap-y-1">
-
-                      <div>
-                    <span className="text-gray-400">Hari:</span>{" "}
-                    <span className="font-semibold">
-                      {getHariNama(row.hariLamaId)}
-                    </span>
-                  </div>
-
-                    <div>
-                      <span className="text-gray-400">Waktu:</span>{" "}
-                      <span>
-                        {getSlotRangeLabel(row.slotWaktuLamaId, row)}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-400">Ruangan:</span>{" "}
-                      <span className="text-blue-600 font-medium">
-                        {getRuangNama(row.ruangLamaId)}
-                      </span>
-                    </div>
-
-                      </div>
-                    </div>
+                  <tbody className="divide-y divide-gray-200 ">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="py-8 text-center">
+                        <Loader2 className="animate-spin mx-auto" />
                       </td>
-                      <td className="px-2 py-3 min-w-[170px] align-top">
-                      {row.jadwalTargetId ? (
-                        <div className="bg-blue-50 p-3 rounded-md text-xs border border-blue-200">
-                          <div className="mb-2 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
-                            Tukar Jadwal
-                          </div>
-                          {(() => {
-                        const target = jadwalList.find(
-                          j => j.id === row.jadwalTargetId
-                        );
+                    </tr>
+                  ) : filteredData.length ? (
+                    filteredData.map((row) => (
+                      <tr key={row.id} className="hover:bg-gray-50 align-top">
 
-                        return target ? (
-                          <>
-                            <div className="mb-1">
-                              <div className="font-semibold text-blue-900">
-                                {target.mataKuliah}
-                              </div>
-
-                              <div className="text-[10px] text-blue-800">
-                                {target.dosen}
-                              </div>
-                            </div>
-
-                            <div className="border-t border-blue-200 my-1"></div>
-                          </>
-                        ) : null;
-                      })()}
-
-                          <div className="flex flex-col gap-y-1">
-                            <div>
-                              <span className="text-gray-400">Hari:</span>{" "}
-                              <span className="font-medium text-blue-700">
-                                {getHariNama(row.hariBaruId)}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span className="text-gray-400">Waktu:</span>{" "}
-                              <span>
-                                {getSlotRangeLabel(row.slotWaktuBaruId, row)}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span className="text-gray-400">Ruangan:</span>{" "}
-                              <span className="text-blue-700 font-medium">
-                                {getRuangNama(row.ruangBaruId)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-green-50 p-3 rounded-md text-xs border border-green-200">
-                          <div className="flex flex-col gap-y-1">
-                            <div>
-                              <span className="text-gray-400">Hari:</span>{" "}
-                              <span className="font-medium text-green-700">
-                                {getHariNama(row.hariBaruId)}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span className="text-gray-400">Waktu:</span>{" "}
-                              <span>
-                                {getSlotRangeLabel(row.slotWaktuBaruId, row)}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span className="text-gray-400">Ruangan:</span>{" "}
-                              <span className="text-green-700 font-medium">
-                                {getRuangNama(row.ruangBaruId)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                        {/* alasan */}
-                        <td className="px-6 py-4 font-xs capitalize">
-                          {row.alasanPengaju}
+                        {/* DOSEN */}
+                        <td className="px-3 py-3 w-[200px]">
+                            {row.jadwalKuliah?.penugasanMengajar?.dosen?.nama || "-"}
                         </td>
-                        {/* statusny */}
-                        <td className="px-2 py-4 ">
+
+                        {/* MATA KULIAH */}
+                        <td className="px-3 py-3 w-[200px]">
+                            {row.jadwalKuliah?.penugasanMengajar?.programMatkul?.mataKuliah?.nama || "-"}
+                        </td>
+
+                        {/* JADWAL LAMA */}
+                        <td className="px-3 py-3 w-[180px]">
+                          <div className="bg-gray-50 p-2 rounded-md text-xs border border-gray-200 space-y-1">
+                            <div>
+                              <span className="text-gray-400">Hari:</span>{" "}
+                              <span className="font-medium">
+                                {getHariNama(row.hariLamaId)}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400">Waktu:</span>{" "}
+                              <span>
+                                {getSlotRangeLabel(row.slotWaktuLamaId, row)}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400">Ruangan:</span>{" "}
+                              <span className="text-blue-600 font-medium">
+                                {getRuangNama(row.ruangLamaId)}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* JADWAL BARU */}
+                        <td className="px-3 py-3 w-[200px]">
+                          {row.jadwalTargetId ? (
+                            <div className="bg-blue-50 p-2 rounded-md text-xs border border-blue-200 space-y-1">
+
+                              <div className="text-[10px] font-semibold text-blue-700 uppercase">
+                                Tukar Jadwal
+                              </div>
+
+                              {(() => {
+                                const target = jadwalList.find(
+                                  j => j.id === row.jadwalTargetId
+                                );
+
+                                return target ? (
+                                  <>
+                                    <div className="font-semibold text-blue-900 leading-snug">
+                                      {target.mataKuliah}
+                                    </div>
+
+                                    <div className="text-[10px] text-blue-700">
+                                      {target.dosen}
+                                    </div>
+
+                                    <div className="border-t border-blue-200 pt-1"></div>
+                                  </>
+                                ) : null;
+                              })()}
+
+                              <div>
+                                <span className="text-gray-400">Hari:</span>{" "}
+                                <span className="font-medium text-blue-700">
+                                  {getHariNama(row.hariBaruId)}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-gray-400">Waktu:</span>{" "}
+                                <span>
+                                  {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-gray-400">Ruangan:</span>{" "}
+                                <span className="text-blue-700 font-medium">
+                                  {getRuangNama(row.ruangBaruId)}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-green-50 p-2 rounded-md text-xs border border-green-200 space-y-1">
+
+                              <div>
+                                <span className="text-gray-400">Hari:</span>{" "}
+                                <span className="font-medium text-green-700">
+                                  {getHariNama(row.hariBaruId)}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-gray-400">Waktu:</span>{" "}
+                                <span>
+                                  {getSlotRangeLabel(row.slotWaktuBaruId, row)}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-gray-400">Ruangan:</span>{" "}
+                                <span className="text-green-700 font-medium">
+                                  {getRuangNama(row.ruangBaruId)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* ALASAN */}
+                        <td className="px-3 py-3 w-[220px]">
+                          <p className="text-sm text-gray-700 leading-relaxed break-words">
+                            {row.alasanPengaju}
+                          </p>
+                        </td>
+
+                        {/* STATUS */}
+                        <td className="px-3 py-3 w-[120px]">
                           <span
-                            className={`inline-flex items-center px-1 py-1 rounded-full text-xs font-medium
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                             ${
                               row.status === "DISETUJUI"
                                 ? "bg-green-100 text-green-800"
@@ -560,6 +566,7 @@
                                   : "bg-yellow-500"
                               }`}
                             />
+
                             {
                               row.status === "DISETUJUI"
                                 ? "Disetujui"
@@ -568,74 +575,62 @@
                                 : "Diajukan"
                             }
                           </span>
-                          
                         </td>
-                       {/* AKSI */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedItem(row);
-                              setShowDetail(true);
-                            }}
-                            className="p-1.5 rounded-md  text-blue-700 hover:bg-blue-200 transition"
-                            title="Lihat Detail"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
+
+                        {/* AKSI */}
+                     <td className="px-3 py-3 whitespace-nowrap align-top">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setSelectedItem(row);
+                                setShowDetail(true);
+                              }}
+                              className="p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition"
+                            >
+                              <Eye size={16} />
+                            </button>
+
+                            <button
                               onClick={() => handleDelete(row.id)}
-                              title="Hapus"
-                               className="p-1.5 rounded-md  text-red-700 hover:bg-blue-200 transition"
+                              className="p-1.5 rounded-md text-red-700 hover:bg-red-100 transition"
                             >
                               <Trash2 size={16} />
                             </button>
 
-                          {/* Approve & Reject hanya untuk Fakultas/Admin */}
-                          {(peran === "TU_FAKULTAS" || peran === "ADMIN") && (
-                            <>
-                              {/* Setujui */}
-                              <button
-                               onClick={() => handleApprove(row.id)}
-                                className="px-3 py-1.5 text-xs font-medium rounded-md
-                                bg-green-700 text-white
-                                hover:bg-green-200 hover:text-green-800
-                                transition"
-                              >
-                                Setujui
-                              </button>
+                            {(peran === "TU_FAKULTAS" || peran === "ADMIN") && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(row.id)}
+                                  className="px-2 py-1 text-xs rounded-md bg-green-700 text-white hover:bg-green-800"
+                                >
+                                  Setujui
+                                </button>
 
-                              {/* Tolak */}
-                              <button
-                                onClick={() => {
-                                  setSelectedId(row.id)
-                                  setAlasanReject("");
-                                  setShowRejectModal(true);
-                                }}
-                                className="px-3 py-1.5 text-xs font-medium rounded-lg
-                                bg-red-700 text-white
-                                hover:bg-red-200 hover:text-red-800
-                                transition"
-                              >
-                                Tolak
-                              </button>
-                           
-                            </>
-                          )}
-
-                        </div>
-                      </td>
-                                              
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="py-8 text-center text-gray-500">
-                          Tidak ada data pengajuan
+                                <button
+                                  onClick={() => {
+                                    setSelectedId(row.id);
+                                    setAlasanReject("");
+                                    setShowRejectModal(true);
+                                  }}
+                                  className="px-2 py-1 text-xs rounded-md bg-red-700 text-white hover:bg-red-800"
+                                >
+                                  Tolak
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
+
                       </tr>
-                    )}
-                  </tbody>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-8 text-center text-gray-500">
+                        Tidak ada data pengajuan
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
                 </table>
               </div>
               {/* FOOTER */}

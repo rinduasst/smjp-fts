@@ -370,7 +370,7 @@ function SlotWaktu() {
                 <h3 className="font-semibold">
                   {selectedItem ? "Edit Slot Waktu" : "Tambah Slot Waktu"}
                 </h3>
-                <button onClick={() => setShowModal(false)}>
+                <button onClick={closeModal}>
                   <X size={18}/>
                 </button>
               </div>
@@ -469,7 +469,7 @@ function SlotWaktu() {
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
+                    onClick={closeModal}
                     className="px-4 py-2 bg-gray-200 rounded"
                   >
                     Batal

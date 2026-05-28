@@ -148,29 +148,31 @@ return (
 
     {/* THEAD */}
     <thead className="bg-gray-50">
-      <tr>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Dosen
-        </th>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Mata Kuliah
-        </th>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Sebelum
-        </th>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Sesudah
-        </th>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Pelanggaran
-        </th>
-        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          AKSI
-        </th>
-        {/* <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">
-          Total
-        </th> */}
-      </tr>
+     <tr>
+  <th className="w-[180px] px-3 text-center text-xs font-semibold text-gray-500 uppercase">
+    Dosen
+  </th>
+
+  <th className="w-[220px] px-3 text-center text-xs font-semibold text-gray-500 uppercase">
+    Mata Kuliah
+  </th>
+
+  <th className="w-[170px] px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase">
+    Sebelum
+  </th>
+
+  <th className="w-[170px] px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase">
+    Sesudah
+  </th>
+
+  <th className="w-[170px] px-2 text-center text-xs font-semibold text-gray-500 uppercase">
+    Pelanggaran
+  </th>
+
+  <th className="w-[120px] px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase">
+    Aksi
+  </th>
+</tr>
     </thead>
 
     {/* TBODY */}
@@ -283,7 +285,7 @@ return (
             </div>
           </td>
       {/* AKSI */}
-      <td className="px-6 py-4 text-center">
+      <td className="px-3 py-2 text-center">
         <button
           onClick={() => {
             navigate("/perubahan-jadwal/ajukan", {
@@ -312,7 +314,7 @@ return (
               },
             });
           }}
-          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+          className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
         >
           Tukar jadwal
         </button>
