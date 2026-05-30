@@ -9,6 +9,7 @@ function PeriodeAkademik() {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
   const [fakultasList, setFakultasList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterTahun, setFilterTahun] = useState("");
@@ -30,8 +31,6 @@ function PeriodeAkademik() {
     message: "",
     type: "success",
   });  
-
-
   const fetchPeriode = async () => {
     try {
       const res = await api.get("/api/master-data/periode-akademik");
@@ -42,7 +41,6 @@ function PeriodeAkademik() {
       setLoading(false);
     }
   };
-
   const fetchFakultas = async () => {
     try {
       const res = await api.get("/api/master-data/fakultas");
@@ -57,17 +55,13 @@ function PeriodeAkademik() {
       setFakultasList([]);
     }
   };
-  
-
   useEffect(() => {
     fetchPeriode();
     fetchFakultas();
   }, []);
-
   const filteredData = data.filter(item => {
     const matchSearch =
       item.nama?.toLowerCase().includes(searchTerm.toLowerCase());
-  
     const matchTahun = filterTahun
       ? String(item.tahunMulai) === filterTahun
       : true;
@@ -78,8 +72,6 @@ function PeriodeAkademik() {
   
     return matchSearch && matchTahun && matchSemester;
   });
-  
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -87,7 +79,6 @@ function PeriodeAkademik() {
       [name]: type === "checkbox" ? checked : value
     }));
   };
-
   const validateForm = () => {
     const errors = {};
     if (!formData.tahunMulai) errors.tahunMulai = "Tahun mulai wajib diisi";
@@ -97,7 +88,6 @@ function PeriodeAkademik() {
     if (!formData.fakultas_id) errors.fakultas_id = "Fakultas wajib dipilih";
     return errors;
   };
-  
   const resetForm = () => {
     setFormData({
       nama: "",
@@ -112,8 +102,6 @@ function PeriodeAkademik() {
     setFormErrors({});
     setSelectedItem(null);
   };
-  
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -203,7 +191,6 @@ function PeriodeAkademik() {
     });
     setShowModal(true);
   };
-
   const handleDelete = (item) => {
     setSelectedItem(item);
   
@@ -214,7 +201,6 @@ function PeriodeAkademik() {
       type: "delete",
     });
   };
-  
   const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
@@ -248,8 +234,6 @@ function PeriodeAkademik() {
       setIsSubmitting(false);
     }
   };
-  
-
   return (
     <MainLayout>
       

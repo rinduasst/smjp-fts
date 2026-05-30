@@ -10,12 +10,6 @@ export default function DetailKurikulum() {
   const [kurikulum, setKurikulum] = useState([]);
   const [matkulList, setMatkulList] = useState([]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    getKurikulum();
-  }, [id]);
-  
-
   const getKurikulum = async () => {
     try {
       const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
@@ -27,9 +21,9 @@ export default function DetailKurikulum() {
       console.error("Gagal ambil kurikulum", err);
     }
   };
-  
-
-
+  useEffect(() => {
+    getKurikulum();
+  }, [id]);
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-2">Detail Kurikulum</h1>

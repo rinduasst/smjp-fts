@@ -28,7 +28,6 @@ function ProgramStudi() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fakultasList, setFakultasList] = useState([]);
 
-  // Fetch data
   const fetchProdi = async () => {
     try {
       const res = await api.get("/api/master-data/prodi");
@@ -46,7 +45,6 @@ function ProgramStudi() {
       setLoading(false);
     }
   };
-
   const fetchFakultas = async () => {
     try {
       const res = await api.get("/api/master-data/fakultas");
@@ -55,23 +53,19 @@ function ProgramStudi() {
       console.error("Gagal fetch fakultas:", err);
     }
   };
-  
   useEffect(() => {
     fetchProdi();
     fetchFakultas();
   }, []);
-
   const filteredData = data.filter(item => 
     item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.kode?.toLowerCase().includes(searchTerm.toLowerCase()) 
   );
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: "" }));
   };
-  
   const validateForm = () => {
     const errors = {};
     if (!formData.kode.trim()) errors.kode = "Kode program studi wajib diisi";
@@ -90,8 +84,6 @@ function ProgramStudi() {
     setFormErrors({});
     setSelectedProdi(null);
   };
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -167,8 +159,6 @@ function ProgramStudi() {
       setIsSubmitting(false);
     }
   };
-  
-  
   const handleEdit = (prodi) => {
     setSelectedProdi(prodi);
     setFormData({
@@ -179,7 +169,6 @@ function ProgramStudi() {
     });
     setShowModal(true);
   };
-  
   const handleDelete = (prodi) => {
     setSelectedProdi(prodi);
   
@@ -226,9 +215,6 @@ function ProgramStudi() {
       setIsSubmitting(false);
     }
   };
-  
-
-
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">

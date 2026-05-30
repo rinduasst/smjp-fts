@@ -38,17 +38,16 @@ function Fakultas() {
       setLoading(false);
     }
   };
-  
-
-  // Filter data berdasarkan search term
-  const filteredData = Array.isArray(data)
-  ? data.filter(item =>
-      item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.kode?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  : [];
-
-
+  useEffect(() => {
+    fetchFakultas();
+  }, []);
+    // Filter data berdasarkan search term
+    const filteredData = Array.isArray(data)
+    ? data.filter(item =>
+        item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.kode?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -65,8 +64,6 @@ function Fakultas() {
       }));
     }
   };
-
-  // Validate form
   const validateForm = () => {
     const errors = {};
     
@@ -83,8 +80,6 @@ function Fakultas() {
    
     return errors;
   };
-
-  // Handle form submit (Add)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -169,8 +164,6 @@ function Fakultas() {
       setIsSubmitting(false);
     }
   };    
-
-  // Handle Edit
   const handleEdit = (fakultas) => {
     setSelectedFakultas(fakultas);
     setFormData({
@@ -179,7 +172,6 @@ function Fakultas() {
     });
     setShowEditModal(true);
   };
-
   const handleDelete = async () => {
     if (!selectedFakultas) return;
   
@@ -219,8 +211,6 @@ function Fakultas() {
       setIsSubmitting(false);
     }
   };
-  
-
   // Reset form
   const resetForm = () => {
     setFormData({
@@ -231,9 +221,6 @@ function Fakultas() {
     setSelectedFakultas(null);
   };
 
-  useEffect(() => {
-    fetchFakultas();
-  }, []);
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">

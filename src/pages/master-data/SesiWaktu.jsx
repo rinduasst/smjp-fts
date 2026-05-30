@@ -8,11 +8,9 @@ function SlotWaktu() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
   const [formData, setFormData] = useState({
     nama: "",
     jamMulaiJam: "",
@@ -27,6 +25,7 @@ function SlotWaktu() {
     message: "",
     type: "success",
   });
+  const menitList = ["00", "10", "20", "30", "40", "50"];
 
   const fetchSlotWaktu = async () => {
     try {
@@ -38,7 +37,6 @@ function SlotWaktu() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchSlotWaktu();
   }, []);
@@ -196,7 +194,6 @@ function SlotWaktu() {
     });
     setShowModal(true);
   };
-  
   const handleDelete = async () => {
     if (!selectedItem) return;
   
@@ -236,13 +233,9 @@ function SlotWaktu() {
       setIsSubmitting(false);
     }
   };
-
-
   const jamList = Array.from({ length: 24 }, (_, i) =>
   String(i).padStart(2, "0")
 );
-
-  const menitList = ["00", "10", "20", "30", "40", "50"];
   const closeModal = () => {
     setShowModal(false);
     resetForm();

@@ -12,8 +12,7 @@ function RuangKuliah() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterJenis, setFilterJenis] = useState("");
   const [filterLantai, setFilterLantai] = useState("");
-
-
+  const [fakultasList, setFakultasList] = useState([]);
   const [formData, setFormData] = useState({
     kode: "",
     nama: "",
@@ -30,7 +29,6 @@ function RuangKuliah() {
     message: "",
     type: "success",
   });
-  const [fakultasList, setFakultasList] = useState([]);
 
   const fetchRuang = async () => {
     try {
@@ -42,18 +40,14 @@ function RuangKuliah() {
       setLoading(false);
     }
   };
-
   const fetchFakultas = async () => {
     const res = await api.get("/api/master-data/fakultas");
     setFakultasList(res.data?.data || []);
   };
-
   useEffect(() => {
     fetchRuang();
     fetchFakultas();
   }, []);
-
-
   const filteredData = data.filter(r => {
     const matchSearch =
       r.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,8 +68,6 @@ function RuangKuliah() {
       .map(r => r.lokasi)
       .filter(l => l && l !== "")
   )];
-  
-  
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -83,7 +75,6 @@ function RuangKuliah() {
       [name]: type === "checkbox" ? checked : value
     }));
   };
-
   const resetForm = () => {
     setFormData({
       kode: "",
@@ -97,7 +88,6 @@ function RuangKuliah() {
     });
     setSelectedItem(null);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -175,7 +165,6 @@ function RuangKuliah() {
     });
     setShowModal(true);
   };
-
   const handleDelete = async (item) => {
     setSelectedItem(item);
   
@@ -226,10 +215,7 @@ function RuangKuliah() {
       }finally {
       setIsSubmitting(false);
     }
-  };
-  
-  
-  
+  };  
   const closeModal = () => {
     setShowModal(false);
     resetForm();

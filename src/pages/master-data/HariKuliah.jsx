@@ -41,12 +41,9 @@ function HariKuliah() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchHari();
   }, []);
-
-
   const filteredData = data
     .filter(item =>
       item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -61,14 +58,12 @@ function HariKuliah() {
       setFormErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
-
   const validateForm = () => {
     const errors = {};
     if (!formData.nama.trim()) errors.nama = "Nama hari wajib diisi";
     if (!formData.urutan) errors.urutan = "Nomer Hari wajib diisi";
     return errors;
   };
-
   const resetForm = () => {
     setFormData({
       nama: "",
@@ -77,7 +72,6 @@ function HariKuliah() {
     setFormErrors({});
     setSelectedHari(null);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -168,7 +162,6 @@ function HariKuliah() {
       type: "delete",
     });
   };
-  
   const confirmDelete = async () => {
     try {
       setIsSubmitting(true);

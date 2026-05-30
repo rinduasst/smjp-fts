@@ -19,9 +19,6 @@ import { saveAs } from "file-saver";
       right:{style:"thin"}
     };
   };
-
-  /* ================= LOAD LOGO ================= */
-
   const logoResponse = await fetch("/logofts.png");
   const logoBuffer = await logoResponse.arrayBuffer();
 
@@ -29,13 +26,8 @@ import { saveAs } from "file-saver";
     buffer: logoBuffer,
     extension: "png"
   });
-
-  /* ================= GROUP SEMESTER ================= */
-
   const semesterGroup = {};
-
   data.forEach((hari)=>{
-
     hari.slots?.forEach((slot)=>{
       const kelasList = slot.kelas?.kode
       ?.split(",")
@@ -62,30 +54,17 @@ import { saveAs } from "file-saver";
         dosen: slot.dosen?.nama,
         ruang: slot.ruang?.nama
       });
-    
     });
-
     });
-
   });
-
-  /* ================= LOOP SEMESTER ================= */
-
   Object.entries(semesterGroup).forEach(([semester, kelasList])=>{
-
     const sheet = workbook.addWorksheet(` SMT ${semester}`);
-
-    /* LOGO */
-
     sheet.addImage(logoId,{
       tl:{ col:0, row:0 },
       ext:{ width:120, height:120 }
     });
 
     let row = 1;
-
-    /* HEADER */
-
     sheet.mergeCells(`A${row}:E${row}`);
     const title = sheet.getCell(`A${row}`);
     title.value = `JADWAL KULIAH ${periode}`;
@@ -130,9 +109,6 @@ import { saveAs } from "file-saver";
     
     row++;
     row += 2;
-
-    /* ================= SORT KELAS ================= */
-
     const sortedKelas = Object.keys(kelasList).sort((a, b) => {
       const ambilKodeKelas = (val) => {
         return val
@@ -150,15 +126,9 @@ import { saveAs } from "file-saver";
     
       return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
-
-    /* ================= LOOP KELAS ================= */
-
     sortedKelas.forEach((kelas)=>{
-
       const jadwalList = kelasList[kelas];
-
       sheet.mergeCells(`A${row}:E${row}`);
-
       const titleCell = sheet.getCell(`A${row}`);
       titleCell.value = `SEMESTER ${semester} - KELAS ${kelas}`;
       titleCell.font = {
@@ -169,8 +139,6 @@ import { saveAs } from "file-saver";
       titleCell.alignment = { horizontal:"center" };
 
       row++;
-
-      /* HEADER TABLE */
 
       const headerRow = sheet.addRow([
         "Hari",
@@ -188,8 +156,6 @@ import { saveAs } from "file-saver";
         cell.alignment = { horizontal:"center" };
         borderAll(cell);
       });
-
-      /* GROUP HARI */
 
       const hariGroup = {};
 

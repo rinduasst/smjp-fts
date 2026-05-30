@@ -55,6 +55,7 @@ function AnalisisJadwal() {
           keterangan: item.keterangan,
           daftarConstraint: [],
         };
+        
       }
   
       const constraint = {
@@ -74,8 +75,7 @@ function AnalisisJadwal() {
       return acc;
     }, {})
   );
-  console.log("RAW:", dataPelanggaran);
-console.log("GROUP:", hasilGrouping);
+
 const toRomawi = (num) => {
   const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
   return map[num] || num;
@@ -102,6 +102,7 @@ const formatKelas = (kelasStr) => {
 
   return ` ${romawi}_${jenis}_${kode}`;
 };
+
 return (
 <MainLayout>
   <div className="bg-gray-50 min-h-screen p-2">

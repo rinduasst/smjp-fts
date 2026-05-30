@@ -5,20 +5,20 @@ import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import {useAuth} from "../../hooks/useAuth"
 import ConfirmModal from "../../components/ConfirmModal";
-
-
 function Kurikulum() {
-  const [state, setState] = useState();
-  const { user,peran } = useAuth();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [filterProdi, setFilterProdi] = useState("");
   const navigate = useNavigate();
+  const { user, peran } = useAuth();
+  
+  const [data, setData] = useState([]);
+  const [prodiList, setProdiList] = useState([]);
+  const [selected, setSelected] = useState(null);
 
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterProdi, setFilterProdi] = useState("");
+  const [loading, setLoading] = useState(true);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     prodiId: "",
     nama: "",
@@ -32,9 +32,9 @@ function Kurikulum() {
     message: "",
     type: "success",
   });
-  
-  const [prodiList, setProdiList] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const filteredData = data.filter((item) =>
+  item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
+);
   // contoh data prodi (nanti dari API)
   const fetchKurikulum = async () => {
     setLoading(true);
@@ -63,21 +63,6 @@ function Kurikulum() {
       console.error("Gagal fetch prodi:", err);
     }
   };
-  
-    // fetch prodi cuma sekali
-    useEffect(() => {
-      fetchProdi();
-    }, []);
-
-    // fetch kurikulum kalau filter berubah
-    useEffect(() => {
-      fetchKurikulum();
-    }, [filterProdi, peran, user?.prodiId]);
-    const filteredData = data.filter(item =>
-      item.nama?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-
   const resetForm = () => {
     setFormData({
       prodiId: peran === "TU_PRODI" ? user?.prodiId || "" : "",
@@ -88,7 +73,6 @@ function Kurikulum() {
     });
     setSelected(null);
   };
-
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     setFormData({
@@ -96,7 +80,6 @@ function Kurikulum() {
       [name]: type === "radio" ? value === "true" : value,
     });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -212,7 +195,6 @@ function Kurikulum() {
       type: "delete",
     });
   };
-  
   const confirmDelete = async () => {
     if (!selected) return;
   
@@ -252,6 +234,13 @@ function Kurikulum() {
       setIsSubmitting(false);
     }
   };
+
+    useEffect(() => {
+      fetchProdi();
+    }, []);
+    useEffect(() => {
+      fetchKurikulum();
+    }, [filterProdi, peran, user?.prodiId]);
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">

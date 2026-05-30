@@ -1,47 +1,48 @@
-  import React, { useEffect, useState } from "react";
-  import { Plus,Check,Trash2, Search, Loader2, Eye, X } from "lucide-react";
-  import { useNavigate } from "react-router-dom";
-  import MainLayout from "../../components/MainLayout";
-  import api from "../../api/api";
-  import { useAuth } from "../../hooks/useAuth";
-  import ConfirmModal from "../../components/ConfirmModal";
-  const PerubahanJadwal = () => {
-    const navigate = useNavigate();
+import React, { useEffect, useState } from "react";
+import { Plus,Check,Trash2, Search, Loader2, Eye, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import MainLayout from "../../components/MainLayout";
+import api from "../../api/api";
+import { useAuth } from "../../hooks/useAuth";
+import ConfirmModal from "../../components/ConfirmModal";
+const PerubahanJadwal = () => {
+  const navigate = useNavigate();
+  const { user, peran } = useAuth();
+  const prodiId = user?.prodiId;
 
-    const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState("");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    const [hariList, setHariList] = useState([]);
-    const [slotList, setSlotList] = useState([]);
-    const [ruangList, setRuangList] = useState([]);
-    const [jadwalList, setJadwalList] = useState([]);
-    const { user, peran } = useAuth();
-    const prodiId = user?.prodiId;
-    const [periodeId, setPeriodeId] = useState([]);
-  
-    const [activeBatchId, setActiveBatchId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [periodeId, setPeriodeId] = useState([]);
 
-    const [showDetail, setShowDetail] = useState(false);
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [selectedRejectId, setSelectedRejectId] = useState(null);
-    const [selectedAction, setSelectedAction] = useState(null);
+  const [hariList, setHariList] = useState([]);
+  const [slotList, setSlotList] = useState([]);
+  const [ruangList, setRuangList] = useState([]);
+  const [jadwalList, setJadwalList] = useState([]);
 
-    //alasan penolakan
-    const [showRejectModal, setShowRejectModal] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
-    const [alasanRespon, setAlasanRespon] = useState("");
-    const [loadingReject, setLoadingReject] = useState(false);
-    const [alasanReject, setAlasanReject] = useState("");
+  const [activeBatchId, setActiveBatchId] = useState(null);
 
-    const [confirmModal, setConfirmModal] = useState({
-      open: false,
-      title: "",
-      message: "",
-      type: "success",
-    });
-    const fetchFinalBatch = async () => {
+  const [showDetail, setShowDetail] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+
+  const [selectedId, setSelectedId] = useState(null);
+  const [selectedAction, setSelectedAction] = useState(null);
+
+  const [alasanReject, setAlasanReject] = useState("");
+  const [loadingReject, setLoadingReject] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
+
+   const fetchFinalBatch = async () => {
       try {
         const res = await api.get("/api/scheduler/batch", {
           params: {
@@ -50,7 +51,6 @@
             pageSize: 10,
           },
         });
-    
         const finalBatch = res.data?.data?.items.find(
           (b) => b.status === "FINAL"
         );
@@ -62,17 +62,16 @@
         console.error("Gagal ambil batch:", err);
       }
     };
-    const fetchData = async () => {
+   const fetchData = async () => {
       try {
         setLoading(true);
         const params = { prodiId, page: 1, pageSize: 100 };
         // status opsional
         if (filterStatus) params.status = filterStatus;
-        // periodeId: kirim hanya kalau ada
         if (periodeId?.length > 0) {
-          params.periodeId = periodeId.join(","); // misal backend butuh CSV string
+          params.periodeId = periodeId.join(","); 
         } else {
-          params.periodeId = ""; // jika backend mau string kosong
+          params.periodeId = ""; 
         }
         const res = await api.get("/api/pengajuan-perubahan-jadwal", { params });
         setData(res.data?.data?.items || []);
@@ -85,43 +84,18 @@
         setLoading(false);
       }
     };
-
-    useEffect(() => {
-      if (activeBatchId) {
-        fetchJadwal();
-      }
-    }, [activeBatchId]);
-
-  
-    
-    const formatJam = (jam) => {
-      if (!jam) return "-";
-    
-      // kalau ISO (ada T)
-      if (jam.includes("T")) {
-        return jam.substring(11, 16); // ambil HH:mm
-      }
-    
-      // kalau format 21.00
-      return jam.replace(".", ":");
-    };
-
-
     const fetchHari = async () => {
       const res = await api.get("/api/master-data/hari");
       setHariList(res.data?.data?.data || []);
     };
-    
     const fetchSlot = async () => {
       const res = await api.get("/api/master-data/slot-waktu");
       setSlotList(res.data?.data?.items || []);
     };
-    
     const fetchRuang = async () => {
       const res = await api.get("/api/master-data/ruang");
       setRuangList(res.data?.data?.items || []);
     };
-
     const fetchJadwal = async () => {
       if (!activeBatchId) return;
     
@@ -142,15 +116,6 @@
         console.error("Gagal ambil jadwal:", err);
       }
     };
-
-    useEffect(() => {
-      fetchFinalBatch();
-      fetchData();
-      fetchHari();
-      fetchSlot();
-      fetchRuang();
-
-    }, [filterStatus, periodeId]);
     const filteredData = data.filter((item) => {
       const matchSearch = searchTerm
         ? item.alasanPengaju.toLowerCase().includes(searchTerm.toLowerCase())
@@ -162,15 +127,23 @@
     
       return matchSearch && matchStatus;
     });
-
- 
-
-      const getHariNama = (id) => {
-        return hariList.find(h => h.id === id)?.nama || "-";
-      };
+    const formatJam = (jam) => {
+      if (!jam) return "-";
+    
+      // kalau ISO (ada T)
+      if (jam.includes("T")) {
+        return jam.substring(11, 16); // ambil HH:mm
+      }
+    
+      // kalau format 21.00
+      return jam.replace(".", ":");
+    };
+    const getHariNama = (id) => {
+      return hariList.find(h => h.id === id)?.nama || "-";
+    };
       
-      const getSlotRangeLabel = (slotId, row) => {
-        const sortedSlotList = [...slotList].sort((a, b) =>
+    const getSlotRangeLabel = (slotId, row) => {
+     const sortedSlotList = [...slotList].sort((a, b) =>
           a.jamMulai.localeCompare(b.jamMulai)
         );
       
@@ -186,8 +159,8 @@
         if (!start || !end) return "-";
       
         return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
-      };
-      const getSlotRange = (slotId, sks) => {
+    };
+    const getSlotRange = (slotId, sks) => {
         const sortedSlotList = [...slotList].sort((a, b) =>
           a.jamMulai.localeCompare(b.jamMulai)
         );
@@ -202,15 +175,11 @@
         if (!start || !end) return "-";
       
         return `${formatJam(start.jamMulai)} - ${formatJam(end.jamSelesai)}`;
+    };
+    const getRuangNama = (id) => {      
+    return ruangList.find(r => r.id === id)?.nama || "-";
       };
-      
-      const getRuangNama = (id) => {
-        return ruangList.find(r => r.id === id)?.nama || "-";
-      };
-      
-
-
-      const handleApprove = (id) => {
+    const handleApprove = (id) => {
         setSelectedId(id);
         setSelectedAction("approve");
       
@@ -221,8 +190,8 @@
           type: "confirm", // ubah
         });
     
-      }; 
-      const submitReject = async () => {
+     }; 
+    const submitReject = async () => {
         if (!alasanReject || alasanReject.length < 5) {
           setConfirmModal({
             open: true,
@@ -261,9 +230,9 @@
         } finally {
           setLoadingReject(false);
         }
-      };
+     };
          
-      const handleDelete = (id) => {
+    const handleDelete = (id) => {
         setSelectedId(id);
         setSelectedAction("delete");
       
@@ -273,8 +242,8 @@
           message: "Yakin ingin menghapus pengajuan ini?",
           type: "delete",
         });
-      };
-      const handleConfirm = async () => {
+     };
+    const handleConfirm = async () => {
         try {
           if (selectedAction === "approve") {
             await api.post(
@@ -312,7 +281,20 @@
             type: "error",
           });
         }
-      };
+     };
+      useEffect(() => {
+        if (activeBatchId) {
+          fetchJadwal();
+        }
+      }, [activeBatchId]);
+      useEffect(() => {
+        fetchFinalBatch();
+        fetchData();
+        fetchHari();
+        fetchSlot();
+        fetchRuang();
+  
+      }, [filterStatus, periodeId]);
     return (
         <MainLayout>
           <div className="bg-gray-50 min-h-screen">

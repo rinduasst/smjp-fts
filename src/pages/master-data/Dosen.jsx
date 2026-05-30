@@ -6,12 +6,19 @@ import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
 
 function Dosen() {
+  const { user, peran } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedDosen, setSelectedDosen] = useState(null);
   const [filterProdi, setFilterProdi] = useState("");
+  
+  const [prodiList, setProdiList] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(50);
+  const [totalData, setTotalData] = useState(0);
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -19,14 +26,13 @@ function Dosen() {
     prodiId: "",
     bebanMengajarMaks: "",
   });
-
-  const [prodiList, setProdiList] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(50);
-  const [totalData, setTotalData] = useState(0);
-
-  // Fetch dosen
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
   const fetchDosen = async () => {
     setLoading(true);
     try {
@@ -48,8 +54,10 @@ function Dosen() {
       setLoading(false);
     }
   };
-
-  // Fetch prodi
+  useEffect(() => {
+    fetchDosen();
+    
+  }, [page,searchTerm, filterProdi]);
   const fetchProdi = async () => {
     try {
       const res = await api.get("/api/master-data/prodi");
@@ -58,25 +66,18 @@ function Dosen() {
       console.error(err);
     }
   };
-
   useEffect(() => {
-    fetchDosen();
-    
-  }, [page,searchTerm, filterProdi]);
-useEffect(() => {
-  fetchProdi();
-}, []);
+    fetchProdi();
+  }, []);
 
   const resetForm = () => {
     setFormData({ nama: "", nidn: "", prodiId: "", bebanMengajarMaks: "" });
     setSelectedDosen(null);
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -144,15 +145,6 @@ useEffect(() => {
       setIsSubmitting(false);
     }
   };
-  const [confirmModal, setConfirmModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-  });
-  
-
   const handleEdit = (dosen) => {
     setSelectedDosen(dosen);
     setFormData({
@@ -163,7 +155,6 @@ useEffect(() => {
     });
     setShowModal(true);
   };
-
   const handleDelete = (dosen) => {
     setConfirmModal({
       open: true,
@@ -213,7 +204,6 @@ useEffect(() => {
       },
     });
   };
-  const { user, peran } = useAuth();
   useEffect(() => {
     if (
       peran === "TU_PRODI" &&

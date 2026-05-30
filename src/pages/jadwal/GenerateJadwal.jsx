@@ -8,14 +8,14 @@ import ConfirmModal from "../../components/ConfirmModal";
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
   const [periodeId, setPeriodeId] = useState("");
+  const [preset, setPreset] = useState("CEPAT");
+  const [namaBatch, setNamaBatch] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [penugasanList, setPenugasanList] = useState([]);
   const [fakultasList, setFakultasList] = useState([]);
   const [periodeList, setPeriodeList] = useState([]);
-  const [preset, setPreset] = useState("CEPAT");
-  const [jobId, setJobId] = useState(null);
-  const [namaBatch, setNamaBatch] = useState("");
+  const [penugasanList, setPenugasanList] = useState([]);
+
+  const [loading, setLoading] = useState(false);
   const {user, peran} = useAuth();
   const [confirmModal, setConfirmModal] = useState({
     open: false,
@@ -23,10 +23,7 @@ const GenerateJadwal = () => {
     message: "",
     onConfirm: null,
   });
-  useEffect(() => {
-    fetchFakultas();
-    fetchPeriode();
-  }, []);
+ 
   const fetchFakultas = async () => {
     const res = await api.get("/api/master-data/fakultas");
     setFakultasList(res.data?.data || []);
@@ -42,10 +39,8 @@ const GenerateJadwal = () => {
       toast.warning("Fakultas dan Periode wajib dipilih!");
       return;
     }
-  
     try {
       setLoading(true);
-  
       const payload = {
         fakultasId,
         periodeAkademikId: periodeId,
@@ -115,21 +110,16 @@ const GenerateJadwal = () => {
       setLoading(false);
     }
   };
-    const prodiList = [
-      ...new Map(
-        penugasanList
-          .filter(p => p.programMatkul?.prodi)
-          .map(p => [
-            p.programMatkul.prodi.id,
-            p.programMatkul.prodi
-          ])
-      ).values()
-    ];
+
     useEffect(() => {
       if (peran === "TU_FAKULTAS" && user?.fakultasId) {
         setFakultasId(user.fakultasId);
       }
     }, [peran, user]);
+    useEffect(() => {
+      fetchFakultas();
+      fetchPeriode();
+    }, []);
 
   return (
     <MainLayout>

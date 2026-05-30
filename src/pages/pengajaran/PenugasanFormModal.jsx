@@ -26,6 +26,7 @@ function PenugasanFormModal({
   const [dosenDropdown, setDosenDropdown] = useState([]);
   const [showDosenDropdown, setShowDosenDropdown] = useState(false);
   const [loadingDosen, setLoadingDosen] = useState(false);
+  const [selectedPeriode, setSelectedPeriode] = useState("");
 
   const [inputMatkul, setInputMatkul] = useState("");
   const [matkulDropdown, setMatkulDropdown] = useState([]);
@@ -95,7 +96,8 @@ useEffect(() => {
           q: keyword,
           page: 1,
           pageSize: 10,
-          prodiId: selectedProdi.id
+          prodiId: selectedProdi.id,
+          periodeId: selectedPeriode
         }
       });
 
@@ -369,6 +371,8 @@ useEffect(() => {
     setShowDosenDropdown(false);
     setShowMatkulDropdown(false);
     setSelectedRow(null);
+    setSelectedPeriode("");
+    setSelectedProdi(null);
     setJadwalMku({
       hariId: "",
       slotId: "",
@@ -511,7 +515,33 @@ useEffect(() => {
                 )}
               </div>
             </div>
+            {/* PERIODE */}
+            <div>
+              <label className="text-sm font-medium">
+                Periode Akademik
+              </label>
 
+              <select
+                value={selectedPeriode}
+                onChange={(e) => {
+                  setSelectedPeriode(e.target.value);
+
+                  // reset matkul saat periode berubah
+                  setPengajaranList([]);
+                  setInputMatkul("");
+                }}
+                className="w-full px-3 py-2 bg-gray-100 rounded
+                focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Pilih Periode</option>
+
+                {periodeList.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
             {/* SEARCH MATKUL */}
             <div className="relative">
           <label className="text-sm font-medium">Tambah Mata Kuliah</label>

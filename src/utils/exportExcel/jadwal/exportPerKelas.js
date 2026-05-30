@@ -94,8 +94,6 @@ row += 2;
       ? Object.keys(groupedData)
       : [filterKelas];
 
-  /* ================= LOOP KELAS ================= */
-
   kelasList.forEach((kelas) => {
     const jadwalList = groupedData[kelas] || [];
 
@@ -118,8 +116,6 @@ row += 2;
     title.font = { bold: true, size: 12 };
 
     row++;
-
-    /* HEADER TABLE */
     const headerRow = sheet.addRow([
       "Hari",
       "Jam",
@@ -182,8 +178,6 @@ row += 2;
     row = sheet.lastRow.number + 2;
   });
 
-  /* ================= COLUMN WIDTH ================= */
-
   sheet.columns = [
     { width: 15 },
     { width: 20 },
@@ -191,9 +185,6 @@ row += 2;
     { width: 30 },
     { width: 18 },
   ];
-
-  /* ================= SAVE ================= */
-
   const buffer = await workbook.xlsx.writeBuffer();
 
   saveAs(

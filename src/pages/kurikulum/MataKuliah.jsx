@@ -4,16 +4,22 @@ import { Search, Plus, Edit, Trash2, X, Loader2} from "lucide-react";
 import api from "../../api/api";
 import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
-
-
-
 function MataKuliah() {
+  const { user,peran } = useAuth();
+
   const [data, setData] = useState([]);
+  const [prodiList, setListProdi] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selected, setSelected] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
+  const [showModal, setShowModal] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(50);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+
+  const [selected, setSelected] = useState(null);
   const [formData, setFormData] = useState({
     kode: "",
     nama: "",
@@ -21,18 +27,14 @@ function MataKuliah() {
     jenis: "WAJIB",
     prodiId: ""
   });
+  const [formErrors, setFormErrors] = useState({});
   const [confirmModal, setConfirmModal] = useState({
     open: false,
     title: "",
     message: "",
     type: "success",
   });
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(50);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
 
-  const [prodiList, setListProdi] = useState([]);
   const fetchData = async () => {
     try {
       const res = await api.get(
@@ -72,7 +74,6 @@ function MataKuliah() {
       setFormErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
-
   const validateForm = () => {
     const errors = {};
     if (!formData.kode.trim()) errors.kode = "Kode wajib diisi";
@@ -80,7 +81,6 @@ function MataKuliah() {
     if (!formData.sks) errors.sks = "SKS wajib diisi";
     return errors;
   };
-
   const resetForm = () => {
     setFormData({
       kode: "",
@@ -176,7 +176,6 @@ function MataKuliah() {
           type: "error",
         });
       }
-  
     } finally {
       setIsSubmitting(false);
     }
@@ -190,8 +189,7 @@ function MataKuliah() {
       message: `Yakin ingin menghapus mata kuliah "${row.kode} - ${row.nama}"?`,
       type: "delete",
     });
-  };
-  
+  }; 
   const confirmDelete = async () => {
     if (!selected) return;
   
@@ -230,14 +228,10 @@ function MataKuliah() {
       setIsSubmitting(false);
     }
   };
-  const { user,peran } = useAuth();
 
-
-
-  
   return (
     <MainLayout>
- <div className=" bg-gray-50 min-h-screen">
+    <div className=" bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Data Mata Kuliah</h1>

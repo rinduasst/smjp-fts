@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import MainLayout from "../components/MainLayout";
+import api from "../api/api";
+import ConfirmModal from "../components/ConfirmModal";
 import {
   Pencil,
   Trash2,
@@ -7,12 +10,7 @@ import {
   Search,
   Loader2,
 } from "lucide-react";
-import MainLayout from "../components/MainLayout";
-import api from "../api/api";
-import ConfirmModal from "../components/ConfirmModal";
-
 function ManajemenPengguna() {
-
   const [data, setData] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -24,8 +22,6 @@ function ManajemenPengguna() {
 
   const [fakultasList, setFakultasList] = useState([]);
   const [prodiList, setProdiList] = useState([]);
-  const [peranList, setPeranList] = useState([]);
-
   const [formData, setFormData] = useState({
     nama: "",
     email: "",
@@ -44,6 +40,7 @@ function ManajemenPengguna() {
   const [pageSize] = useState(50);
   const [total, setTotal] = useState(0);
   
+ 
   const fetchPengguna = async () => {
     try {
       setLoading(true);  
@@ -71,17 +68,14 @@ function ManajemenPengguna() {
     const res = await api.get("/api/master-data/fakultas");
     setFakultasList(res.data?.data || []);
   };
-
   const fetchProdi = async () => {
     const res = await api.get("/api/master-data/prodi");
     setProdiList(res.data?.data?.items || []);
   };
-
   useEffect(() => {
     fetchFakultas();
     fetchProdi();
   }, []);
-
   // untuk filter data
   const filteredData = data.filter((u) => {
     const matchSearch =
@@ -93,9 +87,6 @@ function ManajemenPengguna() {
 
     return matchSearch && matchPeran;
   });
-
-  // handle chane
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -103,12 +94,9 @@ function ManajemenPengguna() {
       [name]: value,
     }));
   };
-
   // open modal
   const openAddModal = () => {
-
     setSelectedItem(null);
-
     setFormData({
       nama: "",
       email: "",
@@ -131,8 +119,6 @@ function ManajemenPengguna() {
     });
     setShowModal(true);
   };
-
-  //submit
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -201,7 +187,6 @@ function ManajemenPengguna() {
       });
     }
   };
-  //delete
   const handleDelete = (item) => {
     setSelectedItem(item);
   
@@ -240,7 +225,6 @@ function ManajemenPengguna() {
       });
     }
   };
-
   return (
 
     <MainLayout>

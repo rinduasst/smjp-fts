@@ -6,9 +6,7 @@ export const exportAllProdi = async (data, batchInfo) => {
 
   const fakultas = batchInfo?.fakultas?.nama || "";
   const periode = batchInfo?.periode?.nama || "";
-
-  /* ================= LOGO ================= */
-
+//logo
   const logoResponse = await fetch("/logofts.png");
   const logoBuffer = await logoResponse.arrayBuffer();
 
@@ -36,7 +34,7 @@ export const exportAllProdi = async (data, batchInfo) => {
     VII: 7,
     VIII: 8,
   };
-  /* ================= HELPER ================= */
+ //helper
 
   const borderAll = (cell) => {
     cell.border = {
@@ -69,7 +67,7 @@ export const exportAllProdi = async (data, batchInfo) => {
     return a.localeCompare(b);
   };
 
-  /* ================= LOOP PRODI ================= */
+  //loop prodi
 
   Object.entries(data).forEach(([namaProdi, hariData]) => {
     if (!hariData || hariData.length === 0) return;
@@ -78,15 +76,13 @@ export const exportAllProdi = async (data, batchInfo) => {
       namaProdi.substring(0, 31).toUpperCase()
     );
 
-    /* ================= ADD LOGO ================= */
+   //tambah logo
 
     sheet.addImage(logoId, {
       tl: { col: 0, row: 0 },
       ext: { width: 120, height: 120 },
     });
-
-    /* ================= HEADER ================= */
-
+//judul
     let row = 1;
 
     const headersInfo = [
@@ -113,9 +109,6 @@ export const exportAllProdi = async (data, batchInfo) => {
     });
 
     row += 2;
-
-    /* ================= GROUPING LIKE JadwalKelas.jsx ================= */
-
     const grouped = {};
 
     hariData.forEach((hari) => {
@@ -151,9 +144,7 @@ export const exportAllProdi = async (data, batchInfo) => {
     const semesterList = Object.keys(grouped)
       .map(Number)
       .sort((a, b) => a - b);
-
-    /* ================= LOOP SEMESTER & KELAS ================= */
-
+      //loop semester kelas
     semesterList.forEach((semesterAktif) => {
       const kelasEntries = Object.entries(grouped[semesterAktif] || {}).sort(
         ([a], [b]) => sortKelas(a, b)
@@ -161,9 +152,7 @@ export const exportAllProdi = async (data, batchInfo) => {
 
       kelasEntries.forEach(([kelas, jadwalList]) => {
         if (!jadwalList.length) return;
-
-        /* ================= TITLE ================= */
-
+        //tittle
         mergeSafe(sheet, `A${row}:E${row}`);
         const titleCell = sheet.getCell(`A${row}`);
         titleCell.value = `SEMESTER ${toRomawi(semesterAktif)} - KELAS ${kelas}`;
@@ -176,9 +165,7 @@ export const exportAllProdi = async (data, batchInfo) => {
         };
         sheet.getRow(row).height = 25;
         row++;
-
-        /* ================= HEADER TABLE ================= */
-
+        //header table
         const headers = ["Hari", "Jam", "Mata Kuliah", "Dosen", "Ruangan"];
         headers.forEach((header, i) => {
           const cell = sheet.getCell(row, i + 1);
@@ -194,17 +181,11 @@ export const exportAllProdi = async (data, batchInfo) => {
         });
         sheet.getRow(row).height = 22;
         row++;
-
-        /* ================= GROUP HARI ================= */
-
         const hariGroup = {};
         jadwalList.forEach((j) => {
           if (!hariGroup[j.hari]) hariGroup[j.hari] = [];
           hariGroup[j.hari].push(j);
         });
-
-        /* ================= DATA ================= */
-
         hariUrut.forEach((hari) => {
           const items = hariGroup[hari] || [];
           if (!items.length) return;
@@ -242,8 +223,6 @@ export const exportAllProdi = async (data, batchInfo) => {
       });
     });
 
-    /* ================= WIDTH ================= */
-
     sheet.columns = [
       { width: 15 },
       { width: 20 },
@@ -252,8 +231,6 @@ export const exportAllProdi = async (data, batchInfo) => {
       { width: 18 },
     ];
   });
-
-  /* ================= EXPORT ================= */
 
   const buffer = await workbook.xlsx.writeBuffer();
 

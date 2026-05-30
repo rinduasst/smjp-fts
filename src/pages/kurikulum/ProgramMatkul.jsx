@@ -6,51 +6,49 @@ import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
 
 function ProgramMatkul() {
+  const { user, peran } = useAuth();
   const [data, setData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  const [isEdit, setIsEdit] = useState(false);
+  const [programMatkulList, setProgramMatkulList] = useState([]);
   const [mataKuliahList, setMataKuliahList] = useState([]);
   const [selectedMatkul, setSelectedMatkul] = useState([]);
-  const [programMatkulList, setProgramMatkulList] = useState([]);
 
-  const [selectedId, setSelectedId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterProdi, setFilterProdi] = useState("");
   const [filterKurikulum, setFilterKurikulum] = useState("");
   const [filterPeriode, setFilterPeriode] = useState("");
 
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  const [selectedId, setSelectedId] = useState(null);
+
+  const [prodiList, setProdiList] = useState([]);
+  const [kurikulumList, setKurikulumList] = useState([]);
+  const [periodeList, setPeriodeList] = useState([]);
+
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [totalData, setTotalData] = useState(0);
-  const { user, peran } = useAuth();
 
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const [form, setForm] = useState({
     prodiId: "",
     kurikulumId: "",
     periodeId: "",
     jumlahKelompokKelas: 1
   });
-  const [confirmModal, setConfirmModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    type: "success",
-    onConfirm: null,
-  });
-  const [prodiList, setProdiList] = useState([]);
-  const [kurikulumList, setKurikulumList] = useState([]);
-  const [periodeList, setPeriodeList] = useState([]);
-
   const totalPages = Math.ceil(totalData / pageSize);
   const uniqueKurikulum = [
     ...new Map(
       kurikulumList.map((k) => [k.nama, k])
     ).values()
   ];
-
-  //fetch data
   const fetchData = async (currentPage = page) => {
     try {
       const res = await api.get("/api/kurikulum/program-matkul", {
@@ -69,7 +67,9 @@ function ProgramMatkul() {
       console.error("FETCH ERROR:", err.response?.data || err);
     }
   };
-
+  useEffect(() => {
+    fetchData(page);
+  }, [page, searchTerm, filterProdi, filterKurikulum, filterPeriode]);
   const fetchMaster = async () => {
     try {
       const [prodi, kurikulum, periode] = await Promise.all([
@@ -88,28 +88,6 @@ function ProgramMatkul() {
   useEffect(() => {
     fetchMaster();
   }, []);
-  
-  const toggleMatkul = (id) => {
-    setSelectedMatkul((prev) => {
-      const exist = prev.find((m) => m.mataKuliahId === id);
-      if (exist) {
-        return prev.filter((m) => m.mataKuliahId !== id);
-      }
-      return [
-        ...prev,
-        { mataKuliahId: id, jumlahKelompokKelas: 1 }
-      ];
-    });
-  };
-  const updateJumlahKelas = (id, value) => {
-    setSelectedMatkul((prev) =>
-      prev.map((m) =>
-        m.mataKuliahId === id
-          ? { ...m, jumlahKelompokKelas: Number(value) }
-          : m
-      )
-    );
-  };
   const fetchMatkulKurikulum = async (kurikulumId) => {
     try {
       const res = await api.get(`/api/kurikulum/kurikulum/${kurikulumId}`);
@@ -119,16 +97,13 @@ function ProgramMatkul() {
       console.error(err);
     }
   };
-  
   useEffect(() => {
     if (form.kurikulumId) {
       fetchMatkulKurikulum(form.kurikulumId);
       setSelectedMatkul([]);
     }
   }, [form.kurikulumId]);
-  useEffect(() => {
-    fetchData(page);
-  }, [page, searchTerm, filterProdi, filterKurikulum, filterPeriode]);
+
   const fetchProgramMatkul = async () => {
     try {
       const res = await api.get("/api/kurikulum/program-matkul", {
@@ -152,6 +127,28 @@ function ProgramMatkul() {
       fetchProgramMatkul();
     }
   }, [form.prodiId, form.periodeId, form.kurikulumId]);
+
+  const toggleMatkul = (id) => {
+    setSelectedMatkul((prev) => {
+      const exist = prev.find((m) => m.mataKuliahId === id);
+      if (exist) {
+        return prev.filter((m) => m.mataKuliahId !== id);
+      }
+      return [
+        ...prev,
+        { mataKuliahId: id, jumlahKelompokKelas: 1 }
+      ];
+    });
+  };
+  const updateJumlahKelas = (id, value) => {
+    setSelectedMatkul((prev) =>
+      prev.map((m) =>
+        m.mataKuliahId === id
+          ? { ...m, jumlahKelompokKelas: Number(value) }
+          : m
+      )
+    );
+  };
 
   const filteredData = data.filter((d) => {
     const matchSearch =
@@ -179,8 +176,6 @@ function ProgramMatkul() {
   
     return !sudahDiprogam;
   });
-
-
   const resetForm = () => {
     setForm({
       prodiId: "",
@@ -281,7 +276,6 @@ function ProgramMatkul() {
     });
     setShowEditModal(true);
   };
-
   const handleDelete = (row) => {
     setSelectedId(row.id);
   
@@ -331,8 +325,6 @@ function ProgramMatkul() {
     ? k.prodi?.id === user?.prodiId
     : true
 );
-
-
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
       setForm((prev) => ({

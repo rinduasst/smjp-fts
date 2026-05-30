@@ -6,16 +6,24 @@ import { ArrowLeft, CheckCircle, Loader2, Eye } from "lucide-react";
 import ConfirmModal from "../../components/ConfirmModal";
 
 const BatchJadwalDetail = () => {
+  const [batch, setBatch] = useState(null);
+  const [jadwalList, setJadwalList] = useState([]);
+  const [slotList, setSlotList] = useState([]);
+  
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  
+  const [conflictCount, setConflictCount] = useState(0);
+
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [batch, setBatch] = useState(null);
-  const [jadwalList, setJadwalList] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const [slotList, setSlotList] = useState([]);
-  const [conflictCount, setConflictCount] = useState(0);
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
   const totalKonflik = conflictCount;
   const warnaProdi = {
     "teknik mesin": "bg-yellow-300 text-black",
@@ -26,23 +34,7 @@ const BatchJadwalDetail = () => {
     "teknik informatika": "bg-purple-500 text-white",
     "teknik elektro": "bg-red-500 text-white",
   };
-  const [confirmModal, setConfirmModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    type: "success",
-  });
-
-  const getWarnaProdi = (nama) => {
-    if (!nama) return "";
-    return warnaProdi[nama.toLowerCase()] || "";
-  };
-
-  const formatNamaBatch = (nama) => {
-    if (!nama) return "-";
-    return nama;
-  };
-
+  const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   const fetchBatch = async () => {
     try {
       const res = await api.get(`/api/scheduler/batch/${id}`);
@@ -78,7 +70,6 @@ const BatchJadwalDetail = () => {
       setLoading(false);
     }
   };
-  console.log(jadwalList.filter(i => i.hasConflict));
   const fetchSlotWaktu = async () => {
     try {
       const res = await api.get("/api/master-data/slot-waktu");
@@ -102,12 +93,23 @@ const BatchJadwalDetail = () => {
       console.error("ERROR SLOT:", err);
     }
   };
+    // const totalKonflik = jadwalList.filter((i) => i.hasConflict).length;
+    const fetchConflictCount = async () => {
+      try {
+        const res = await api.get(`/api/scheduler/batch/${id}/conflicts`);
+        const count = res.data?.data?.conflicts?.ruang?.count || 0;
+    
+        // kalau masih ada konflik, coba cek ulang (delay)
+        if (count > 0) {
+          setTimeout(fetchConflictCount, 1000); // retry 1 detik
+        }
+    
+        setConflictCount(count);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  useEffect(() => {
-    fetchData();
-    fetchSlotWaktu();
-    fetchConflictCount();
-  }, [id]);
   const handleSetAktif = async () => {
     // cek konflik dulu
     if (totalKonflik > 0) {
@@ -144,43 +146,15 @@ const BatchJadwalDetail = () => {
       });
     }
   };
-
-  // const totalKonflik = jadwalList.filter((i) => i.hasConflict).length;
-  const fetchConflictCount = async () => {
-    try {
-      const res = await api.get(`/api/scheduler/batch/${id}/conflicts`);
-      const count = res.data?.data?.conflicts?.ruang?.count || 0;
-  
-      // kalau masih ada konflik, coba cek ulang (delay)
-      if (count > 0) {
-        setTimeout(fetchConflictCount, 1000); // retry 1 detik
-      }
-  
-      setConflictCount(count);
-    } catch (err) {
-      console.error(err);
-    }
+  const getWarnaProdi = (nama) => {
+    if (!nama) return "";
+    return warnaProdi[nama.toLowerCase()] || "";
   };
 
-  const filtered = jadwalList.filter((i) =>
-    i.mataKuliah?.toLowerCase().includes(search.toLowerCase()) ||
-    i.dosen?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const grouped = filtered.reduce((acc, item) => {
-    const h = item.hari || "Tanpa Hari";
-    if (!acc[h]) acc[h] = [];
-    acc[h].push(item);
-    return acc;
-  }, {});
-
-  const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const sesiList = slotList.map((s) => ({
-    id: s.id,
-    label: `${s.jamMulai}-${s.jamSelesai}`,
-    mulai: s.jamMulai,
-    selesai: s.jamSelesai,
-  }));
+  const formatNamaBatch = (nama) => {
+    if (!nama) return "-";
+    return nama;
+  };
   const hitungRowSpan = (mulai, selesai) => {
     const start = sesiList.findIndex((s) => s.mulai === mulai);
     const end = sesiList.findIndex((s) => s.selesai === selesai);
@@ -191,52 +165,74 @@ const BatchJadwalDetail = () => {
   };
   const toRomawi = (num) =>
   ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][num] || num;
+ 
+  const formatKelas = (jadwal) => {
+    if (!jadwal?.kelas) return "-";
 
-const formatKelas = (jadwal) => {
-  if (!jadwal?.kelas) return "-";
+    let romawi = "";
 
-  let romawi = "";
+    if (jadwal.semester) {
+      romawi =
+        typeof jadwal.semester === "number"
+          ? toRomawi(jadwal.semester)
+          : jadwal.semester;
+    }
 
-  if (jadwal.semester) {
-    romawi =
-      typeof jadwal.semester === "number"
-        ? toRomawi(jadwal.semester)
-        : jadwal.semester;
-  }
+    const kelasList = jadwal.kelas.split(",").map((k) => k.trim());
 
-  const kelasList = jadwal.kelas.split(",").map((k) => k.trim());
+    return kelasList
+      .map((k) => (romawi ? `${romawi}_${k}` : k))
+      .join(", ");
+  };
 
-  return kelasList
-    .map((k) => (romawi ? `${romawi}_${k}` : k))
-    .join(", ");
-};
-const ruangListGlobal = React.useMemo(() => {
-  return [...new Set(jadwalList.map(i => i.ruangan))]
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-}, [jadwalList]);
-const normalize = (val) => val?.toString().trim().toLowerCase();
-const matrix = React.useMemo(() => {
-  const m = {};
+  
+  const filtered = jadwalList.filter((i) =>
+  i.mataKuliah?.toLowerCase().includes(search.toLowerCase()) ||
+  i.dosen?.toLowerCase().includes(search.toLowerCase())
+  );
+  const grouped = filtered.reduce((acc, item) => {
+    const h = item.hari || "Tanpa Hari";
+    if (!acc[h]) acc[h] = [];
+    acc[h].push(item);
+    return acc;
+  }, {});
+  const sesiList = slotList.map((s) => ({
+    id: s.id,
+    label: `${s.jamMulai}-${s.jamSelesai}`,
+    mulai: s.jamMulai,
+    selesai: s.jamSelesai,
+  }));
+  const ruangListGlobal = React.useMemo(() => {
+    return [...new Set(jadwalList.map(i => i.ruangan))]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [jadwalList]);
+  const matrix = React.useMemo(() => {
+    const m = {};
 
-  jadwalList.forEach(j => {
-    const slotIndex = sesiList.findIndex(s => s.mulai === j.jamMulai);
-    if (slotIndex === -1) return;
+    jadwalList.forEach(j => {
+      const slotIndex = sesiList.findIndex(s => s.mulai === j.jamMulai);
+      if (slotIndex === -1) return;
 
-    const slot = sesiList[slotIndex];
-    const key = `${j.hari}-${slot.label}`;
+      const slot = sesiList[slotIndex];
+      const key = `${j.hari}-${slot.label}`;
 
-    if (!m[key]) m[key] = {};
+      if (!m[key]) m[key] = {};
 
-    m[key][j.ruangan] = {
-      ...j,
-      rowspan: hitungRowSpan(j.jamMulai, j.jamSelesai),
-      startIndex: slotIndex
-    };
-  });
+      m[key][j.ruangan] = {
+        ...j,
+        rowspan: hitungRowSpan(j.jamMulai, j.jamSelesai),
+        startIndex: slotIndex
+      };
+    });
 
-  return m;
-}, [jadwalList, sesiList]);
+    return m;
+  }, [jadwalList, sesiList]);
 
+useEffect(() => {
+  fetchData();
+  fetchSlotWaktu();
+  fetchConflictCount();
+}, [id]);
   return (
     <MainLayout>
      <div className="bg-gray-50 min-h-screen">

@@ -7,19 +7,27 @@ import Select from "react-select";
 import ConfirmModal from "../../components/ConfirmModal";
 
 const ConstraintDosen = () => {
+  const { user, peran } = useAuth();
   const [data, setData] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+
   const [dosenList, setDosenList] = useState([]);
   const [hariList, setHariList] = useState([]);
   const [jamList, setJamList] = useState([]);
   const [ruangList, setRuangList] = useState([]);
   const [filterJenis, setFilterJenis] = useState("");
-  const { user, peran } = useAuth();
   const [openGroups, setOpenGroups] = useState({});
+  
+  const [selectedDosen, setSelectedDosen] = useState(null);
+  const [inputDosen, setInputDosen] = useState("");
+  const [dosenDropdown, setDosenDropdown] = useState([]);
+  const [showDosenDropdown, setShowDosenDropdown] = useState(false);
+  const [loadingDosen, setLoadingDosen] = useState(false);
 
   const [formData, setFormData] = useState({
     dosenId: "",
@@ -64,8 +72,6 @@ const ConstraintDosen = () => {
 
     fetchMaster();
   }, []);
-
-  // ================= FETCH DATA =================
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -77,12 +83,9 @@ const ConstraintDosen = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData();
   }, []);
-
-  // form
   const resetForm = () => {
     setFormData({
       dosenId: "",
@@ -135,8 +138,6 @@ const ConstraintDosen = () => {
     setIsEdit(true);
     setShowModal(true);
   };
-  
-  
   const handleSubmit = async () => {
 
     if (!formData.tipe) {
@@ -286,11 +287,7 @@ const ConstraintDosen = () => {
       setLoading(false);
     }
   };
-  const [selectedDosen, setSelectedDosen] = useState(null);
-  const [inputDosen, setInputDosen] = useState("");
-  const [dosenDropdown, setDosenDropdown] = useState([]);
-  const [showDosenDropdown, setShowDosenDropdown] = useState(false);
-  const [loadingDosen, setLoadingDosen] = useState(false);
+
   const searchDosen = async (keyword) => {
     try {
       setLoadingDosen(true);
@@ -330,7 +327,6 @@ const timeoutRef = useRef(null);
         return jenis;
     }
   };
-
   const filteredData = useMemo(() => {
     const result = data.filter((item) => {
       const matchSearch =
@@ -609,8 +605,6 @@ const timeoutRef = useRef(null);
         return null;
     }
   };
-  
-  // render
   return (
       <MainLayout>
           <div className=" bg-gray-50 min-h-screen">

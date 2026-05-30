@@ -11,9 +11,6 @@ import {
 import ConfirmModal from "../../components/ConfirmModal";
 
 const DetailKonflik = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,16 +19,9 @@ const DetailKonflik = () => {
   const [isResolved, setIsResolved] = useState(false);
 
   const [activeTab, setActiveTab] = useState("konflik");
-
-  useEffect(() => {
-    fetchKonflik();
-  }, []);
-
-  useEffect(() => {
-    if (isResolved) {
-      setActiveTab("riwayat");
-    }
-  }, [isResolved]);
+  const navigate = useNavigate();
+  const { id } = useParams();
+ 
 
   const fetchKonflik = async () => {
     try {
@@ -50,17 +40,6 @@ const DetailKonflik = () => {
       setLoading(false);
     }
   };
-
-  const konflikRuang = data?.conflicts?.ruang?.items || [];
-  const totalKonflik = data?.conflicts?.ruang?.count || 0;
-
-  const jumlahSlotBentrok = konflikRuang.length;
-
-  const jumlahJadwalBentrok = konflikRuang.reduce(
-    (acc, item) => acc + item.conflictingSchedules.length,
-    0
-  );
-
   const handleResolveAll = async () => {
     try {
       setLoadingResolve(true);
@@ -79,23 +58,20 @@ const DetailKonflik = () => {
       setLoadingResolve(false);
     }
   };
-  const formatNamaBatch = (nama) => {
-    if (!nama) return "-";
-    const match = nama.match(/Batch (.+)/);
-    if (!match) return nama;
 
-    const date = new Date(match[1]);
-    if (isNaN(date)) return nama;
+  const konflikRuang = data?.conflicts?.ruang?.items || [];
+  const totalKonflik = data?.conflicts?.ruang?.count || 0;
+  const jumlahSlotBentrok = konflikRuang.length;
 
-    return `Batch ${date.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    })} - ${date.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-  };
+  useEffect(() => {
+    fetchKonflik();
+  }, []);
+
+  useEffect(() => {
+    if (isResolved) {
+      setActiveTab("riwayat");
+    }
+  }, [isResolved]);
 
   return (
     <MainLayout>
@@ -114,55 +90,43 @@ const DetailKonflik = () => {
           <h1 className="text-xl font-bold">
             Detail Konflik Jadwal
           </h1>
-              {/* <p className="text-sm text-gray-600">
-               Batch {formatNamaBatch(data?.batchNama)} 
-              </p> */}
         </div>
         </div>
 
-        {/* summary*/}
-        {!loading && totalKonflik > 0 && changes.length === 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500 mb-1">Total bentrok waktu</p>
-              <p className="text-lg font-semibold text-red-600">
+    {/* SUMMARY */}
+      {!loading && jumlahSlotBentrok > 0 && changes.length === 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-6">
+          
+          <div className="flex items-center justify-between">
+            
+            {/* INFO */}
+            <div>
+              <p className="text-xs text-gray-500 mb-1">
+                Total Bentrok 
+              </p>
+
+              <p className="text-2xl font-bold text-red-600">
                 {jumlahSlotBentrok}
               </p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500 mb-1">Total Jadwal Bentrok</p>
-              <p className="text-xl font-bold text-orange-600">
-                {jumlahJadwalBentrok}
-              </p>
-            </div>
+            {/* BUTTON */}
+            <button
+              onClick={handleResolveAll}
+              disabled={loadingResolve}
+              className="inline-flex items-center gap-2 px-4 py-2
+              bg-green-600 text-white text-sm font-medium
+              rounded-lg hover:bg-green-700 transition
+              disabled:opacity-50"
+            >
+              <CheckCircle size={16} />
+              {loadingResolve ? "Memproses..." : "Resolve Konflik"}
+            </button>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">
-                    Total Bentrok Ruangan
-                  </p>
-                  <p className="text-xl font-bold text-red-600">
-                    {totalKonflik}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleResolveAll}
-                  disabled={loadingResolve}
-                  className="inline-flex items-center gap-1 px-3 py-2
-                  bg-green-600 text-white text-xs font-medium 
-                  rounded-lg hover:bg-green-700 transition
-                  disabled:opacity-50"
-                >
-                  <CheckCircle size={14} />
-                  {loadingResolve ? "Proses..." : "Resolve konflik jadwal"}
-                </button>
-              </div>
-            </div>
           </div>
-        )}
+
+        </div>
+      )}
 
         {loading && (
           <div className="flex items-center justify-center min-h-[60vh] text-gray-500 gap-2">
@@ -188,9 +152,8 @@ const DetailKonflik = () => {
           </p>
 
         </div>
-      )}
-
-      {/* ================= TAB SECTION ================= */}
+      )}  
+      {/* Tab section */}
       {!loading && (totalKonflik > 0 || isResolved) && (
         <>
           {/* TAB NAVIGATION */}
@@ -242,7 +205,6 @@ const DetailKonflik = () => {
 
         </div>
       )}
-    {/* TAB CONTENT */}
      {/* konflik */}
      {activeTab === "konflik" && (
               <div className="space-y-4">

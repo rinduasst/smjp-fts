@@ -7,21 +7,18 @@ import { exportPdfAllProdi } from "../../utils/exportPdf/exportPdfAllProdi.js";
 
 const Jadwal = () => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [batchInfo, setBatchInfo] = useState(null);
   const [prodiList, setProdiList] = useState([]);
+
   const [selectedProdi, setSelectedProdi] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(200);
   const [total, setTotal] = useState(0);
-  const [hasFetched, setHasFetched] = useState(false);
 
-  const [showExportModal, setShowExportModal] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState("");
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  const totalPages = Math.ceil(total / pageSize);
-
-  // Ambil batch FINAL
   const fetchFinalBatch = async () => {
     try {
       const res = await api.get("/api/scheduler/batch", {
@@ -48,9 +45,7 @@ const Jadwal = () => {
   const fetchJadwal = async () => {
     if (!batchInfo) return;
     setLoading(true);
-    setHasFetched(false);
-  
-    try {
+  try {
       const params = {
         periodeAkademikId: batchInfo.periodeId,
         statusBatch: "FINAL",
@@ -69,60 +64,7 @@ const Jadwal = () => {
       console.error("Gagal mengambil jadwal", err);
     } finally {
       setLoading(false);
-      setHasFetched(true);
     }
-  };
-
-  // useEffect init batch & prodi
-  useEffect(() => {
-    const init = async () => {
-      await fetchFinalBatch();
-      await fetchProdi();
-    };
-    init();
-  }, []);
-
-  // useEffect fetch jadwal saat batch, prodi, atau page berubah
-  useEffect(() => {
-    fetchJadwal();
-  }, [batchInfo, selectedProdi, page]);
-
-  // Grouping berdasarkan hari
-  const groupedByHari = data.reduce((acc, item) => {
-    const hari = item.hari || "-";
-    if (!acc[hari]) acc[hari] = [];
-    acc[hari].push(item);
-    return acc;
-  }, {});
-
-  const toRomawi = (num) => {
-    if (!num || num <= 0) return "";
-    const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
-    return map[num] || num;
-  };
-
-  const formatKelas = (jadwal) => {
-
-    const semester = Number(jadwal?.semester);
-  
-    const romawi = toRomawi(semester);
-  
-    const kelasList = String(jadwal?.kelas || "")
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean);
-  
-    return kelasList
-      .map((k) => {
-        if (
-          jadwal?.jenisKelas?.toLowerCase() === "karyawan"
-        ) {
-          return `${romawi}_KAR_KARYAWAN`;
-        }
-  
-        return `${romawi}_REG_${k}`;
-      })
-      .join(", ");
   };
   const handleExportExcel = async () => {
     if (!batchInfo) return;
@@ -180,6 +122,55 @@ const Jadwal = () => {
       console.error("Gagal export PDF", err);
     }
   };
+  const toRomawi = (num) => {
+    if (!num || num <= 0) return "";
+    const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+    return map[num] || num;
+  };
+
+  const formatKelas = (jadwal) => {
+    const semester = Number(jadwal?.semester);
+    const romawi = toRomawi(semester);
+    const kelasList = String(jadwal?.kelas || "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+  
+    return kelasList
+      .map((k) => {
+        if (
+          jadwal?.jenisKelas?.toLowerCase() === "karyawan"
+        ) {
+          return `${romawi}_KAR_KARYAWAN`;
+        }
+  
+        return `${romawi}_REG_${k}`;
+      })
+      .join(", ");
+  };
+
+    // useEffect init batch & prodi
+    useEffect(() => {
+      const init = async () => {
+        await fetchFinalBatch();
+        await fetchProdi();
+      };
+      init();
+    }, []);
+  
+    // useEffect fetch jadwal saat batch, prodi, atau page berubah
+    useEffect(() => {
+      fetchJadwal();
+    }, [batchInfo, selectedProdi, page]);
+      // Grouping berdasarkan hari
+  
+  const totalPages = Math.ceil(total / pageSize);
+  const groupedByHari = data.reduce((acc, item) => {
+    const hari = item.hari || "-";
+    if (!acc[hari]) acc[hari] = [];
+    acc[hari].push(item);
+    return acc;
+  }, {});
   return (
     <MainLayout>
       <div className="bg-gray-50 min-h-screen">

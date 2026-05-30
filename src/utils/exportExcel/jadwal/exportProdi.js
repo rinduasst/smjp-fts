@@ -144,8 +144,7 @@ sheet.addImage(logoId, {
   
   // spacing
   let row = 6;
-
-    /* ================= SORT KELAS ================= */
+//sortir kelas
     const sortedKelas = Object.keys(kelasList).sort((a, b) => {
       const ambilKelas = (val) => {
         return val.trim().toUpperCase().split(/[\s_]+/).pop();

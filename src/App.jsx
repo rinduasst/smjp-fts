@@ -41,7 +41,6 @@ import JadwalRuangan from "./pages/jadwal-kuliah/JadwalRuangan";
 import JadwalKelas from "./pages/jadwal-kuliah/JadwalKelas";
 import PerubahanJadwal from "./pages/jadwal/PerubahanJadwal";
 import TabelPerubahan from "./pages/jadwal/TabelPerubahan";
-import TabelPenukaran from "./pages/jadwal/TabelPenukaran";
 import AnalisisJadwal from "./pages/jadwal/AnalisisJadwal";
 
 /* Pengaturan */
@@ -101,7 +100,6 @@ function App() {
         <Route path="/jadwal-kuliah/jadwal-kelas" element={<JadwalKelas />} />
         <Route path="/perubahan-jadwal" element={<PerubahanJadwal />} />
         <Route path="/perubahan-jadwal/ajukan" element={<TabelPerubahan />} />
-        <Route path="/perubahan-jadwal/tukar" element={<TabelPenukaran />} />
         <Route path="/analisis-jadwal" element={<AnalisisJadwal/>} />
 
         {/* Pengaturan */}

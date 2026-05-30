@@ -13,17 +13,19 @@ const BatchJadwal = () => {
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [namaBatchBaru, setNamaBatchBaru] = useState("");
-  const navigate = useNavigate();
 
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [actionType, setActionType] = useState(null);
+
   const [confirmModal, setConfirmModal] = useState({
     open: false,
     title: "",
     message: "",
     type: "success",
   });
-  const fetchBatch = async () => {
+
+  const navigate = useNavigate();
+  const fetchBatch = async () => { 
     try {
       setLoading(true);
       const res = await api.get("/api/scheduler/batch");
@@ -47,7 +49,7 @@ const BatchJadwal = () => {
     });
   };
   const hapusBatch = (id, status) => {
-    // kalau batch aktif/final, blok
+    // kalau batch aktif/final
     if (status === "FINAL") {
       setConfirmModal({
         open: true,
@@ -57,8 +59,6 @@ const BatchJadwal = () => {
       });
       return;
     }
-  
-    // kalau bukan final, lanjut modal konfirmasi hapus
     setSelectedBatchId(id);
     setActionType("delete");
   
@@ -75,13 +75,11 @@ const BatchJadwal = () => {
       if (actionType === "delete") {
         await api.delete(`/api/scheduler/batch/${selectedBatchId}`);
       }
-  
       if (actionType === "aktif") {
         await api.patch(
           `/api/scheduler/batch/${selectedBatchId}/set-final`
         );
       }
-  
       if (actionType === "siap") {
         await api.patch(
           `/api/scheduler/batch/${selectedBatchId}/status`,
@@ -90,9 +88,7 @@ const BatchJadwal = () => {
           }
         );
       }
-  
       fetchBatch();
-  
       setConfirmModal({
         open: true,
         title: "Berhasil",
@@ -148,9 +144,7 @@ const BatchJadwal = () => {
       });
     }
   };
-  useEffect(() => {
-    fetchBatch();
-  }, []);
+
   const ubahKeDraft = (id) => {
     setSelectedBatchId(id);
     setActionType("siap");
@@ -199,6 +193,9 @@ const BatchJadwal = () => {
   
     return { label: "Kurang", color: "red", value: persen };
   };
+  useEffect(() => {
+    fetchBatch();
+  }, []);
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">

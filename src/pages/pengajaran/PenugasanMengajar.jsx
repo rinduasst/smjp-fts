@@ -14,6 +14,7 @@ function PenugasanMengajar() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDetail, setShowDetail] = useState(false);
+  const [filterKelas, setFilterKelas] = useState("");
 
   const { peran } = useAuth();
 
@@ -34,6 +35,7 @@ function PenugasanMengajar() {
   const [totalData, setTotalData] = useState(0);
   const [loadingProgramMatkul, setLoadingProgramMatkul] = useState(false);
   const [filterProdi, setFilterProdi] = useState("");
+  const [filterPeriode, setFilterPeriode] = useState("");
 
   const [confirmModal, setConfirmModal] = useState({
     open: false,
@@ -52,6 +54,8 @@ function PenugasanMengajar() {
           page: currentPage,
           pageSize: currentPageSize,
           q: searchTerm || undefined,
+          periodeId: filterPeriode || undefined,
+          kelasId: filterKelas || undefined,
           prodiId: peran === "TU_Prodi" ? user?.prodiId : filterProdi || undefined
         }
       });
@@ -68,7 +72,7 @@ function PenugasanMengajar() {
   };
   useEffect(() => {
     fetchData(page, pageSize);
-  }, [page, pageSize, searchTerm, filterProdi]);
+  }, [page, pageSize, searchTerm, filterProdi, filterPeriode, filterKelas]);
 
   const totalPage = Math.ceil(totalData / pageSize);
   const resetForm = () => {
@@ -211,27 +215,6 @@ function PenugasanMengajar() {
       setIsSubmitting(false);
     }
   };
-  //untuk filter dara
-  //ambil list angkatan
-  const angkatanList = [
-    ...new Set(
-      data.flatMap(item =>
-        item.kelasList?.map(k => String(k.kelompokKelas.angkatan))
-      ).filter(Boolean)
-    )
-  ].sort();
-  //ambil list jenis kelas
-  const jenisKelasList = [
-    ...new Set(data.flatMap(item => 
-      item.kelasList?.map(k => k.kelompokKelas.jenisKelas)
-    ).filter(Boolean))
-  ];
-  //ambil kode kelas
-  const kodeKelasList = [
-    ...new Set(data.flatMap(item => 
-      item.kelasList?.map(k => k.kelompokKelas.kode)
-    ).filter(Boolean))
-  ];  
   const prodiList = [
     ...new Map(
       data
@@ -240,6 +223,28 @@ function PenugasanMengajar() {
           item.programMatkul?.prodi
         ])
         .filter(([id]) => id)
+    ).values()
+  ];
+  const periodeList = [
+    ...new Map(
+      data
+        .map(item => [
+          item.programMatkul?.periode?.id,
+          item.programMatkul?.periode
+        ])
+        .filter(([id]) => id)
+    ).values()
+  ];
+  const kelasListFilter = [
+    ...new Map(
+      data
+        .flatMap(item =>
+          item.kelasList?.map(k => [
+            k.kelompokKelas?.id,
+            k.kelompokKelas
+          ])
+        )
+        .filter(Boolean)
     ).values()
   ];
   const [dosenDropdown, setDosenDropdown] = useState([]);
@@ -346,30 +351,36 @@ function PenugasanMengajar() {
         >
           <Plus size={18} /> Tambah Penugasan
         </button>
- 
            <div className="flex sm:flex-row gap-3 w-full lg:w-auto ml-auto">
-          {/* <select   
-          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-            value={filterJenisKelas} 
-            onChange={e => setFilterJenisKelas(e.target.value)}>
-            <option value="">Semua Jenis Kelas
-            </option>
-            {jenisKelasList.map(jenis => (
-              <option key={jenis}
-               value={jenis}>{jenis}
-               </option>
-            ))}
-          </select>
+           {peran === "TU_PRODI" && (
+               <select
+          className="w-full pl-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+          value={filterKelas}
+          onChange={(e) => setFilterKelas(e.target.value)}
+        >
+          <option value="">Semua Kelas</option>
 
-          <select   
-          className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-          value={filterKode} 
-          onChange={e => setFilterKode(e.target.value)}>
-            <option value="">Semua Kelas</option>
-            {kodeKelasList.map(kode => (
-              <option key={kode} value={kode}>{kode}</option>
-            ))}
-          </select> */}
+          {kelasListFilter.map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.kode}
+            </option>
+          ))}
+        </select>
+        )}
+
+         <select
+          className="w-full pl-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+          value={filterPeriode}
+          onChange={(e) => setFilterPeriode(e.target.value)}
+        >
+          <option value="">Semua Periode</option>
+
+          {periodeList.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nama}
+            </option>
+          ))}
+        </select>
           {peran !== "TU_PRODI" && (
           <select
           className="w-full pl-3  py-2.5 border border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"

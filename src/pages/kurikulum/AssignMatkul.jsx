@@ -5,12 +5,15 @@ import {ArrowLeft  } from "lucide-react";
 import MainLayout from "../../components/MainLayout";
 import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
-export default function AssignMatkul() {
+function AssignMatkul() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, peran } = useAuth();
+
   const [kurikulum, setKurikulum] = useState(null);
-  const [matkulList, setMatkulList] = useState([]); // sudah di-assign
-  const [allMatkul, setAllMatkul] = useState([]);   // semua matkul
+  const [matkulList, setMatkulList] = useState([]);
+  const [allMatkul, setAllMatkul] = useState([]);
+
   const [selectedMatkul, setSelectedMatkul] = useState([]);
 
   const [confirmModal, setConfirmModal] = useState({
@@ -19,7 +22,6 @@ export default function AssignMatkul() {
     message: "",
     type: "success",
   });
-  const {user, peran}= useAuth();
   const getKurikulum = async () => {
     const res = await api.get(`/api/kurikulum/kurikulum/${id}`);
     const data = res.data.data;
@@ -30,7 +32,6 @@ export default function AssignMatkul() {
     // ambil matkul sesuai prodi kurikulum
     getAllMatkul(data.prodi?.id);
   };
-
   const getAllMatkul = async (prodiId) => {
     let page = 1;
     let totalPages = 1;
@@ -117,7 +118,6 @@ export default function AssignMatkul() {
         (m) => m.mataKuliah?.id === mk.id
       )
   );
-
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-1">Daftar Mata Kuliah Kurikulum</h1>
@@ -314,3 +314,4 @@ export default function AssignMatkul() {
     </MainLayout>
   );
 }
+export default AssignMatkul;

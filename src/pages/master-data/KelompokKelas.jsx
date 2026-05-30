@@ -6,11 +6,12 @@ import { useAuth } from "../../hooks/useAuth";
 import ConfirmModal from "../../components/ConfirmModal";
 
 function KelompokKelas() {
+  const { user, peran } = useAuth();
   const [data, setData] = useState([]);
   const [prodiList, setProdiList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [selected, setSelected] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formErrors, setFormErrors] = useState({});
@@ -55,7 +56,6 @@ function KelompokKelas() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchKelompokKelas();
   }, [page, searchTerm, filterProdi, filterJenis, filterAngkatan]);
@@ -84,7 +84,6 @@ function KelompokKelas() {
   
     return matchJenis;
   });
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -92,7 +91,6 @@ function KelompokKelas() {
       [name]: type === "checkbox" ? checked : value
     }));
   };
-
   const validateForm = () => {
     const errors = {};
     if (!formData.kode.trim()) errors.kode = "Kode kelas wajib diisi";
@@ -101,7 +99,6 @@ function KelompokKelas() {
     if (!formData.kapasitas) errors.kapasitas = "Kapasitas wajib diisi";
     return errors;
   };
-
   const resetForm = () => {
     setFormData({
       kode: "",
@@ -112,7 +109,6 @@ function KelompokKelas() {
     setFormErrors({});
     setSelected(null);
   };
-
   const handleEdit = (row) => {
     setSelected(row);
     setFormData({
@@ -193,7 +189,6 @@ function KelompokKelas() {
   };
   const handleDelete = () => {
     if (!selected) return;
-  
     setConfirmModal({
       open: true,
       title: "Hapus Kelas",
@@ -201,7 +196,6 @@ function KelompokKelas() {
       type: "delete",
     });
   };
-  
   const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
@@ -240,9 +234,6 @@ function KelompokKelas() {
       setIsSubmitting(false);
     }
   };
-  const { user, peran } = useAuth();
-
-
   return (
     <MainLayout>
         <div className=" bg-gray-50 min-h-screen">
@@ -256,6 +247,7 @@ function KelompokKelas() {
 
         {/* Action Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {peran === "TU_PRODI" &&(
           <button
            onClick={() => {
             resetForm();
@@ -274,9 +266,10 @@ function KelompokKelas() {
             <Plus size={18} />
             Tambah Kelas
           </button>
+          )}
 
             {/* Right */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto ml-auto">
 
         {/* Filter Angkatan */}
         <select
