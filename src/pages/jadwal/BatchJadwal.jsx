@@ -8,7 +8,6 @@ import ConfirmModal from "../../components/ConfirmModal";
 const BatchJadwal = () => {
   const [batchList, setBatchList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fakultasList, setFakultasList] = useState([]);
 
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);

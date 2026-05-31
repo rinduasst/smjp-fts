@@ -42,26 +42,6 @@ const PerubahanJadwal = () => {
     type: "success",
   });
 
-   const fetchFinalBatch = async () => {
-      try {
-        const res = await api.get("/api/scheduler/batch", {
-          params: {
-            status: "FINAL",
-            page: 1,
-            pageSize: 10,
-          },
-        });
-        const finalBatch = res.data?.data?.items.find(
-          (b) => b.status === "FINAL"
-        );
-    
-        if (finalBatch) {
-          setActiveBatchId(finalBatch.periodeId);
-        }
-      } catch (err) {
-        console.error("Gagal ambil batch:", err);
-      }
-    };
    const fetchData = async () => {
       try {
         setLoading(true);
@@ -84,19 +64,28 @@ const PerubahanJadwal = () => {
         setLoading(false);
       }
     };
-    const fetchHari = async () => {
-      const res = await api.get("/api/master-data/hari");
-      setHariList(res.data?.data?.data || []);
-    };
-    const fetchSlot = async () => {
-      const res = await api.get("/api/master-data/slot-waktu");
-      setSlotList(res.data?.data?.items || []);
-    };
-    const fetchRuang = async () => {
-      const res = await api.get("/api/master-data/ruang");
-      setRuangList(res.data?.data?.items || []);
-    };
-    const fetchJadwal = async () => {
+   //inget ya rindu ini buat nampilin jadwal terget 
+   const fetchFinalBatch = async () => {
+    try {
+      const res = await api.get("/api/scheduler/batch", {
+        params: {
+          status: "FINAL",
+          page: 1,
+          pageSize: 10,
+        },
+      });
+      const finalBatch = res.data?.data?.items.find(
+        (b) => b.status === "FINAL"
+      );
+  
+      if (finalBatch) {
+        setActiveBatchId(finalBatch.periodeId);
+      }
+    } catch (err) {
+      console.error("Gagal ambil batch:", err);
+    }
+  };
+      const fetchJadwal = async () => {
       if (!activeBatchId) return;
     
       try {
@@ -116,6 +105,19 @@ const PerubahanJadwal = () => {
         console.error("Gagal ambil jadwal:", err);
       }
     };
+    const fetchHari = async () => {
+      const res = await api.get("/api/master-data/hari");
+      setHariList(res.data?.data?.data || []);
+    };
+    const fetchSlot = async () => {
+      const res = await api.get("/api/master-data/slot-waktu");
+      setSlotList(res.data?.data?.items || []);
+    };
+    const fetchRuang = async () => {
+      const res = await api.get("/api/master-data/ruang");
+      setRuangList(res.data?.data?.items || []);
+    };
+
     const filteredData = data.filter((item) => {
       const matchSearch = searchTerm
         ? item.alasanPengaju.toLowerCase().includes(searchTerm.toLowerCase())

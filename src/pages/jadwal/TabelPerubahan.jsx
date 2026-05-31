@@ -45,6 +45,40 @@ const TabelPerubahan = () => {
   });
   
   const { user } = useAuth();
+  const fetchFinalBatch = async () => {
+    try {
+      const res = await api.get("/api/scheduler/batch", {
+        params: { status: "FINAL", page: 1, pageSize: 10 }
+      });
+      const finalBatch = res.data?.data?.items.find(b => b.status === "FINAL");
+      if (finalBatch) {
+        setActiveBatchId(finalBatch.periodeId);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };//ambil nilai periode
+  const fetchJadwal = async () => {
+    if (!activeBatchId) return;
+  
+    try {
+      setLoading(true);
+  
+      const params = {
+        periodeAkademikId: activeBatchId,
+        statusBatch: "FINAL",
+        page: 1,
+        pageSize: 1000,
+      };
+      const res = await api.get("/api/view-jadwal/all", { params });
+      setJadwalList(res.data?.data?.items || []);
+      setHasFetched(true);
+    } catch (err) {
+      console.error("Gagal ambil jadwal", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const fetchHari = async () => {
     try {
       const res = await api.get("/api/master-data/hari");
@@ -69,51 +103,7 @@ const TabelPerubahan = () => {
       console.error("Gagal ambil prodi", err)
     }
   }
-  const fetchJadwal = async () => {
-    if (!activeBatchId) return;
-  
-    try {
-      setLoading(true);
-  
-      const params = {
-        periodeAkademikId: activeBatchId,
-        statusBatch: "FINAL",
-        page: 1,
-        pageSize: 1000,
-      };
-  
-    //  //filter role
-    //   if (user?.peran === "TU_PRODI") {
-    //     params.prodiId = user.prodiId;
-    //   }
-  
-    //   if (user?.peran === "TU_FAKULTAS") {
-    //     params.fakultasId = user.fakultasId;
-    //   }
-  
-      const res = await api.get("/api/view-jadwal/all", { params });
-  
-      setJadwalList(res.data?.data?.items || []);
-      setHasFetched(true);
-    } catch (err) {
-      console.error("Gagal ambil jadwal", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const fetchFinalBatch = async () => {
-    try {
-      const res = await api.get("/api/scheduler/batch", {
-        params: { status: "FINAL", page: 1, pageSize: 10 }
-      });
-      const finalBatch = res.data?.data?.items.find(b => b.status === "FINAL");
-      if (finalBatch) {
-        setActiveBatchId(finalBatch.periodeId);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
   const fetchAvailableSlots = async (slotWaktuId) => {
     try {
       const res = await api.get("/api/view-jadwal/available-slots", {
@@ -129,6 +119,7 @@ const TabelPerubahan = () => {
       console.error(err);
     }
   };
+  //helper function
   const toRomawi = (num) => {
     if (!num || num <= 0) return "";
     const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
@@ -142,12 +133,12 @@ const TabelPerubahan = () => {
       .map(k => {
         if (k.toLowerCase() === "karyawan") {
           return `${romawi}_KARYAWAN`; 
-          // atau `${romawi}_KRY`
         }
         return `${romawi}_REG_${k}`;
       })
       .join(", ");
   };
+
   const formatJam = (jam) => {
     if (!jam) return "-";
   
@@ -161,21 +152,22 @@ const TabelPerubahan = () => {
   
     return jam.replace(".", ":");
   };
-
-  //slot atau time logic
   const toMinutes = (time) => {
     const [h, m] = time.replace(".", ":").split(":").map(Number);
-    return h * 60 + m;
+    return h * 60 + m; //ubah jam ke menit buat di bandingin
   }; 
   const getSksSlot = (jadwal) => {
     if (!jadwal) return 1;
     if (jadwal.sksEfektif) return jadwal.sksEfektif;
     return jadwal.hasPraktikum
-      ? Math.ceil(jadwal.sks / 2)
+      ? Math.ceil(jadwal.sks / 2)//menentukan slot yang bersedia sesuai sks kayak matkul ini butuh slot brp
       : jadwal.sks || 1;
    };
+
+
   const generateAvailableSlotRange = () => {
-      if (!selectedJadwal || !availableData.length || !hariBaru) return [];
+    //pilih hari seusai kebutuhan user  
+    if (!selectedJadwal || !availableData.length || !hariBaru) return [];
       const sks = getSksSlot(selectedJadwal);
       const hariData = availableData.find(d => d.hariId === hariBaru);
       if (!hariData) return [];
@@ -196,15 +188,12 @@ const TabelPerubahan = () => {
           return jamA - jamB;
         });
       const result = [];
-    
+        //kelompokan berdasarkan sks
       for (let i = 0; i <= slots.length - sks; i++) {
         const group = slots.slice(i, i + sks);
       
         if (group.length !== sks) continue;
-      
-        // =========================
-        // VALIDASI SLOT NYAMBUNG
-        // =========================
+          //validasi apakah slot nyambung kayakk dari jam 8 ke 8.50 dilanjut slot itu ke slot lain harus nyambung
         let valid = true;
       
         for (let j = 0; j < group.length - 1; j++) {
@@ -216,14 +205,13 @@ const TabelPerubahan = () => {
             break;
           }
         }
-      
         if (!valid) continue;
       
         const startGroup = toMinutes(group[0].jamMulai);
         const endGroup = toMinutes(group[group.length - 1].jamSelesai);
         const selectedHariNama =
-    hariList.find((h) => h.id === hariBaru)?.nama;
-  
+        hariList.find((h) => h.id === hariBaru)?.nama;
+        //cek bentrok dosen
         const bentrokDosen = jadwalList.some((j) => {
           if (j.id === selectedJadwal.id) return false;
         
@@ -236,7 +224,7 @@ const TabelPerubahan = () => {
         
           return startGroup < jadwalEnd && endGroup > jadwalStart;
         });
-        
+        //cek bentrok kelas
         const bentrokKelas = jadwalList.some((j) => {
           if (j.id === selectedJadwal.id) return false;
         
@@ -249,11 +237,9 @@ const TabelPerubahan = () => {
         
           return startGroup < jadwalEnd && endGroup > jadwalStart;
         });
-        
-        // INI YANG KURANG
         if (bentrokDosen) continue;
         if (bentrokKelas) continue;
-      
+      //kalau semuanya lolos validasi atau sesuai maaka slot dimasukan ke hasil available slot gtuuuu
         result.push({
           startId: group[0].id,
           slotIds: group.map((s) => s.id),
@@ -267,7 +253,8 @@ const TabelPerubahan = () => {
       
    };
   const getRoomsForSelectedGroup = () => {
-      if (!selectedSlotGroup || !availableData.length) return [];
+    //cari ruang yang tersedia  
+    if (!selectedSlotGroup || !availableData.length) return [];
       const hariData = availableData.find(d => d.hariId === hariBaru);
       if (!hariData) return [];
       const selectedSlots = hariData.slots.filter(slot =>
@@ -282,8 +269,63 @@ const TabelPerubahan = () => {
       }
       return commonRooms;
   };
+  const ruangFinal = getRoomsForSelectedGroup();
 
-  //funcion action
+
+
+    //check konflik
+    const isDosenBentrok = (jadwalLama, jadwalBaru) => {
+      return jadwalList.some((j) => {
+        // skip jadwal yg sedang ditukar
+        if (
+          j.id === jadwalLama.id ||
+          j.id === jadwalBaru.id
+        ) return false;
+    
+        // DOSEN YANG DIPINDAH
+        if (j.dosen !== jadwalLama.dosen) return false;
+    
+        // cek di slot tujuan
+        if (j.hari !== jadwalBaru.hari) return false;
+    
+        const startA = toMinutes(jadwalBaru.jamMulai);
+        const endA = toMinutes(jadwalBaru.jamSelesai);
+    
+        const startB = toMinutes(j.jamMulai);
+        const endB = toMinutes(j.jamSelesai);
+    
+        // overlap waktu
+        return startA < endB && endA > startB;
+      });
+    };
+    const isKelasBentrok = (jadwalLama, jadwalBaru) => {
+      return jadwalList.some((j) => {
+        if (
+          j.id === jadwalLama.id ||
+          j.id === jadwalBaru.id
+        ) return false;
+    
+        // kelas sama
+        if (
+          formatKelas(j) !== formatKelas(jadwalBaru)
+        ) return false;
+    
+        // hari sama
+        if (j.hari !== jadwalLama.hari) return false;
+    
+        const startA = toMinutes(jadwalLama.jamMulai);
+        const endA = toMinutes(jadwalLama.jamSelesai);
+    
+        const startB = toMinutes(j.jamMulai);
+        const endB = toMinutes(j.jamSelesai);
+    
+        return startA < endB && endA > startB;
+      });
+    };
+    const isSlotCocok = (jadwalLama, jadwalBaru) => {
+      return getSksSlot(jadwalLama) === getSksSlot(jadwalBaru);
+    };
+      //funcion action
   const handleSubmit = async () => {
     // validasi kosong
     if (!selectedJadwal || !hariBaru || !slotBaru || !ruangBaru || !alasan) {
@@ -360,6 +402,9 @@ const TabelPerubahan = () => {
       }
     }
   };
+  const handlePilihJadwal = (jadwal) => {
+    setSelectedJadwal(jadwal);
+  };
   const handleSubmitSwap = async () => {
     if (!jadwalLama || !jadwalBaru || !alasanSwap.trim()) {
       setConfirmModal({
@@ -421,6 +466,13 @@ const TabelPerubahan = () => {
         });
     }
   };
+  const resetForm = () => {
+    setSelectedJadwal(null);
+    setHariBaru("");
+    setSlotBaru("");
+    setRuangBaru("");
+    setAlasan("");
+  };
   const filteredJadwal = jadwalList.filter((j) => {
 
     const matchProdi =
@@ -438,75 +490,13 @@ const TabelPerubahan = () => {
     return matchProdi && matchHari && matchSearch
 
   })
-  const resetForm = () => {
-    setSelectedJadwal(null);
-    setHariBaru("");
-    setSlotBaru("");
-    setRuangBaru("");
-    setAlasan("");
-  };
-  const handlePilihJadwal = (jadwal) => {
-    setSelectedJadwal(jadwal);
-  };
   const groupedByHariFiltered = filteredJadwal.reduce((acc, item) => {
     const hari = item.hari || "Tanpa Hari"
     if (!acc[hari]) acc[hari] = []
     acc[hari].push(item)
     return acc  
   }, {})
-  const ruangFinal = getRoomsForSelectedGroup();
-  //check konflik
-  const isDosenBentrok = (jadwalLama, jadwalBaru) => {
-    return jadwalList.some((j) => {
-      // skip jadwal yg sedang ditukar
-      if (
-        j.id === jadwalLama.id ||
-        j.id === jadwalBaru.id
-      ) return false;
-  
-      // DOSEN YANG DIPINDAH
-      if (j.dosen !== jadwalLama.dosen) return false;
-  
-      // cek di slot tujuan
-      if (j.hari !== jadwalBaru.hari) return false;
-  
-      const startA = toMinutes(jadwalBaru.jamMulai);
-      const endA = toMinutes(jadwalBaru.jamSelesai);
-  
-      const startB = toMinutes(j.jamMulai);
-      const endB = toMinutes(j.jamSelesai);
-  
-      // overlap waktu
-      return startA < endB && endA > startB;
-    });
-  };
-  const isKelasBentrok = (jadwalLama, jadwalBaru) => {
-    return jadwalList.some((j) => {
-      if (
-        j.id === jadwalLama.id ||
-        j.id === jadwalBaru.id
-      ) return false;
-  
-      // kelas sama
-      if (
-        formatKelas(j) !== formatKelas(jadwalBaru)
-      ) return false;
-  
-      // hari sama
-      if (j.hari !== jadwalLama.hari) return false;
-  
-      const startA = toMinutes(jadwalLama.jamMulai);
-      const endA = toMinutes(jadwalLama.jamSelesai);
-  
-      const startB = toMinutes(j.jamMulai);
-      const endB = toMinutes(j.jamSelesai);
-  
-      return startA < endB && endA > startB;
-    });
-  };
-  const isSlotCocok = (jadwalLama, jadwalBaru) => {
-    return getSksSlot(jadwalLama) === getSksSlot(jadwalBaru);
-  };
+
   useEffect(() => {
     if (activeBatchId) {
       fetchJadwal();

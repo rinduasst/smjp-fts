@@ -8,12 +8,11 @@ import ConfirmModal from "../../components/ConfirmModal";
 const GenerateJadwal = () => {
   const [fakultasId, setFakultasId] = useState("");
   const [periodeId, setPeriodeId] = useState("");
-  const [preset, setPreset] = useState("CEPAT");
+  const [preset, setPreset] = useState("CEPAT"); //optimasi
   const [namaBatch, setNamaBatch] = useState("");
 
   const [fakultasList, setFakultasList] = useState([]);
   const [periodeList, setPeriodeList] = useState([]);
-  const [penugasanList, setPenugasanList] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const {user, peran} = useAuth();
@@ -64,7 +63,7 @@ const GenerateJadwal = () => {
           setPreset("CEPAT");
           setNamaBatch("");
 
-          const interval = setInterval(async () => {
+          const interval = setInterval(async () => { //pengecekan status
             const jobRes = await api.get(`/api/scheduler/job/${jid}`);
             const jobData = jobRes.data.data;
 
@@ -98,7 +97,6 @@ const GenerateJadwal = () => {
         } else {
         // MODE SYNC
         toast.success("Jadwal berhasil disimpan!");
-  
         setTimeout(() => {
           window.location.href = "/scheduler/batch";
         }, 1500);

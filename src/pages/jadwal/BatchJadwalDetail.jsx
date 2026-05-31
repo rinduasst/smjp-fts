@@ -11,8 +11,6 @@ const BatchJadwalDetail = () => {
   const [slotList, setSlotList] = useState([]);
   
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  
   const [conflictCount, setConflictCount] = useState(0);
 
   const { id } = useParams();
@@ -48,10 +46,8 @@ const BatchJadwalDetail = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-
       const batchData = await fetchBatch();
       setBatch(batchData);
-
       const res = await api.get("/api/view-jadwal/all", {
         params: {
           batchId: id,
@@ -93,13 +89,10 @@ const BatchJadwalDetail = () => {
       console.error("ERROR SLOT:", err);
     }
   };
-    // const totalKonflik = jadwalList.filter((i) => i.hasConflict).length;
     const fetchConflictCount = async () => {
       try {
         const res = await api.get(`/api/scheduler/batch/${id}/conflicts`);
         const count = res.data?.data?.conflicts?.ruang?.count || 0;
-    
-        // kalau masih ada konflik, coba cek ulang (delay)
         if (count > 0) {
           setTimeout(fetchConflictCount, 1000); // retry 1 detik
         }
@@ -150,10 +143,24 @@ const BatchJadwalDetail = () => {
     if (!nama) return "";
     return warnaProdi[nama.toLowerCase()] || "";
   };
-
   const formatNamaBatch = (nama) => {
     if (!nama) return "-";
-    return nama;
+  
+    const match = nama.match(/Batch (.+)/);
+    if (!match) return nama;
+  
+    const date = new Date(match[1]);
+  
+    if (isNaN(date)) return nama;
+  
+    return `Batch ${date.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })} - ${date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
   };
   const hitungRowSpan = (mulai, selesai) => {
     const start = sesiList.findIndex((s) => s.mulai === mulai);
@@ -168,7 +175,7 @@ const BatchJadwalDetail = () => {
  
   const formatKelas = (jadwal) => {
     if (!jadwal?.kelas) return "-";
-
+    //cek semester di data kelas
     let romawi = "";
 
     if (jadwal.semester) {
@@ -179,18 +186,13 @@ const BatchJadwalDetail = () => {
     }
 
     const kelasList = jadwal.kelas.split(",").map((k) => k.trim());
-
+    //misahin kelas jika lebih dari 1
     return kelasList
       .map((k) => (romawi ? `${romawi}_${k}` : k))
       .join(", ");
   };
 
-  
-  const filtered = jadwalList.filter((i) =>
-  i.mataKuliah?.toLowerCase().includes(search.toLowerCase()) ||
-  i.dosen?.toLowerCase().includes(search.toLowerCase())
-  );
-  const grouped = filtered.reduce((acc, item) => {
+  const grouped = jadwalList.reduce((acc, item) => {
     const h = item.hari || "Tanpa Hari";
     if (!acc[h]) acc[h] = [];
     acc[h].push(item);
@@ -205,10 +207,9 @@ const BatchJadwalDetail = () => {
   const ruangListGlobal = React.useMemo(() => {
     return [...new Set(jadwalList.map(i => i.ruangan))]
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  }, [jadwalList]);
+  }, [jadwalList]); //judul kolom pada tabel
   const matrix = React.useMemo(() => {
     const m = {};
-
     jadwalList.forEach(j => {
       const slotIndex = sesiList.findIndex(s => s.mulai === j.jamMulai);
       if (slotIndex === -1) return;

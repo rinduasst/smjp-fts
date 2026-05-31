@@ -12,24 +12,11 @@ function AnalisisJadwal() {
   const fetchPelanggaran = async () => {
     try {
       setLoading(true);
-  
-      // const res = await api.get("/api/scheduler/unmet-constraints", {
-      //   params: {
-      //     batchStatus: "FINAL",
-      //   },
-      // });
-  
-      // console.log("DATA:", res.data);
       const res = await api.get("/api/scheduler/unmet-constraints", {
         params: {
           batchStatus: "FINAL",
         },
       });
-      
-      console.log("FULL RESPONSE:", res);
-      console.log("DATA:", res.data);
-      console.log("VIOLATIONS:", res.data.data.violations);
-  
       setDataPelanggaran(res.data.data.violations || []);
       setTotalPelanggaran(res.data.data.totalViolations || 0);
   
@@ -76,31 +63,16 @@ function AnalisisJadwal() {
     }, {})
   );
 
-const toRomawi = (num) => {
-  const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
-  return map[num] || num;
-};
+// const toRomawi = (num) => {
+//   const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+//   return map[num] || num;
+// };
 
-const hitungSemester = (angkatan, tahunMulai, paruh) => {
-  if (!angkatan || !tahunMulai) return null;
-  return (tahunMulai - angkatan) * 2 + (paruh === "GENAP" ? 2 : 1);
-};
 
-const formatKelas = (kelasStr) => {
-  if (!kelasStr) return "-";
+const formatKelas = (kelas) => {
+  if (!kelas) return "-";
 
-  const parts = kelasStr.split(" ");
-  const kode = parts[0];
-  const angkatan = Number(parts[1]);
-
-  // hitung kasar semester dari tahun sekarang
-  const tahunSekarang = new Date().getFullYear();
-  const semester = (tahunSekarang - angkatan) * 2 + 1;
-
-  const romawi = toRomawi(semester);
-  const jenis = kelasStr.includes("KARYAWAN") ? "KAR" : "REG";
-
-  return ` ${romawi}_${jenis}_${kode}`;
+  return kelas;
 };
 
 return (
@@ -201,7 +173,7 @@ return (
                 {item.mataKuliah}
               </p>
               <p className="text-xs text-gray-500">
-              {formatKelas(item.kelas, batch?.periode)}
+              {formatKelas(item.kelas)}
               </p>
             </td>
 

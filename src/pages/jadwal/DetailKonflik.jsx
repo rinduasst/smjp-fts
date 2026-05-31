@@ -8,7 +8,6 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
-import ConfirmModal from "../../components/ConfirmModal";
 
 const DetailKonflik = () => {
   const [data, setData] = useState(null);
@@ -43,7 +42,6 @@ const DetailKonflik = () => {
   const handleResolveAll = async () => {
     try {
       setLoadingResolve(true);
-
       const res = await api.post(
         `/api/scheduler/batch/${id}/resolve-conflicts`
       );
