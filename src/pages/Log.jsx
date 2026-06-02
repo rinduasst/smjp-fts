@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import MainLayout from "../components/MainLayout";
-import { Search } from "lucide-react";
+import ConfirmModal from "../components/ConfirmModal";
 
 function Log() {
   const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState("");
-
+  const [showClearModal, setShowClearModal] = useState(false);
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem("activity_logs")) || [];
     setLogs(data);
@@ -22,28 +22,28 @@ function Log() {
     UPDATE: "bg-yellow-100 text-yellow-600",
     DELETE: "bg-red-100 text-red-600",
   };
-
+  const handleClearLogs = () => {
+    localStorage.removeItem("activity_logs");
+    setLogs([]);
+    setShowClearModal(false);
+  };
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas</h1>
-          </div>
-          {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6  ">
-          <div className="relative w-full sm:max-w-sm">
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
-          <input 
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 text-gray-900 focus:border-green-500 focus:outline-none transition"
-              type="text"
-              placeholder=" Cari.."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        </div> */}
+        <div className="mb-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Log Aktivitas
+        </h1>
+
+        <button
+          onClick={() => setShowClearModal(true)}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          Hapus Semua Log
+        </button>
+
+      </div>
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -96,6 +96,14 @@ function Log() {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={showClearModal}
+        type="delete"
+        title="Hapus Semua Log"
+        message="Apakah Anda yakin ingin menghapus seluruh log aktivitas?"
+        onClose={() => setShowClearModal(false)}
+        onConfirm={handleClearLogs}
+      />
     </MainLayout>
   );
 }
