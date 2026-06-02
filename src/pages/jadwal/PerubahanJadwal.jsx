@@ -562,30 +562,37 @@ const PerubahanJadwal = () => {
                         </td>
 
                         {/* AKSI */}
-                     <td className="px-3 py-3 whitespace-nowrap align-top">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setSelectedItem(row);
-                                setShowDetail(true);
-                              }}
-                              className="p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition"
-                            >
-                              <Eye size={16} />
-                            </button>
-
+                        <td className="px-3 py-3 whitespace-nowrap align-top">
+                        <div
+                          className={`flex items-center gap-1 ${
+                            row.status === "DISETUJUI" || row.status === "DITOLAK"
+                              ? "justify-center"
+                              : "justify-start"
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              setSelectedItem(row);
+                              setShowDetail(true);
+                            }}
+                            className="p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          {row.status === "DIAJUKAN" && (
                             <button
                               onClick={() => handleDelete(row.id)}
                               className="p-1.5 rounded-md text-red-700 hover:bg-red-100 transition"
                             >
                               <Trash2 size={16} />
                             </button>
-
-                            {(peran === "TU_FAKULTAS" || peran === "ADMIN") && (
+                          )}
+                          {(peran === "TU_FAKULTAS" || peran === "ADMIN") &&
+                            row.status === "DIAJUKAN" && (
                               <>
                                 <button
                                   onClick={() => handleApprove(row.id)}
-                                  className="px-2 py-1 text-xs rounded-md bg-green-700 text-white hover:bg-green-800"
+                                  className="px-2 py-1 text-xs rounded-md bg-green-700 text-white"
                                 >
                                   Setujui
                                 </button>
@@ -593,17 +600,16 @@ const PerubahanJadwal = () => {
                                 <button
                                   onClick={() => {
                                     setSelectedId(row.id);
-                                    setAlasanReject("");
                                     setShowRejectModal(true);
                                   }}
-                                  className="px-2 py-1 text-xs rounded-md bg-red-700 text-white hover:bg-red-800"
+                                  className="px-2 py-1 text-xs rounded-md bg-red-700 text-white"
                                 >
                                   Tolak
                                 </button>
                               </>
                             )}
-                          </div>
-                        </td>
+                        </div>
+                      </td>
 
                       </tr>
                     ))

@@ -30,17 +30,6 @@ const Jadwal = () => {
       console.error("Gagal mengambil batch", err);
     }
   };
-
-  // Ambil daftar prodi
-  const fetchProdi = async () => {
-    try {
-      const res = await api.get("/api/master-data/prodi");
-      setProdiList(res.data?.data?.items || []);
-    } catch (err) {
-      console.error("Gagal mengambil prodi", err);
-    }
-  };
-
   // Ambil semua jadwal (showConflictsOnly = false)
   const fetchJadwal = async () => {
     if (!batchInfo) return;
@@ -64,6 +53,14 @@ const Jadwal = () => {
       console.error("Gagal mengambil jadwal", err);
     } finally {
       setLoading(false);
+    }
+  };
+  const fetchProdi = async () => {
+    try {
+      const res = await api.get("/api/master-data/prodi");
+      setProdiList(res.data?.data?.items || []);
+    } catch (err) {
+      console.error("Gagal mengambil prodi", err);
     }
   };
   const handleExportExcel = async () => {

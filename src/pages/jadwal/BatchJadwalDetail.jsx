@@ -42,7 +42,6 @@ const BatchJadwalDetail = () => {
       return null;
     }
   };
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -191,9 +190,8 @@ const BatchJadwalDetail = () => {
       .map((k) => (romawi ? `${romawi}_${k}` : k))
       .join(", ");
   };
-
   const grouped = jadwalList.reduce((acc, item) => {
-    const h = item.hari || "Tanpa Hari";
+    const h = item.hari || "Tanpa Hari"; //kelompokin ke hari dan itemny
     if (!acc[h]) acc[h] = [];
     acc[h].push(item);
     return acc;
@@ -324,83 +322,80 @@ useEffect(() => {
               <p className="text-gray-500">Memuat data Jadwal..</p>
             </div>
       )}
-
-        {/* TABLE */}
       {/* TABLE */}
-{!loading &&
-  hariUrut.map((hari) => {
-    const list = grouped[hari] || [];
-    if (!list.length) return null;
-    const skipCell = {};
-    
-
-    return (
-      <div key={hari} className="bg-white border  border-gray-300 rounded-xl p-4 mb-4">
-        <h2 className="font-bold mb-2">{hari}</h2>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border">
-            
-            {/* HEADER */}
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border p-2">Jam</th>
-                {ruangListGlobal.map((r) => (
-                  <th key={r} className="border p-2">{r}</th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* BODY */}
-            <tbody>
-  {sesiList.map((slot, index) => {
-    const slotKey = `${hari}-${slot.label}`;
-
-    return (
-      <tr key={slot.id}>
-        <td className="p-2 border font-medium whitespace-nowrap">
-          {slot.label}
-        </td>
-
-        {ruangListGlobal.map((ruang) => {
-          const skipKey = `${slot.label}-${ruang}`;
-          if (skipCell[skipKey]) return null;
-
-          const jadwal = matrix[slotKey]?.[ruang];
-
-          if (!jadwal) {
-            return <td key={ruang} className="p-2 border" />;
-          }
-
-          // tandai slot berikutnya biar tidak dirender
-          for (let i = 1; i < jadwal.rowspan; i++) {
-            const nextSlot = sesiList[jadwal.startIndex + i];
-            if (nextSlot) {
-              skipCell[`${nextSlot.label}-${ruang}`] = true;
-            }
-          }
+      {!loading &&
+        hariUrut.map((hari) => {
+          const list = grouped[hari] || [];
+          if (!list.length) return null;
+          const skipCell = {};
+          
 
           return (
-            <td
-              key={ruang}
-              rowSpan={jadwal.rowspan}
-              className={`p-2 border text-center align-top ${getWarnaProdi(jadwal.prodi)}`}
-            >
-              <div className="font-medium">{jadwal.mataKuliah}</div>
-              <div className="text-[11px]">{formatKelas(jadwal)}</div>
-            </td>
+            <div key={hari} className="bg-white border  border-gray-300 rounded-xl p-4 mb-4">
+              <h2 className="font-bold mb-2">{hari}</h2>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border">
+                  
+                  {/* HEADER */}
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border p-2">Jam</th>
+                      {ruangListGlobal.map((r) => (
+                        <th key={r} className="border p-2">{r}</th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  {/* BODY */}
+                  <tbody>
+                  {sesiList.map((slot, index) => {
+                    const slotKey = `${hari}-${slot.label}`;
+
+                    return (
+                      <tr key={slot.id}>
+                        <td className="p-2 border font-medium whitespace-nowrap">
+                          {slot.label}
+                        </td>
+
+                        {ruangListGlobal.map((ruang) => {
+                          const skipKey = `${slot.label}-${ruang}`;
+                          if (skipCell[skipKey]) return null;
+
+                          const jadwal = matrix[slotKey]?.[ruang];
+
+                          if (!jadwal) {
+                            return <td key={ruang} className="p-2 border" />;
+                          }
+
+                          // tandai slot berikutnya biar tidak dirender
+                          for (let i = 1; i < jadwal.rowspan; i++) {
+                            const nextSlot = sesiList[jadwal.startIndex + i];
+                            if (nextSlot) {
+                              skipCell[`${nextSlot.label}-${ruang}`] = true;
+                            }
+                          }
+                          return (
+                            <td
+                              key={ruang}
+                              rowSpan={jadwal.rowspan}
+                              className={`p-2 border text-center align-top ${getWarnaProdi(jadwal.prodi)}`}
+                            >
+                              <div className="font-medium">{jadwal.mataKuliah}</div>
+                              <div className="text-[11px]">{formatKelas(jadwal)}</div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+
+                </table>
+              </div>
+            </div>
           );
         })}
-      </tr>
-    );
-  })}
-</tbody>
-
-          </table>
-        </div>
-      </div>
-    );
-  })}
 
         {/* BACK */}
           {/* kiri */}

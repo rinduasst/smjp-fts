@@ -216,9 +216,6 @@ function Dosen() {
       }));
     }
   }, [peran, user?.prodiId, formData.prodiId]);
-  
-  
-
   return (
     <MainLayout>
       <div className=" bg-gray-50 min-h-screen">

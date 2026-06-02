@@ -67,9 +67,7 @@ function ProgramMatkul() {
       console.error("FETCH ERROR:", err.response?.data || err);
     }
   };
-  useEffect(() => {
-    fetchData(page);
-  }, [page, searchTerm, filterProdi, filterKurikulum, filterPeriode]);
+
   const fetchMaster = async () => {
     try {
       const [prodi, kurikulum, periode] = await Promise.all([
@@ -91,7 +89,6 @@ function ProgramMatkul() {
   const fetchMatkulKurikulum = async (kurikulumId) => {
     try {
       const res = await api.get(`/api/kurikulum/kurikulum/${kurikulumId}`);
-  
       setMataKuliahList(res.data?.data?.matkul || []);
     } catch (err) {
       console.error(err);
@@ -129,11 +126,13 @@ function ProgramMatkul() {
   }, [form.prodiId, form.periodeId, form.kurikulumId]);
 
   const toggleMatkul = (id) => {
+    //buat pilih atau batalin cekbox
     setSelectedMatkul((prev) => {
       const exist = prev.find((m) => m.mataKuliahId === id);
       if (exist) {
         return prev.filter((m) => m.mataKuliahId !== id);
       }
+      // jml kls auto 1
       return [
         ...prev,
         { mataKuliahId: id, jumlahKelompokKelas: 1 }
@@ -146,7 +145,7 @@ function ProgramMatkul() {
         m.mataKuliahId === id
           ? { ...m, jumlahKelompokKelas: Number(value) }
           : m
-      )
+      )//buat ubah jml kls
     );
   };
 
@@ -163,7 +162,7 @@ function ProgramMatkul() {
   });
   const filteredMatkul = mataKuliahList.filter((mk) => {
     if (!mk.mataKuliah) return false;
-  
+  //buat nyaring matkul yg blm di program
     const sudahDiprogam = programMatkulList.some((pm) => {
       const pmMatkulId = pm.mataKuliahId || pm.mataKuliah?.id;
   
@@ -176,6 +175,15 @@ function ProgramMatkul() {
   
     return !sudahDiprogam;
   });
+  const filteredKurikulum = kurikulumList.filter((k) =>
+  //batasi kurikuluum sesuai prodi
+  peran === "TU_PRODI"
+    ? k.prodi?.id === user?.prodiId
+    : true
+);
+  useEffect(() => {
+    fetchData(page);
+  }, [page, searchTerm, filterProdi, filterKurikulum, filterPeriode]);
   const resetForm = () => {
     setForm({
       prodiId: "",
@@ -320,11 +328,7 @@ function ProgramMatkul() {
       });
     }
   };
-  const filteredKurikulum = kurikulumList.filter((k) =>
-  peran === "TU_PRODI"
-    ? k.prodi?.id === user?.prodiId
-    : true
-);
+
   useEffect(() => {
     if (peran === "TU_PRODI" && user?.prodiId) {
       setForm((prev) => ({

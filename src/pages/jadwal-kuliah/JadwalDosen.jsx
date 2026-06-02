@@ -7,14 +7,14 @@ import { exportJadwalDosenExcel } from "../../utils/exportExcel/dosen/exportBkd.
 import { exportPdfDosen } from "../../utils/exportPdf/exportPdfDosen.js";
 
 const JadwalDosen = () => {
-  const { user } = useAuth();
+  const { user, peran } = useAuth();
   const [data, setData] = useState([]);
   const [batchInfo, setBatchInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [showExportModal, setShowExportModal] = useState(false);
-const [exportType, setExportType] = useState("");
+  const [exportType, setExportType] = useState("");
 
   const toRomawi = (num) => {
     if (!num || num <= 0) return "";
@@ -29,14 +29,11 @@ const [exportType, setExportType] = useState("");
     if (!semester) {
       semester = 7;
     }
-  
     const romawi = toRomawi(Number(semester));
-  
     const kelasList = (jadwal?.kelas || "")
       .split(",")
       .map((k) => k.trim())
       .filter(Boolean);
-  
     return kelasList
       .map((k) => {
         if (jadwal?.jenisKelas === "KARYAWAN") {
@@ -67,22 +64,31 @@ const [exportType, setExportType] = useState("");
   };
 
   const fetchJadwalDosen = async () => {
-    if (!user?.prodiId) return;
+    if (!batchInfo?.periodeId) return;
     setLoading(true);
     try {
       const periodeId = batchInfo.periodeId;
       if (!periodeId) return;
-
+      const params = {
+        periodeAkademikId: periodeId,
+        statusBatch: "FINAL",
+        page: 1,
+        pageSize: 1000,
+        sortBy: "hari",
+        sortOrder: "asc",
+      };
+      
+      if (peran === "TU_PRODI") {
+        params.prodiId = user.prodiId;
+      }
+      
+      if (peran === "TU_FAKULTAS") {
+        params.fakultasId = user.fakultasId;
+      }
+      
+      // ADMIN tidak dikasih filter
       const res = await api.get("/api/view-jadwal/all", {
-        params: {
-          periodeAkademikId: periodeId,
-          prodiId: user.prodiId,
-          statusBatch: "FINAL",
-          page: 1,
-          pageSize: 200,
-          sortBy: "hari",
-          sortOrder: "asc",
-        },
+        params,
       });
 
       const items = res.data?.data?.items || [];
@@ -111,10 +117,10 @@ const [exportType, setExportType] = useState("");
   }, []);
   
   useEffect(() => {
-    if (batchInfo && user?.prodiId) {
+    if (batchInfo) {
       fetchJadwalDosen();
     }
-  }, [batchInfo, user?.prodiId]);
+  }, [batchInfo, peran]);
   // Filter berdasarkan search
   const filteredData = data.map(dosen => ({
     ...dosen,
@@ -128,8 +134,6 @@ const [exportType, setExportType] = useState("");
         <p className="text-sm text-gray-600 mb-4">
           Daftar jadwal perkuliahan dosen pada periode akademik saat ini.
         </p>
-
-                {/* Kontrol Export + Search */}
        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex flex-col sm:flex-row gap-3">
         <button 

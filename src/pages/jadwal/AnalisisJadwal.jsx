@@ -4,9 +4,7 @@ import api from "../../api/api";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 function AnalisisJadwal() {
-  const [batch, setBatch] = useState(null);
   const [dataPelanggaran, setDataPelanggaran] = useState([]);
-  const [totalPelanggaran, setTotalPelanggaran] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const fetchPelanggaran = async () => {
@@ -17,8 +15,10 @@ function AnalisisJadwal() {
           batchStatus: "FINAL",
         },
       });
+      
+      console.log("ROLE TU_PRODI RESPONSE", res.data);
+     
       setDataPelanggaran(res.data.data.violations || []);
-      setTotalPelanggaran(res.data.data.totalViolations || 0);
   
     } catch (error) {
       console.error("Gagal ambil pelanggaran:", error);
@@ -62,19 +62,15 @@ function AnalisisJadwal() {
       return acc;
     }, {})
   );
-
 // const toRomawi = (num) => {
 //   const map = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
 //   return map[num] || num;
 // };
-
-
 const formatKelas = (kelas) => {
   if (!kelas) return "-";
 
   return kelas;
 };
-
 return (
 <MainLayout>
   <div className="bg-gray-50 min-h-screen p-2">
@@ -94,18 +90,8 @@ return (
       </div>
     )}
 
-    {/* EMPTY */}
-    {!loading && hasilGrouping.length === 0 && (
-      <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-        <AlertTriangle className="mx-auto mb-2 text-gray-400" size={28} />
-        <p className="text-sm text-gray-600">
-          Tidak ada pelanggaran
-        </p>
-      </div>
-    )}
-
     {/* TABLE */}
-    {!loading && hasilGrouping.length > 0 && (
+    {!loading && (
 
 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 

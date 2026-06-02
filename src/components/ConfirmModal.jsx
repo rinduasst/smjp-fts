@@ -21,7 +21,7 @@ function ConfirmModal({
     if (open && !["delete", "confirm"].includes(type)) {
       const timer = setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }

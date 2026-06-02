@@ -31,7 +31,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
     // Baris 1
     worksheet.mergeCells("B1:I1");
-    worksheet.getCell("B1").value = "BEBAN KERJA DOSEN";
+    worksheet.getCell("B1").value = "";
     worksheet.getCell("B1").font = {
     name: "Times New Roman",
     size: 20,
@@ -44,7 +44,7 @@ export const exportJadwalDosenExcel = async (data, formatKelas, batchInfo) => {
 
     // Baris 2
     worksheet.mergeCells("B2:I2");
-   worksheet.getCell("B2").value = `PROGRAM STUDI ${prodiNama.toUpperCase()}`;
+   worksheet.getCell("B2").value = `JADWAL MENGAJAR DOSEN`;
     worksheet.getCell("B2").font = {
     name: "Times New Roman",
     size: 16,
@@ -173,7 +173,7 @@ data.forEach((dosen, idx) => {
     { width: 6 },
     { width: 12 },
     { width: 18 },
-    { width: 10 },
+    { width: 16 },
     { width: 10 }
   ];
 

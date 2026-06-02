@@ -21,7 +21,6 @@ const DetailKonflik = () => {
   const navigate = useNavigate();
   const { id } = useParams();
  
-
   const fetchKonflik = async () => {
     try {
       setLoading(true);

@@ -31,12 +31,9 @@ function ProgramStudi() {
   const fetchProdi = async () => {
     try {
       const res = await api.get("/api/master-data/prodi");
-  
       const items =
         res.data?.data?.items ||
-
         [];
-  
       setData(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error("Gagal fetch prodi:", err);
